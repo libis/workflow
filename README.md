@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/libis/workflow.svg?branch=master)](https://travis-ci.org/libis/workflow)
+[![Coverage Status](https://coveralls.io/repos/libis/workflow/badge.png)](https://coveralls.io/r/libis/workflow)
+
 # LIBIS Workflow
 
 LIBIS Workflow framework

@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'rspec'
+require_relative 'spec_helper'
 
 describe 'TestWorkflow' do
 
