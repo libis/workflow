@@ -53,8 +53,68 @@ You should start by including the following line in your source code:
 require 'LIBIS_Workflow'
 ```
 
-This will load all of the LIBIS Workflow framework into your environment, but including only the required parts is OK as well. This
-is shown in the examples below.
+This will load all of the LIBIS Workflow framework into your environment, but including only the required parts is OK as
+well. This is shown in the examples below.
+
+### Workflows
+
+A ::LIBIS::Workflow::Workflow instance contains the definition of a workflow. Once instantiated, it can be run by
+calling the 'run' method. The Workflow constructor takes two arguments: config - a workflow configuration and a option
+Hash.
+
+#### Workflow configuration
+
+A workflow configuration is a Hash with:
+* tasks: Array of task descriptions
+* start_object: String with class name of the starting object to be created. An istance of this class will be created
+  for each run and serves as the root work item for that particular run. 
+* input: Hash with input variable definitions
+
+##### Task description
+ 
+is a Hash with:
+* class: String with class name of the task
+* name: String with the name of the task
+* tasks: Array with task definitions of sub-tasks
+* options: Hash with additional task configuration options (see 'Tasks - Configuration' for more info)
+
+If 'class' is not present, the default '::LIBIS::Workflow::Task' with the given name will be instantiated, which simply 
+iterates over the child items of the given work item and performs each sub-task on each of the child items. If a 'class'
+value is given, an instance of that class will be created and the task will be handed the work item to process on. See 
+the chapter on 'Tasks' below for more information on tasks.
+
+##### Input variable definition
+
+The key of the input Hash is the unique id of the variable. The value is a Hash with:
+* name: String with the name of the input variable
+  This value is used for display only
+* description: String with descriptive text explaining the use/meaning of the variable
+* type: String with the type of the variable
+  Currently only 'String', 'Time' and 'Boolean' are supported. If the value is not present, 'String' is asumed.
+* default: String with the default value
+  If the default value contains the string %s, it will be replaced with the current time in the format yymmddHHMMSS when
+  the workflow is started.  For boolean values, 'true', 'yes', 't', 'y' and 1 are all interpreted as boolean true.
+
+All of these Hash keys are optional. Each input variable key and value will be added to the root work item's option Hash.
+
+#### Options
+
+The option Hash contains special configuration parameters for the workflow:
+* action: String with the action that should be taken. Currently only 'start' is supported. In the future support for
+  'restart' and 'continue' will be added.
+* interactive: Boolean that indicates if the user should be queried to input values for variables that have no value set.
+  This will pause the workflow run and is therefore not compatible with scheduling the workflow. For unattended runs the
+  options should be set to false, causing the run to throw an exception if an input variable is missing a value.
+  
+Remaining values are considered to be (default) values for the input variables.
+
+#### Run-time configuration
+
+The 'run' method takes an optional Hash as argument which will complement and override the options Hash described in the
+previous chapter.
+ 
+Once the workflow is configured and the root work item instantiated, the method will run each top-level task on the root
+work item in sequence until all tasks have completed successfully or a task has failed.
 
 ### Work items
 
@@ -115,9 +175,9 @@ class MyTask < ::LIBIS::Workflow::Task
 end
 ```
 
-You have two options to specify the actions:
+You have some options to specify the actions:
 
-### performing an action on each child item of the provided work item
+### Performing an action on each child item of the provided work item
 
 In that case the task should provide a 'process_item' method as above. Each child item will be passed as the argument
 to the method and perform whatever needs to be done on the item.
@@ -126,26 +186,52 @@ If the action fails the method is expected to set the item status field to faile
 example. If the error is so severe that no other child items should be processed, the action can decide to throw an
 exception, preferably a ::LIBIS::Workflow::Exception or a child exception thereof.
   
-### performing an action on the provided work item
+### Performing an action on the provided work item
 
 If the task wants to perform an action on the work item directly, it should define a 'process' method. The work item is
-available to the method as class instance variable '@workitem'. Again the method is responsible to communicate errors
+available to the method as class instance variable 'workitem'. Again the method is responsible to communicate errors
 with a failed status or by throwing an exception.
 
-### combining both
+### Combining both
 
 It is possible to perform some action on the parent work item first and then process each child item. Processing the
 child items should be done in process_item as usual, but processing the parent item can be done either by defining a
 pre_process method or a process method that ends with a 'super' call. Using this should be an exception as it is
 recommended to create a seperate task to process the child work items.
 
-### default behaviour
+### Default behaviour
 
 The default implementation of 'process' is to call 'pre_process' and then call 'process_item' on each child item.
 
-The default implementation for 'process_item' is to run each child task for each given child item. 
+The default implementation for 'process_item' is to run each child task for each given child item. This will raise an
+exception unless the workflow has defined some sub-tasks for this task. This means that in the workflow definition tree
+each leaf task should either implement it's own 'process_item' method or override the 'process' method. Only non-leaf
+nodes in the workflow definition tree are allowed to use the default implementation (by defining only 'name' and 'tasks'
+value). See above on 'Workflow configuration' for more info.
 
-### convenience functions
+### Configuration
+
+The task takes some options that determine how the task will be handling special cases. The options should be passed to
+the Task constructor as part of the initialization. The workflow configuration will take care of that.
+
+* quiet: Boolean - default: false
+* always_run: Boolean - default: false
+* items_first: Boolean - default: false
+
+The quiet option surpresses all logging for this task.
+
+When the option always_run is set, the task will run even when a previous task failed to run on the item before. Note
+that successfully running such a task will unmark the item as failed. The status history of the item will show which
+tasks failed. Only use this option if you are sure the task will fully recover if the previous tasks failed or did not
+run due to a previous failure.
+ 
+The items_fist option determines the processing order. If a task has multiple subtasks and the given workitem has 
+multiple subitems, setting the items_first option will cause it to take the first subitem, run the first subtask on it,
+then the second subtask and so on. Next it will run the first, second, ... subtask on the second subitem and so on. If
+the option is not set or set to false, the first subtask will run on each subitem, then the second subtask on each 
+subitem, and so on.
+
+### Convenience functions
 
 #### get_root_item()
 
@@ -179,12 +265,12 @@ The first argument is mandatory and can be:
 * a static string. The message text is used as-is.
 * a string with placement holders as used in String#%. Args can either be an array or a hash. See also Kernel#sprintf.
 
-The log message is logged to the general logging and attached to the current work item (@workitem) unless another
+The log message is logged to the general logging and attached to the current work item (workitem) unless another
 work item is passed as first argument after the message.
 
 #### check_item_type(klass, item = nil)
 
-Checks if the work item is of the given class. @workitem is checked if the item argument is not present. If the check 
+Checks if the work item is of the given class. 'workitem' is checked if the item argument is not present. If the check 
 fails a Runtime exception is thrown which will cause the task to abort if not catched. 
 
 #### item_type?(klass, item = nil)

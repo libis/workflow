@@ -25,19 +25,18 @@ module LIBIS
           Config.logger.level = ::Logger::DEBUG
         end
 
-        @options = options
-
-        @workflow = Workflow.new workflow_name, options
+        @workflow = Workflow.new workflow_name
 
       end
 
-      def start
-        @workflow.start interactive: true
+      def start(options = {})
+        options[:interactive] = true
+        @workflow.run options
       end
 
       def run(options = {})
         options[:interactive] = false
-        @workflow.start options
+        @workflow.run options
       end
 
     end

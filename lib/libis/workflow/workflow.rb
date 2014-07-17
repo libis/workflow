@@ -2,6 +2,7 @@
 
 require 'backports/rails/string'
 require 'backports/rails/hash'
+
 require 'libis/workflow/config'
 require 'libis/workflow/base'
 require 'libis/workflow/task'
@@ -17,9 +18,8 @@ module LIBIS
       attr_reader :tasks
       attr_reader :config
 
-      # @param [Hash] config Workflow configuration contain
-      # @param [Hash] opts
-      def initialize(config, opts = {})
+      # @param [Hash] config Workflow configuration
+      def initialize(config)
 
         Config.require_all(File.join(File.dirname(__FILE__), 'tasks'))
         Config.require_all(Config.taskdir)
@@ -27,7 +27,9 @@ module LIBIS
 
         @config = {input: [], tasks: [], start_object: '::LIBIS::Workflow::WorkItem'}.merge config
 
-        unless @config[:tasks].last[:class].split('::').last == 'Analyzer'
+        @name = config[:name] || self.class.name
+
+        unless @config[:tasks].last[:class] && @config[:tasks].last[:class].split('::').last == 'Analyzer'
           @config[:tasks] << { class: '::LIBIS::Workflow::Tasks::Analyzer' }
         end
 
@@ -43,52 +45,51 @@ module LIBIS
         end
 
         @inputs = @config[:input]
-        @default_options = opts
 
       end
 
-      def start(opts = {})
+      # @param [Hash] opts
+      def run(opts = {})
 
         @workitem = @config[:start_object].constantize.new
-        #noinspection RubyResolve
-        @workitem.workflow = self
-        @workitem.save
+        raise RuntimeError.new "Could not create instance of start object '#{@config[:start_object]}'" unless workitem
+
+        workitem.workflow = self
+        workitem.save
 
         process_options opts
 
         check_item_type WorkItem
 
         @tasks.each do |m|
-          next if @workitem.failed? and not m[:instance].options[:allways_run]
-          m[:instance].start(@workitem)
+          next if workitem.failed? and not m[:instance].options[:allways_run]
+          m[:instance].run(workitem)
         end
+
+        workitem.set_status :DONE unless workitem.failed?
 
       end
 
       def inputs_required
-        (@inputs || []).map do |input|
-          key = input[:option_key]
-          ( @default_options.has_key?(key) || input.has_key?(:default) ) ? nil : input
-        end.compact
+        (@inputs || {}).reject { |_, input| input.has_key?(:default) }
       end
 
       private
 
       # @param [Hash] opts
       def process_options(opts)
-        options = @default_options.merge opts
-        @action = options[:action]
+        options = opts.dup
+        @action = options.delete(:action) || 'start'
         options = prepare_input options, @inputs
-        options.each { |k,v| @workitem.options[k.to_sym] = v }
+        options.each { |k,v| workitem.options[k.to_sym] = v }
       end
 
       # @param [Hash] opts
       # @param [Array] inputs
       def prepare_input(opts, inputs)
-        options = opts.symbolize_keys!
+        options = opts.symbolize_keys
         interactive = options.delete :interactive
-        (inputs || []).each do |input|
-          key = input[:option_key]
+        (inputs || {}).each do |key, input|
           # provided in opts
           unless options.has_key? key
             if input.has_key? :default
@@ -97,8 +98,8 @@ module LIBIS
             else
               raise StandardError.new "input option '#{input[:name]}' has no value." unless interactive
               # ask user
-              puts input[:description]
-              print "#{input[:name]} : "
+              puts input[:description] if input[:description]
+              print "#{input[:name] || key.to_s} : "
               value = STDIN.gets.strip
               options[key] = value
             end
@@ -107,7 +108,7 @@ module LIBIS
             when 'Time'
               options[key] = s_to_time options[key]
             when 'Boolean'
-              options[key] = %w'true yes ja'.include? options[key].downcase if options[key].is_a?(String)
+              options[key] = %w'true yes t y 1'.include? options[key].downcase if options[key].is_a?(String)
             else
               options[key].gsub!('%s',Time.now.strftime('%Y%m%d%H%M%S')) if options[key].is_a? String
           end

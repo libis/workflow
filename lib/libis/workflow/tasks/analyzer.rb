@@ -12,7 +12,7 @@ module LIBIS
           { quiet: true, allways_run: true }
         end
 
-        def start(item)
+        def run(item)
 
           item.properties[:ingest_failed] = item.failed?
 
@@ -24,7 +24,7 @@ module LIBIS
 
           if item.respond_to? :each
             item.each do |i|
-              start i
+              run i
               i.summary.each do |level, count|
                 item.summary[level] ||= 0
                 item.summary[level] += (count || 0)
@@ -32,7 +32,6 @@ module LIBIS
             end
           end
 
-          item.set_status :DONE
           item.save
 
         end

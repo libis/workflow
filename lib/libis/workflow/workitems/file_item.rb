@@ -11,6 +11,14 @@ module LIBIS
         self.properties[:filename]
       end
 
+      def properties
+        @properties ||= {}
+      end
+
+      def set_file(name)
+        self.filename = name
+      end
+
       def filename=(name)
         begin
           stats = ::File.stat name

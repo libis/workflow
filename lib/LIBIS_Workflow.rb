@@ -1,7 +1,7 @@
 # encoding: utf-8
 
+require 'libis/exceptions'
 require 'libis/workflow/config'
-require 'libis/workflow/exception'
 
 module LIBIS
   module Workflow

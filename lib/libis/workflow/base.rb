@@ -4,9 +4,9 @@ require 'logger'
 
 require 'backports/rails/string'
 
+require 'libis/exceptions'
 require 'libis/workflow/message_registry'
 require 'libis/workflow/workitems/work_item'
-require 'libis/workflow/exception'
 require 'libis/workflow/config'
 
 module LIBIS
@@ -57,14 +57,14 @@ module LIBIS
       end
 
       def check_item_type(klass, item = nil)
-        item ||= @workitem
+        item ||= workitem
         unless item.is_a? klass.to_s.constantize
-          raise RuntimeError, "Workitem is of wrong type : #{item.class} - expected #{klass.to_s}"
+          raise WorkflowError, "Workitem is of wrong type : #{item.class} - expected #{klass.to_s}"
         end
       end
 
       def item_type?(klass, item = nil)
-        item ||= @workitem
+        item ||= workitem
         item.is_a? klass.to_s.constantize
       end
 
@@ -91,7 +91,7 @@ module LIBIS
                                      [0, '']
                                    end
 
-        item = @workitem
+        item = workitem
         item = args.shift if args.size > 0 and args[0].is_a?(WorkItem)
 
         # Support for named substitutions
