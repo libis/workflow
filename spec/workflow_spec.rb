@@ -108,8 +108,8 @@ STR
 
     expect(sample_out.count).to eq output.count
     output.each_with_index do |o, i|
-      s = sample_out[i][39..-1]
-      o = o[39..-1]
+      s = sample_out[i].split(']')[1]
+      o = o.split(']')[1]
       expect(o).to eq s
     end
 
@@ -145,8 +145,8 @@ STR
 
     expect(sample_out.count).to eq output.count
     output.each_with_index do |o, i|
-      s = sample_out[i][39..-1]
-      o = o[39..-1]
+      s = sample_out[i].split(']')[1]
+      o = o.split(']')[1]
       expect(o).to eq s
     end
 
