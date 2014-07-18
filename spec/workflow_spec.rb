@@ -101,7 +101,7 @@ D, [2014-07-17T19:49:36.789973 #12276] DEBUG -- ProcessFiles/CamelizeName - Spec
 D, [2014-07-17T19:49:36.790040 #12276] DEBUG -- ProcessFiles/CamelizeName - Spec::Items::TestDirItem.rb : 2 of 2 items passed
 D, [2014-07-17T19:49:36.790107 #12276] DEBUG -- ProcessFiles - spec/items : Completed
 STR
-    sample_out = sample_out.lines
+    sample_out = sample_out.lines.to_a
 
     output = @logoutput.string.lines
     # puts output
@@ -136,7 +136,7 @@ D, [2014-07-17T19:56:58.207419 #12404] DEBUG -- ProcessFiles/CamelizeName - spec
 D, [2014-07-17T19:56:58.207511 #12404] DEBUG -- ProcessFiles/CamelizeName - Spec::Items::TestDirItem.rb : Completed
 D, [2014-07-17T19:56:58.207595 #12404] DEBUG -- ProcessFiles - spec/items : Completed
 STR
-    sample_out = sample_out.lines
+    sample_out = sample_out.lines.to_a
 
     output = @logoutput.string.lines
     # puts output
