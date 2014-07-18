@@ -63,7 +63,7 @@ describe 'TestWorkflow' do
 
   end
 
-  it 'should contain two tasks' do
+  it 'should contain three tasks' do
 
     expect(@workflow.tasks.size).to eq 3
     expect(@workflow.tasks.first[:class]).to eq CollectFiles
@@ -108,12 +108,14 @@ STR
 
     expect(sample_out.count).to eq output.count
     output.each_with_index do |o, i|
-      expect(o).to match Regexp.escape(sample_out[i][40..-1])
+      s = sample_out[i][39..-1]
+      o = o[39..-1]
+      expect(o).to eq s
     end
 
   end
 
-  it 'should run subtasks first' do
+  it 'should process subitems first' do
 
     @workflow2.run(dirname: 'spec/items')
     sample_out = <<STR
@@ -143,7 +145,9 @@ STR
 
     expect(sample_out.count).to eq output.count
     output.each_with_index do |o, i|
-      expect(o).to match Regexp.escape(sample_out[i][40..-1])
+      s = sample_out[i][39..-1]
+      o = o[39..-1]
+      expect(o).to eq s
     end
 
   end
