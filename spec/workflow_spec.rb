@@ -80,37 +80,34 @@ describe 'TestWorkflow' do
     expect(@workflow.workitem.items[1].class).to eq TestFileItem
 
     sample_out = <<STR
-D, [] DEBUG -- CollectFiles - spec/items : Started
-D, [] DEBUG -- CollectFiles - spec/items : Completed
-D, [] DEBUG -- ProcessFiles - spec/items : Started
-D, [] DEBUG -- ProcessFiles - spec/items : Running subtask (1/2): ChecksumTester
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items : Processing subitem (1/2): spec/items/test_dir_item.rb
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_dir_item.rb : Started
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_dir_item.rb : Completed
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items : Processing subitem (2/2): spec/items/test_file_item.rb
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_file_item.rb : Started
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_file_item.rb : Completed
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items : 2 of 2 items passed
-D, [] DEBUG -- ProcessFiles - spec/items : Running subtask (2/2): CamelizeName
-D, [] DEBUG -- ProcessFiles/CamelizeName - spec/items : Processing subitem (1/2): spec/items/test_dir_item.rb
-D, [] DEBUG -- ProcessFiles/CamelizeName - spec/items/test_dir_item.rb : Started
-D, [] DEBUG -- ProcessFiles/CamelizeName - Spec::Items::TestDirItem.rb : Completed
-D, [] DEBUG -- ProcessFiles/CamelizeName - spec/items : Processing subitem (2/2): spec/items/test_file_item.rb
-D, [] DEBUG -- ProcessFiles/CamelizeName - spec/items/test_file_item.rb : Started
-D, [] DEBUG -- ProcessFiles/CamelizeName - Spec::Items::TestFileItem.rb : Completed
-D, [] DEBUG -- ProcessFiles/CamelizeName - spec/items : 2 of 2 items passed
-D, [] DEBUG -- ProcessFiles - spec/items : Completed
+DEBUG -- CollectFiles - spec/items : Started
+DEBUG -- CollectFiles - spec/items : Completed
+DEBUG -- ProcessFiles - spec/items : Started
+DEBUG -- ProcessFiles - spec/items : Running subtask (1/2): ChecksumTester
+DEBUG -- ProcessFiles/ChecksumTester - spec/items : Processing subitem (1/2): spec/items/test_dir_item.rb
+DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_dir_item.rb : Started
+DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_dir_item.rb : Completed
+DEBUG -- ProcessFiles/ChecksumTester - spec/items : Processing subitem (2/2): spec/items/test_file_item.rb
+DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_file_item.rb : Started
+DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_file_item.rb : Completed
+DEBUG -- ProcessFiles/ChecksumTester - spec/items : 2 of 2 items passed
+DEBUG -- ProcessFiles - spec/items : Running subtask (2/2): CamelizeName
+DEBUG -- ProcessFiles/CamelizeName - spec/items : Processing subitem (1/2): spec/items/test_dir_item.rb
+DEBUG -- ProcessFiles/CamelizeName - spec/items/test_dir_item.rb : Started
+DEBUG -- ProcessFiles/CamelizeName - Spec::Items::TestDirItem.rb : Completed
+DEBUG -- ProcessFiles/CamelizeName - spec/items : Processing subitem (2/2): spec/items/test_file_item.rb
+DEBUG -- ProcessFiles/CamelizeName - spec/items/test_file_item.rb : Started
+DEBUG -- ProcessFiles/CamelizeName - Spec::Items::TestFileItem.rb : Completed
+DEBUG -- ProcessFiles/CamelizeName - spec/items : 2 of 2 items passed
+DEBUG -- ProcessFiles - spec/items : Completed
 STR
     sample_out = sample_out.lines.to_a
-
     output = @logoutput.string.lines
     # puts output
 
     expect(sample_out.count).to eq output.count
     output.each_with_index do |o, i|
-      s = sample_out[i].split(']')[1]
-      o = o.split(']')[1]
-      expect(o).to eq s
+      expect(o[/(?<=\] ).*/]).to eq sample_out[i].strip
     end
 
   end
@@ -119,36 +116,33 @@ STR
 
     @workflow2.run(dirname: 'spec/items')
     sample_out = <<STR
-D, [] DEBUG -- CollectFiles - spec/items : Started
-D, [] DEBUG -- CollectFiles - spec/items : Completed
-D, [] DEBUG -- ProcessFiles - spec/items : Started
-D, [] DEBUG -- ProcessFiles - spec/items : Processing subitem (1/2): spec/items/test_dir_item.rb
-D, [] DEBUG -- ProcessFiles - spec/items/test_dir_item.rb : Running subtask (1/2): ChecksumTester
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_dir_item.rb : Started
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_dir_item.rb : Completed
-D, [] DEBUG -- ProcessFiles - spec/items/test_dir_item.rb : Running subtask (2/2): CamelizeName
-D, [] DEBUG -- ProcessFiles/CamelizeName - spec/items/test_dir_item.rb : Started
-D, [] DEBUG -- ProcessFiles/CamelizeName - Spec::Items::TestDirItem.rb : Completed
-D, [] DEBUG -- ProcessFiles - spec/items : Processing subitem (2/2): spec/items/test_file_item.rb
-D, [] DEBUG -- ProcessFiles - spec/items/test_file_item.rb : Running subtask (1/2): ChecksumTester
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_file_item.rb : Started
-D, [] DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_file_item.rb : Completed
-D, [] DEBUG -- ProcessFiles - spec/items/test_file_item.rb : Running subtask (2/2): CamelizeName
-D, [] DEBUG -- ProcessFiles/CamelizeName - spec/items/test_file_item.rb : Started
-D, [] DEBUG -- ProcessFiles/CamelizeName - Spec::Items::TestFileItem.rb : Completed
-D, [] DEBUG -- ProcessFiles - spec/items : 2 of 2 items passed
-D, [] DEBUG -- ProcessFiles - spec/items : Completed
+DEBUG -- CollectFiles - spec/items : Started
+DEBUG -- CollectFiles - spec/items : Completed
+DEBUG -- ProcessFiles - spec/items : Started
+DEBUG -- ProcessFiles - spec/items : Processing subitem (1/2): spec/items/test_dir_item.rb
+DEBUG -- ProcessFiles - spec/items/test_dir_item.rb : Running subtask (1/2): ChecksumTester
+DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_dir_item.rb : Started
+DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_dir_item.rb : Completed
+DEBUG -- ProcessFiles - spec/items/test_dir_item.rb : Running subtask (2/2): CamelizeName
+DEBUG -- ProcessFiles/CamelizeName - spec/items/test_dir_item.rb : Started
+DEBUG -- ProcessFiles/CamelizeName - Spec::Items::TestDirItem.rb : Completed
+DEBUG -- ProcessFiles - spec/items : Processing subitem (2/2): spec/items/test_file_item.rb
+DEBUG -- ProcessFiles - spec/items/test_file_item.rb : Running subtask (1/2): ChecksumTester
+DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_file_item.rb : Started
+DEBUG -- ProcessFiles/ChecksumTester - spec/items/test_file_item.rb : Completed
+DEBUG -- ProcessFiles - spec/items/test_file_item.rb : Running subtask (2/2): CamelizeName
+DEBUG -- ProcessFiles/CamelizeName - spec/items/test_file_item.rb : Started
+DEBUG -- ProcessFiles/CamelizeName - Spec::Items::TestFileItem.rb : Completed
+DEBUG -- ProcessFiles - spec/items : 2 of 2 items passed
+DEBUG -- ProcessFiles - spec/items : Completed
 STR
     sample_out = sample_out.lines.to_a
-
     output = @logoutput.string.lines
     # puts output
 
     expect(sample_out.count).to eq output.count
     output.each_with_index do |o, i|
-      s = sample_out[i].split(']')[1]
-      o = o.split(']')[1]
-      expect(o).to eq s
+      expect(o[/(?<=\] ).*/]).to eq sample_out[i].strip
     end
 
   end
