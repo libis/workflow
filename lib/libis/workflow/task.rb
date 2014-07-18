@@ -82,10 +82,20 @@ module LIBIS
 
       def process_subitems
         items = subitems
+        failed = 0
         items.each_with_index do |item, i|
           debug 'Processing subitem (%d/%d): %s', i+1, items.count, item.to_string
           run_subtasks item
+          failed += 1 if item.failed?
         end
+        if failed > 0
+          warn '%d item(s) failed', failed
+          if failed == items.count
+            error 'All child items have failed'
+            workitem.set_status to_status :failed
+          end
+        end
+        debug '%d of %d items passed', items.count - failed, items.count if items.count > 0
       end
 
       def process_subtasks
@@ -118,11 +128,11 @@ module LIBIS
         $stderr = STDERR
       end
 
-        def run_subitems(workitem)
-          items = subitems workitem
+        def run_subitems(parent_item)
+          items = subitems parent_item
           failed = passed = 0
           items.each_with_index do |item, i|
-            debug 'Processing subitem (%d/%d): %s', workitem, i+1, items.count, item.to_string
+            debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.count, item.to_string
             run item
             if item.failed?
               failed += 1
@@ -134,14 +144,14 @@ module LIBIS
               passed += 1
             end
           end
-          debug '%d of %d items passed', passed, items.count if items.count > 0
           if failed > 0
             warn '%d item(s) failed', failed
             if failed == items.count
               error 'All child items have failed'
-              workitem.set_status to_status :failed
+              parent_item.set_status to_status :failed
             end
           end
+          debug '%d of %d items passed', parent_item, passed, items.count if items.count > 0
         end
 
         def run_subtasks(item)
