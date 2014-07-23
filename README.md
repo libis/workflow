@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/libis/workflow.svg?branch=master)](https://travis-ci.org/libis/workflow)
-[![Coverage Status](https://coveralls.io/repos/libis/workflow/badge.png)](https://coveralls.io/r/libis/workflow)
+[![Build Status](https://travis-ci.org/Kris-LIBIS/workflow.svg?branch=master)](https://travis-ci.org/Kris-LIBIS/workflow)
+[![Coverage Status](https://img.shields.io/coveralls/Kris-LIBIS/workflow.svg)](https://coveralls.io/r/Kris-LIBIS/workflow)
 
 # LIBIS Workflow
 

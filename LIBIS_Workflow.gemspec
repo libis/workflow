@@ -12,7 +12,7 @@ Gem::Specification.new do |gem|
 
   gem.author = 'Kris Dekeyser'
   gem.email = 'kris.dekeyser@libis.be'
-  gem.homepage = 'https://github.com/libis/workflow'
+  gem.homepage = 'https://github.com/Kris-LIBIS/workflow'
   gem.license = 'MIT'
 
   gem.files = `git ls-files -z`.split("\0")
