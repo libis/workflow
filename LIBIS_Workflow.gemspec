@@ -3,7 +3,7 @@
 require File.expand_path(File.join(File.dirname(__FILE__), 'lib/libis/workflow/version'))
 
 Gem::Specification.new do |gem|
-  gem.name = 'LIBIS_Worfklow'
+  gem.name = 'LIBIS_Workflow'
   gem.version = ::LIBIS::Workflow::VERSION
   gem.date = Date.today.to_s
 
