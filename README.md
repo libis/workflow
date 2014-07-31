@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/Kris-LIBIS/workflow.svg?branch=master)](https://travis-ci.org/Kris-LIBIS/workflow)
 [![Coverage Status](https://img.shields.io/coveralls/Kris-LIBIS/workflow.svg)](https://coveralls.io/r/Kris-LIBIS/workflow)
+[![status](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/status.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
 
 # LIBIS Workflow
 
@@ -33,9 +34,9 @@ The objects that the tasks will be working on should derive from the ::LIBIS::Wo
 file objects the module ::LIBIS::Workflow::FileItem module can be included for additional file-specific functionality.
 Work items can be organized in different types and a hierarchical structure.
 
-All the tasks will be organized into a ::LIBIS::Workflow::Workflow which will be able to execute the tasks in proper order
-on all the WorkItems supplied/collected. Each task can be implemented with code to run or simply contain a list of child
-tasks.
+All the tasks will be organized into a ::LIBIS::Workflow::WorkflowDefinition which will be able to execute the tasks in 
+proper order on all the WorkItems supplied/collected. Each task can be implemented with code to run or simply contain a 
+list of child tasks.
 
 Two tasks are predefined:
 ::LIBIS::Workflow::Tasks::VirusChecker - runs a virus check on each WorkItem that is also a FileItem.
@@ -58,9 +59,10 @@ well. This is shown in the examples below.
 
 ### Workflows
 
-A ::LIBIS::Workflow::Workflow instance contains the definition of a workflow. Once instantiated, it can be run by
-calling the 'run' method. The Workflow constructor takes two arguments: config - a workflow configuration and a option
-Hash.
+A ::LIBIS::Workflow::WorkflowDefinition instance contains the definition of a workflow. Once instantiated, it can be run 
+by calling the 'run' method. This will create a ::LIBIS::Workflow::WorkflowRun instance, configure it and call the 'run'
+method on it. The Workflow constructor takes no arguments, but is should be configured by calling the 'set_config'
+method with the workflow configuration as an argument. The 'run' method takes an option Hash as argument.
 
 #### Workflow configuration
 
@@ -99,7 +101,7 @@ All of these Hash keys are optional. Each input variable key and value will be a
 
 #### Options
 
-The option Hash contains special configuration parameters for the workflow:
+The option Hash contains special run-time configuration parameters for the workflow:
 * action: String with the action that should be taken. Currently only 'start' is supported. In the future support for
   'restart' and 'continue' will be added.
 * interactive: Boolean that indicates if the user should be queried to input values for variables that have no value set.
@@ -290,3 +292,11 @@ status field should be set at.
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
+[![authors](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/authors.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
+[![views](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.counters/views.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
+[![views 24h](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.counters/views-24h.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
+[![library users](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/library-users.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
+[![xrefs](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/xrefs.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
+[![docs examples](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/docs-examples.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
+[![funcs](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/funcs.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
+[![dependencies](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/dependencies.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
