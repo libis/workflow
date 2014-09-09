@@ -18,7 +18,7 @@ class TestFileItem < ::LIBIS::Workflow::WorkItem
     @name = n
   end
 
-  def to_string
+  def to_s
     name
   end
 

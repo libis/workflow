@@ -22,7 +22,7 @@ describe 'TestWorkflow' do
       cfg.logger.level = Logger::DEBUG
     end
 
-    @workflow = ::LIBIS::Workflow::Workflow.new(
+    @workflow = ::LIBIS::Workflow::Definition.new(
         tasks: [
             { class: 'CollectFiles' },
             {
@@ -39,7 +39,7 @@ describe 'TestWorkflow' do
         }
     )
 
-    @workflow2 = ::LIBIS::Workflow::Workflow.new(
+    @workflow2 = ::LIBIS::Workflow::Definition.new(
         tasks: [
             { class: 'CollectFiles' },
             {

@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 require 'libis/workflow/config'
-require 'libis/workflow/workflow'
+require 'libis/workflow/workflow_definition'
 
 module LIBIS
   module Workflow
@@ -25,7 +25,7 @@ module LIBIS
           Config.logger.level = ::Logger::DEBUG
         end
 
-        @workflow = Workflow.new workflow_name
+        @workflow = Definition.new workflow_name
 
       end
 

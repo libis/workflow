@@ -22,13 +22,11 @@ module LIBIS
             item.summary[level] += 1
           end
 
-          if item.respond_to? :each
-            item.each do |i|
-              run i
-              i.summary.each do |level, count|
-                item.summary[level] ||= 0
-                item.summary[level] += (count || 0)
-              end
+          item.each do |i|
+            run i
+            i.summary.each do |level, count|
+              item.summary[level] ||= 0
+              item.summary[level] += (count || 0)
             end
           end
 

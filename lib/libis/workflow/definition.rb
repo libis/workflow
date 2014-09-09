@@ -4,58 +4,65 @@ require 'backports/rails/string'
 require 'backports/rails/hash'
 
 require 'libis/workflow/config'
-require 'libis/workflow/base'
 require 'libis/workflow/task'
 require 'libis/workflow/tasks/analyzer'
 
 module LIBIS
   module Workflow
 
-    class Workflow
-      include Base
+    class Definition
 
-      attr_reader :workitem
-      attr_reader :tasks
       attr_reader :config
+      attr_reader :tasks
 
       # @param [Hash] config Workflow configuration
       def initialize(config)
+
+        @tasks = []
+        set_config(config)
+      end
+
+      def set_config(config)
+        @config = {input: [], tasks: [], run_object: '::LIBIS::Workflow::WorkItem'}.merge config
+        self.config[:name] ||= self.class.name
 
         Config.require_all(File.join(File.dirname(__FILE__), 'tasks'))
         Config.require_all(Config.taskdir)
         Config.require_all(Config.itemdir)
 
-        @config = {input: [], tasks: [], start_object: '::LIBIS::Workflow::WorkItem'}.merge config
-
-        @name = config[:name] || self.class.name
-
-        unless @config[:tasks].last[:class] && @config[:tasks].last[:class].split('::').last == 'Analyzer'
-          @config[:tasks] << { class: '::LIBIS::Workflow::Tasks::Analyzer' }
+        unless self.config[:tasks].last[:class] && self.config[:tasks].last[:class].split('::').last == 'Analyzer'
+          self.config[:tasks] << { class: '::LIBIS::Workflow::Tasks::Analyzer' }
         end
 
-        @tasks = []
-        @config[:tasks].each do |m|
+        self.tasks.clear
+        self.config[:tasks].each do |m|
           task_class = Task
           task_class    = m[:class].constantize if m[:class]
           task_instance = task_class.new nil, m.symbolize_keys!
-          @tasks << {
+          self.tasks << {
               class:    task_class,
               instance: task_instance
           }
         end
+      end
 
-        @inputs = @config[:input]
+      def name
+        self.config[:name]
+      end
 
+      def input
+        self.config[:input]
       end
 
       # @param [Hash] opts
       def run(opts = {})
 
-        @workitem = @config[:start_object].constantize.new
-        raise RuntimeError.new "Could not create instance of start object '#{@config[:start_object]}'" unless workitem
+        run_object = self.config[:run_object].constantize.new
+        raise RuntimeError.new "Could not create instance of run object '#{self.config[:run_object]}'" unless run_object
 
-        workitem.workflow = self
-        workitem.save
+        run_object.parent = self
+        run_object.options = opts
+        run_object.save
 
         process_options opts
 
@@ -66,7 +73,7 @@ module LIBIS
           m[:instance].run(workitem)
         end
 
-        workitem.set_status :DONE unless workitem.failed?
+        workitem.status = :DONE unless workitem.failed?
 
       end
 

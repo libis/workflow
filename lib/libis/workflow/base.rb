@@ -53,18 +53,18 @@ module LIBIS
       end
 
       def to_status(text)
-        ((name || parent.name + 'Worker') + text.to_s.capitalize).to_sym
+        ((name || self.parent.name + 'Worker') + text.to_s.capitalize).to_sym
       end
 
       def check_item_type(klass, item = nil)
-        item ||= workitem
+        item ||= self.workitem
         unless item.is_a? klass.to_s.constantize
           raise WorkflowError, "Workitem is of wrong type : #{item.class} - expected #{klass.to_s}"
         end
       end
 
       def item_type?(klass, item = nil)
-        item ||= workitem
+        item ||= self.workitem
         item.is_a? klass.to_s.constantize
       end
 
@@ -91,7 +91,7 @@ module LIBIS
                                      [0, '']
                                    end
 
-        item = workitem
+        item = self.workitem
         item = args.shift if args.size > 0 and args[0].is_a?(WorkItem)
 
         # Support for named substitutions
@@ -101,7 +101,7 @@ module LIBIS
 
         process_message(severity, message_id.to_i, message_text, item)
 
-        Config.logger.add(severity, message_text, '%s - %s ' % [self.names.join('/'), (item.to_string rescue '')])
+        Config.logger.add(severity, message_text, '%s - %s ' % [self.names.join('/'), (item.to_s rescue '')])
       end
 
       def process_message(severity, message_id, message_text, item)
