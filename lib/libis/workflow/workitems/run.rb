@@ -11,27 +11,29 @@ module LIBIS
 
       def workflow
         raise RuntimeError.new 'Missing workflow definition' unless self.parent and self.parent.is_a? Definition
-        parent
+        self.parent
       end
 
       def tasks
-        self.workflow.tasks
+        @task_instances ||= self.workflow.tasks
       end
 
-      # @param [Hash] opts
+      def name
+        self.class.name
+      end
+
       def run(opts = {})
 
-        process_options opts
+        self.options = workflow.prepare_input(self.options.merge(opts))
 
-        tasks.each do |m|
-          next if workitem.failed? and not m[:instance].options[:allways_run]
-          m[:instance].run(workitem)
+        self.tasks.each do |task|
+          next if self.failed? and not task.options[:allways_run]
+          task.run self
         end
 
-        workitem.status = :DONE unless workitem.failed?
+        self.status = :DONE unless self.failed?
 
       end
-
 
     end
 

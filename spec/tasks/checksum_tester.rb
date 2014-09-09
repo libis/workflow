@@ -6,10 +6,10 @@ require 'libis/workflow/workitems'
 
 class ChecksumTester < ::LIBIS::Workflow::Task
   def process
-    check_item_type ::LIBIS::Workflow::FileItem
+    return unless item_type? TestFileItem
 
-    md5sum = ::Digest::MD5.hexdigest(File.read(workitem.filename))
+    md5sum = ::Digest::MD5.hexdigest(File.read(workitem.long_name))
 
-    raise ::LIBIS::WorkflowError "Checksum test failed for #{workitem.filename}" unless workitem.properties[:checksum] == md5sum
+    raise ::LIBIS::WorkflowError "Checksum test failed for #{workitem.long_name}" unless workitem.properties[:checksum] == md5sum
   end
 end

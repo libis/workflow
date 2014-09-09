@@ -1,25 +1,13 @@
 # encoding: utf-8
 require 'libis/workflow/workitems'
 
-class TestFileItem < ::LIBIS::Workflow::WorkItem
+class TestFileItem
   include ::LIBIS::Workflow::FileItem
 
   def initialize(file)
     super()
     raise RuntimeError, "'#{file}' is not a file" unless File.file? file
-    set_file file
-  end
-
-  def name
-    @name ||= filename
-  end
-
-  def name=(n)
-    @name = n
-  end
-
-  def to_s
-    name
+    self.name = file
   end
 
   def filesize

@@ -1,106 +1,92 @@
 # encoding: utf-8
-
 require 'backports/rails/hash'
 require 'backports/rails/string'
+
+require 'libis/workflow'
 
 module LIBIS
   module Workflow
 
     class Task
+      include Base::Logger
 
-      attr_reader :parent, :name, :action, :options, :workitem
+      attr_accessor :parent, :name, :options, :workitem, :tasks
 
       def initialize(parent, config = {})
-        set_parent parent
+        self.parent = parent
+        self.tasks = []
         set_config config
       end
 
-      def run(item)
+      def <<(task)
+        self.tasks << task
+      end
 
-        @workitem = item
+      def run(item)
 
         check_item_type WorkItem, item
 
         return if item.failed? unless options[:allways_run]
 
-        item.status = to_status :started
-        debug 'Started'
+        return run_subitems(item) if options[:subitems]
 
-        process
-        options[:per_item] ? process_subitems : process_subtasks
-        post_process
+        run_item(item)
 
-        unless item.failed?
-          debug 'Completed'
-          item.set_status to_status :done
+      end
+
+      def run_item(item)
+
+        begin
+
+          self.workitem = item
+
+          item.status = to_status :started
+          debug 'Started'
+
+          process
+          run_subtasks item
+          post_process
+
+          unless item.failed?
+            debug 'Completed'
+            item.status = to_status :done
+          end
+
+        rescue WorkflowError => e
+          error e.message
+          item.status = to_status :failed
+
+        rescue WorkflowAbort => e
+          item.status = to_status :failed
+          raise e if parent
+
+        rescue ::Exception => e
+          fatal 'Exception occured: %s', e.message
+          debug e.backtrace.join("\n")
+          workitem.status = to_status :failed
         end
 
-      rescue WorkflowError => e
-        error e.message
-        item.set_status(to_status(:failed))
-
-      rescue WorkflowAbort => e
-        item.set_status(to_status(:failed))
-        raise e if parent
-
-      rescue ::Exception => e
-        fatal 'Exception occured: %s', e.message
-        debug e.backtrace.join("\n")
-        workitem.status = to_status :failed
+        run_subitems(item) if options[:recursive]
 
       end
 
       protected
 
-      def set_parent(p)
-        @parent = p
-      end
-
-
-
       def default_options
-        {abort_on_error: false, always_run: false, per_item: false}
+        {abort_on_error: false, always_run: false, subitems: false, recursive: false}
       end
 
       def process
         # needs implementation unless there are subtasks
-        raise RuntimeError, 'Should be overwritten' if @task_config.empty?
+        raise RuntimeError, 'Should be overwritten' if self.tasks.empty?
       end
 
       def post_process
         # optional implementation
       end
 
-      def process_subitems
-        items = subitems
-        failed = 0
-        items.each_with_index do |item, i|
-          debug 'Processing subitem (%d/%d): %s', i+1, items.count, item
-          run_subtasks item
-          failed += 1 if item.failed?
-        end
-        if failed > 0
-          warn '%d item(s) failed', failed
-          if failed == items.count
-            error 'All child items have failed'
-            workitem.status = to_status :failed
-          end
-        end
-        debug '%d of %d items passed', items.count - failed, items.count if items.count > 0
-      end
-
-      def process_subtasks
-        tasks = subtasks
-        tasks.each_with_index do |task, i|
-          debug 'Running subtask (%d/%d): %s', i+1, tasks.count, task.name
-          task.run_subitems workitem
-        end
-      end
-
       def get_root_item
-        root_item = workitem
-        root_item = root_item.parent until root_item.parent.nil?
-        root_item
+        self.workitem.root
       end
 
       def get_work_dir
@@ -123,8 +109,8 @@ module LIBIS
         items = subitems parent_item
         failed = passed = 0
         items.each_with_index do |item, i|
-          debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.count, item
-          run item
+          debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.count, item.to_s
+          run_item item
           if item.failed?
             failed += 1
             if options[:abort_on_error]
@@ -161,41 +147,42 @@ module LIBIS
       end
 
       def set_config(cfg)
-        set_name(cfg[:name] || cfg[:class] || self.class.name)
-        @task_config = cfg[:tasks] || []
-
-        @action = cfg[:action] || :START
-
-        temp = cfg.dup
-        temp.delete :options
-        temp.delete :tasks
-
-        @options = default_options.merge(cfg[:options] || {}).merge(temp).symbolize_keys!
+        self.name = cfg[:name] || cfg[:class] || self.class.name
+        @options = default_options.merge cfg
       end
 
-      def set_name(name)
-        @name = name
+      def to_status(text)
+        ((self.name || self.parent.name + 'Worker') + text.to_s.capitalize).to_sym
+      end
+
+      def check_item_type(klass, item = nil)
+        item ||= self.workitem
+        unless item.is_a? klass.to_s.constantize
+          raise WorkflowError, "Workitem is of wrong type : #{item.class} - expected #{klass.to_s}"
+        end
+      end
+
+      def item_type?(klass, item = nil)
+        item ||= self.workitem
+        item.is_a? klass.to_s.constantize
+      end
+
+      def names
+        (self.parent.names rescue Array.new).push(name).compact
       end
 
       private
 
       def subtasks(item = nil)
-        item ||= workitem
-        @task_config.map do |t|
-          task_class = Task
-          task_class = t[:class].constantize if t[:class]
-          task_instance = task_class.new self, t.symbolize_keys!
-          (item.failed? and not task_instance.options[:always_run]) ? nil : task_instance
+        self.tasks.map do |task|
+          ((item || self.workitem).failed? and not task.options[:always_run]) ? nil : task
         end.compact
       end
 
       def subitems(item = nil)
-        item ||= workitem
-        items = item.items
-        unless self.options[:always_run]
-          items = items.reject { |i| i.failed? }
-        end
-        items
+        items = (item || workitem).items
+        return items if self.options[:always_run]
+        items.reject { |i| i.failed? }
       end
     end
 

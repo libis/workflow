@@ -26,9 +26,9 @@ Or install it yourself as:
 ## Architecture
 
 This gem is essentially a simple, custom workflow system. The core of the workflow are the tasks. You can - and should -
-create your own tasks by creating new classes derived from ::LIBIS::Workflow::Task. The ::LIBIS::Workflow::Task class and
-the included ::LIBIS::Workflow::Base class provide the necessary attributes and methods to make them work in the workflow.
-See the detailed documentation for the classes for more information.
+create your own tasks by creating new classes and include ::LIBIS::Workflow::Task. The ::LIBIS::Workflow::Task module
+and the included ::LIBIS::Workflow::Base::Logger module provide the necessary attributes and methods to make them work
+in the workflow. See the detailed documentation for the modules for more information.
 
 The objects that the tasks will be working on should derive from the ::LIBIS::Workflow::WorkItem class. When working with
 file objects the module ::LIBIS::Workflow::FileItem module can be included for additional file-specific functionality.

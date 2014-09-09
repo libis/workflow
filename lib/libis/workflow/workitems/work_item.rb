@@ -7,9 +7,9 @@ require 'libis/workflow/config'
 module LIBIS
   module Workflow
 
-    # Base class for all work items.
+    # Base module for all work items.
     #
-    # This class contains some basic attributes required for making the workflow and tasks behave properly:
+    # This module contains some basic attributes required for making the workflow and tasks behave properly:
     #
     # - status: [Symbol] the status field. Each task sets the status of the items it works on. Before starting processing
     #     the status is set to "#{task_name}Started". After successfull processing it is set to "#{task_name}Done" and if
@@ -32,7 +32,7 @@ module LIBIS
     # - summary: [Hash] collected statistics about the ingest for the work item and its children. This structure will
     #     be filled in by the included task ::Lias::Ingester::Tasks::Analyzer wich is appended to the workflow by default.
     #
-    # The class is created so that it is possible to derive an ActiveRecord/Datamapper/Mongoid/... implementation easily.
+    # The module is created so that it is possible to implement an ActiveRecord/Datamapper/... implementation easily.
 
     module WorkItem
       include Enumerable
@@ -146,20 +146,39 @@ module LIBIS
       def save
       end
 
+      # Dummy method. It is a placeholder for DB backed implementations. Wherever appropriate WorkItem#save will be
+      # called to save the current item's state. If state needs to persisted, you should override this method or make
+      # sure your persistence layer implements it in your class.
+      def save!
+      end
+
+      # Add a structured message to the log history. The message text can be submitted as an integer or text. If an
+      # integer is submitted, it will be used to look up the text in the MessageRegistry. The message text will be
+      # passed to the % operator with the args parameter. If that failes (e.g. because the format string is not correct)
+      # the args value is appended to the message.
+      #
+      # @param [Symbol] severity
+      # @param [Hash] msg should contain message text as :id or :text and the hierarchical name of the task as :task
+      # @param [Array] args string format values
+      def log_message(severity, msg, *args)
+        # Prepare info from msg struct for use with string substitution
+        message_id, message_text = if msg[:id]
+                                     [msg[:id], MessageRegistry.instance.get_message(msg[:id])]
+                                   elsif msg[:text]
+                                     [0, msg[:text]]
+                                   else
+                                     [0, '']
+                                   end
+        task = msg[:task] || '*UNKNOWN*'
+        message_text = (message_text % args rescue ((message_text + ' - %s') % args.to_s))
+
+        self.add_log severity: severity, id: message_id.to_i, text: message_text, task: task
+        Config.logger.add(severity, message_text, '%s - %s ' % [task, (self.to_s rescue '')])
+      end
+
       protected
 
       SEV_LABEL = %w(DEBUG INFO WARN ERROR FATAL ANY) unless const_defined? :SEV_LABEL
-
-      # create and return a proper message structure
-      def message_struct(opts = {})
-        opts.reverse_merge!(severity: ::Logger::INFO, id: 0, text: '')
-        {
-            timestamp: ::Time.now,
-            severity: SEV_LABEL[opts[:severity]],
-            task_list: opts[:names],
-            message: opts[:text]
-        }
-      end
 
       # go up the hierarchy and return the topmost work item
       #
@@ -168,6 +187,19 @@ module LIBIS
         root = self
         root = root.parent while root.parent and root.parent.is_a? WorkItem
         root
+      end
+
+      # create and return a proper message structure
+      # @param [Hash] opts
+      def message_struct(opts = {})
+        opts.reverse_merge!(severity: ::Logger::INFO, id: 0, text: '')
+        {
+            timestamp: ::Time.now,
+            severity: SEV_LABEL[opts[:severity]],
+            task_list: opts[:names],
+            id: opts[:id],
+            message: opts[:text]
+        }
       end
 
     end
