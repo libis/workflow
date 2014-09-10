@@ -116,6 +116,9 @@ STR
       expect(o[/(?<=\] ).*/]).to eq sample_out[i].strip
     end
 
+    expect(run.summary['DEBUG']).to eq 46
+    expect(run.log_history.count).to eq 6
+
   end
 
 end

@@ -15,7 +15,7 @@ module LIBIS
       def initialize(parent, config = {})
         self.parent = parent
         self.tasks = []
-        set_config config
+        configure config
       end
 
       def <<(task)
@@ -28,9 +28,7 @@ module LIBIS
 
         return if item.failed? unless options[:allways_run]
 
-        return run_subitems(item) if options[:subitems]
-
-        run_item(item)
+        options[:subitems] ? run_subitems(item) : run_item(item)
 
       end
 
@@ -47,7 +45,10 @@ module LIBIS
           run_subtasks item
           post_process
 
-          unless item.failed?
+          if item.failed?
+            debug 'Failed'
+            item.status = to_status :failed
+          else
             debug 'Completed'
             item.status = to_status :done
           end
@@ -146,9 +147,14 @@ module LIBIS
         end
       end
 
-      def set_config(cfg)
+      def configure(cfg)
         self.name = cfg[:name] || cfg[:class] || self.class.name
-        @options = default_options.merge cfg
+        self.options =
+            self.default_options.merge(
+                cfg[:options] || {}
+            ).merge(
+                cfg.reject { |k, _| [:options].include? k.to_sym }
+            ).symbolize_keys!
       end
 
       def to_status(text)

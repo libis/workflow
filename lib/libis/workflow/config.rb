@@ -67,6 +67,7 @@ module LIBIS
 
       def self.require_all(dir)
         instance
+        return unless Dir.exist?(dir)
         Dir.glob(File.join(dir, '*.rb')).each do |filename|
           #noinspection RubyResolve
           require filename

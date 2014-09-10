@@ -76,11 +76,19 @@ module LIBIS
         self.to_s.gsub(/[^\w.-]/) { |s| '%%%02x' % s.ord }
       end
 
+      # Gets the current status of the object.
+      #
+      # @return [Symbol] status code
+      def status
+        self.status_log.last[:text].to_sym rescue :START
+      end
+
       # Changes the status of the object. As a side effect the status is also logged in the status_log with the current
       # timestamp.
       #
       # @param [Symbol] s
       def status=(s)
+        s = s.to_sym
         if s != self.status
           self.status_log << {
               timestamp: ::Time.now,
@@ -89,11 +97,6 @@ module LIBIS
           self.status = s
           self.save
         end
-      end
-
-
-      def status
-        self.status_log.last[:text] rescue :START
       end
 
       # Check ingest status of the object. The status is checked to see if it ends in 'Failed'.
@@ -131,11 +134,12 @@ module LIBIS
       #
       # @param [WorkItem] item to be added to the child list :items
       def add_item(item)
-        return unless item and item.is_a? WorkItem
+        return self unless item and item.is_a? WorkItem
         self.items << item
         item.parent = self
-        self.save
-        item.save
+        self.save!
+        item.save!
+        self
       end
 
       alias :<< :add_item
