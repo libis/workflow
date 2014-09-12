@@ -12,10 +12,10 @@ module LIBIS
 
       attr_accessor :parent, :name, :options, :workitem, :tasks
 
-      def initialize(parent, config = {})
+      def initialize(parent, cfg = {})
         self.parent = parent
         self.tasks = []
-        configure config
+        configure cfg
       end
 
       def <<(task)

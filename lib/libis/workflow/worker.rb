@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 require 'libis/workflow/config'
-require 'libis/workflow/workflow_definition'
+require 'libis/workflow/definition'
 
 module LIBIS
   module Workflow

@@ -16,10 +16,10 @@ module LIBIS
 
       # @param [Hash] config Workflow configuration
       def initialize(config)
-        self.config = config
+        self.configure config
       end
 
-      def config=(cfg)
+      def configure(cfg)
         @config = {input: [], tasks: [], run_object: '::LIBIS::Workflow::WorkItem'}.merge cfg
         self.config[:name] ||= self.class.name
 
