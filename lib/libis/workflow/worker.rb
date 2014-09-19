@@ -1,42 +1,39 @@
 # encoding: utf-8
+require 'sidekiq'
 
 require 'libis/workflow/config'
-require 'libis/workflow/definition'
+require 'libis/workflow/workflow'
 
 module LIBIS
   module Workflow
 
     class Worker
+      include Sidekiq::Worker
 
-      attr_accessor :workflow_name, :options
-      attr_reader :workflow
+      def perform(workflow_config, options = {})
+        workflow = self.class.configure(workflow_config, options)
+        options[:interactive] = false
+        workflow.run options
+      end
 
-      def initialize(workflow_name, options = {})
-
-        @workflow_name = workflow_name
+      def self.configure(workflow_config, options = {})
         log_path = options.delete :log_path
         if log_path
           Config.logger = ::Logger.new(
-              File.join(log_path, "#{workflow_name}.log"),
+              File.join(log_path, "#{workflow_config}.log"),
               (options.delete(:log_shift_age) || 'daily'),
               (options.delete(:log_shift_size) || 1024 ** 2)
           )
           Config.logger.formatter = ::Logger::Formatter.new
           Config.logger.level = ::Logger::DEBUG
         end
-
-        @workflow = Definition.new workflow_name
-
+        get_workflow(workflow_config)
       end
 
-      def start(options = {})
-        options[:interactive] = true
-        @workflow.run options
-      end
-
-      def run(options = {})
-        options[:interactive] = false
-        @workflow.run options
+      def get_workflow(workflow_config)
+        workflow = ::LIBIS::Workflow::Workflow.new
+        workflow.configure workflow_config
+        workflow
       end
 
     end

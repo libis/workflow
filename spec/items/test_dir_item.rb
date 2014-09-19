@@ -4,10 +4,9 @@ require 'libis/workflow/workitems'
 class TestDirItem
   include ::LIBIS::Workflow::DirItem
 
-  def initialize(dir)
-    super()
+  def name=(dir)
     raise RuntimeError, "'#{dir}' is not a directory" unless File.directory? dir
-    self.name = dir
+    super dir
   end
 
   def file_list

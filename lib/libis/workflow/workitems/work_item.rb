@@ -124,10 +124,8 @@ module LIBIS
       alias :<= :add_log
 
       # Iterates over the work item clients and invokes code on each of them.
-      #
-      # @param [Proc] block procedure that will be invoked for each item. The block gets the item as parameter.
-      def each(&block)
-        self.items.each { |item| block.call(item) }
+      def each
+        self.items.each { |item| yield item }
       end
 
       # Add a child work item
@@ -177,7 +175,7 @@ module LIBIS
         message_text = (message_text % args rescue ((message_text + ' - %s') % args.to_s))
 
         self.add_log severity: severity, id: message_id.to_i, text: message_text, task: task
-        Config.logger.add(severity, message_text, '%s - %s ' % [task, (self.to_s rescue '')])
+        Config.logger.add(severity, message_text, ('%s - %s ' % [task, (self.to_s rescue '')]))
       end
 
       protected
@@ -200,7 +198,7 @@ module LIBIS
         {
             timestamp: ::Time.now,
             severity: SEV_LABEL[opts[:severity]],
-            task_list: opts[:names],
+            task: opts[:task],
             id: opts[:id],
             message: opts[:text]
         }

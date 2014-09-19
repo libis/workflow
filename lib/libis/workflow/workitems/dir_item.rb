@@ -11,7 +11,9 @@ module LIBIS
       def collect(fileclass, opts = {})
         dirclass = opts[:dirclass] || self.class
         wildcard = opts[:wildcard] || '*'
-        Dir.glob(File,join(self.properties[:name], wildcard)).each do |name|
+        base_dir = self.long_name
+        self.items.clear
+        Dir.glob(File.join(base_dir, wildcard)).sort.each do |name|
           next if %w'. ..'.include? name
           if File.file? name
             file = fileclass.new
@@ -26,6 +28,8 @@ module LIBIS
             # do nothing
           end
         end
+        # puts "Dir #{self.long_name} has #{self.items.count} items"
+        # self.each { |item| puts "- #{item.name}" }
       end
 
     end

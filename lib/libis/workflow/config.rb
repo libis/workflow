@@ -12,17 +12,21 @@ module LIBIS
       attr_accessor :logger, :workdir, :taskdir, :itemdir, :virusscanner
 
       def initialize
+        Config.require_all(File.join(File.dirname(__FILE__), 'tasks'))
         @logger = ::Logger.new STDOUT
-        @logger.formatter = proc do |severity, time, progname, msg|
+        set_formatter
+        @workdir = './work'
+        self.taskdir = './tasks'
+        self.itemdir = './items'
+        @virusscanner = {command: 'echo', options: {}}
+      end
+
+      def set_formatter(formatter = nil)
+        @logger.formatter = formatter || proc do |severity, time, progname, msg|
           "%s, [%s#%d] %5s -- %s: %s\n" % [severity[0..0],
                                            (time.strftime('%Y-%m-%dT%H:%M:%S.') << '%06d ' % time.usec),
                                            $$, severity, progname, msg]
         end
-
-        @workdir = './work'
-        @taskdir = './tasks'
-        @itemdir = './items'
-        @virusscanner = {command: 'echo', options: {}}
       end
 
       def self.logger
@@ -45,12 +49,26 @@ module LIBIS
         instance.logger = log
       end
 
+      def self.set_formatter(formatter = nil)
+        instance.set_formatter(formatter)
+      end
+
       def self.workdir=(dir)
         instance.workdir = dir
       end
 
+      def taskdir=(dir)
+        @taskdir = dir
+        Config.require_all dir
+      end
+
       def self.taskdir=(dir)
         instance.taskdir = dir
+      end
+
+      def itemdir=(dir)
+        @itemdir = dir
+        Config.require_all dir
       end
 
       def self.itemdir=(dir)
@@ -66,7 +84,6 @@ module LIBIS
       end
 
       def self.require_all(dir)
-        instance
         return unless Dir.exist?(dir)
         Dir.glob(File.join(dir, '*.rb')).each do |filename|
           #noinspection RubyResolve

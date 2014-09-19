@@ -4,10 +4,9 @@ require 'libis/workflow/workitems'
 class TestFileItem
   include ::LIBIS::Workflow::FileItem
 
-  def initialize(file)
-    super()
+  def name=(file)
     raise RuntimeError, "'#{file}' is not a file" unless File.file? file
-    self.name = file
+    super file
   end
 
   def filesize

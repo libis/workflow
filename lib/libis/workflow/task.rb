@@ -3,6 +3,7 @@ require 'backports/rails/hash'
 require 'backports/rails/string'
 
 require 'libis/workflow'
+require 'libis/workflow/base/logger'
 
 module LIBIS
   module Workflow
@@ -28,7 +29,13 @@ module LIBIS
 
         return if item.failed? unless options[:allways_run]
 
-        options[:subitems] ? run_subitems(item) : run_item(item)
+        if options[:subitems]
+            item.status = to_status :started
+            run_subitems(item)
+            item.status = item.failed? ? to_status(:failed) : to_status(:done)
+        else
+          run_item(item)
+        end
 
       end
 
@@ -38,24 +45,15 @@ module LIBIS
 
           self.workitem = item
 
-          item.status = to_status :started
-          debug 'Started'
+          log_started item
 
           process
           run_subtasks item
           post_process
 
-          if item.failed?
-            debug 'Failed'
-            item.status = to_status :failed
-          else
-            debug 'Completed'
-            item.status = to_status :done
-          end
-
         rescue WorkflowError => e
           error e.message
-          item.status = to_status :failed
+          log_failed item
 
         rescue WorkflowAbort => e
           item.status = to_status :failed
@@ -64,14 +62,35 @@ module LIBIS
         rescue ::Exception => e
           fatal 'Exception occured: %s', e.message
           debug e.backtrace.join("\n")
-          workitem.status = to_status :failed
+          log_failed item
         end
 
         run_subitems(item) if options[:recursive]
 
+        if item.failed?
+          log_failed item
+        else
+          log_done item
+        end
+
       end
 
       protected
+
+      def log_started(item)
+        item.status = to_status :started
+        debug 'Started'
+      end
+
+      def log_failed(item)
+        warn 'Failed', item
+        item.status = to_status :failed
+      end
+
+      def log_done(item)
+        debug 'Completed', item
+        item.status = to_status :done
+      end
 
       def default_options
         {abort_on_error: false, always_run: false, subitems: false, recursive: false}
@@ -115,7 +134,7 @@ module LIBIS
           if item.failed?
             failed += 1
             if options[:abort_on_error]
-              error 'Aborting ...'
+              error 'Aborting ...', parent_item
               raise WorkflowAbort.new "Aborting: task #{name} failed on #{item}"
             end
           else
@@ -126,7 +145,7 @@ module LIBIS
           warn '%d item(s) failed', failed
           if failed == items.count
             error 'All child items have failed'
-            parent_item.status = to_status :failed
+            log_failed parent_item
           end
         end
         debug '%d of %d items passed', parent_item, passed, items.count if items.count > 0
@@ -190,6 +209,7 @@ module LIBIS
         return items if self.options[:always_run]
         items.reject { |i| i.failed? }
       end
+
     end
 
   end

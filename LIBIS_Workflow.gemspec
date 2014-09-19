@@ -1,6 +1,9 @@
 # encoding: utf-8
 
-require File.expand_path(File.join(File.dirname(__FILE__), 'lib/libis/workflow/version'))
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+require 'libis/workflow/version'
 
 Gem::Specification.new do |gem|
   gem.name = 'LIBIS_Workflow'
@@ -15,13 +18,14 @@ Gem::Specification.new do |gem|
   gem.homepage = 'https://github.com/Kris-LIBIS/workflow'
   gem.license = 'MIT'
 
-  gem.files = `git ls-files -z`.split("\0")
+  gem.files = `git ls-files -z`.split("\x0")
   gem.executables = gem.files.grep(%r{^bin/}).map { |f| File.basename(f) }
   gem.test_files = gem.files.grep(%r{^(test|spec|features)/})
 
   gem.require_paths = ['lib']
 
   gem.add_runtime_dependency 'backports'
+  gem.add_runtime_dependency 'sidekiq'
 
   gem.add_development_dependency 'bundler', '~> 1.6'
   gem.add_development_dependency 'rake'

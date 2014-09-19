@@ -3,6 +3,8 @@ require 'libis/workflow/workitems'
 
 require_relative 'test_dir_item'
 
-class TestRun
-  include ::LIBIS::Workflow::Run
+class TestRun < ::LIBIS::Workflow::Run
+
+  def name; 'TestRun'; end
+
 end
