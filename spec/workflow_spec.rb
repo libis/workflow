@@ -123,7 +123,6 @@ DEBUG -- ProcessFiles - TestRun : 1 of 1 items passed
 STR
     sample_out = sample_out.lines.to_a
     output = @logoutput.string.lines
-    puts output
 
     expect(sample_out.count).to eq output.count
     output.each_with_index do |o, i|
