@@ -57,10 +57,14 @@ module LIBIS
           self.run opts
         end
 
+        def create_run_object
+          self.config[:run_object].constantize.new
+        end
+
         # @param [Hash] opts
         def run(opts = {})
 
-          run_object = self.config[:run_object].constantize.new
+          run_object = self.create_run_object
           raise RuntimeError.new "Could not create instance of run object '#{self.config[:run_object]}'" unless run_object
 
           run_object.workflow = self
@@ -83,10 +87,10 @@ module LIBIS
                 # not provided in opts, but default exists
                 options[key] = input[:default]
               else
-                raise StandardError.new "input option '#{input[:name]}' has no value." unless interactive
+                raise StandardError.new "input option '#{key}' has no value." unless interactive
                 # ask user
                 puts input[:description] if input[:description]
-                print "#{input[:name] || key.to_s} : "
+                print "#{key} : "
                 value = STDIN.gets.strip
                 options[key] = value
               end
