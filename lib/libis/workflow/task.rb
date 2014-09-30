@@ -52,9 +52,10 @@ module LIBIS
 
           log_started item
 
-          process
+          pre_process item
+          process item
           run_subtasks item
-          post_process
+          post_process item
 
         rescue WorkflowError => e
           error e.message
@@ -81,11 +82,10 @@ module LIBIS
       end
 
       def apply_options(opts)
-        o = opts[self.name] || opts[self.name.to_sym]
+        o = opts[self.name]
         if o
           self.default_options.each do |k,_|
-            self.options[k] = o[k.to_s] if o[k.to_s]
-            self.options[k] = o[k.to_s.to_sym] if o[k.to_s.to_sym]
+            self.options[k] = o[k] if o[k]
           end
           self.tasks.each do |task|
             task.apply_options o
@@ -118,12 +118,16 @@ module LIBIS
         item.status = to_status :done
       end
 
-      def process
+      def process(item)
         # needs implementation unless there are subtasks
         raise RuntimeError, 'Should be overwritten' if self.tasks.empty?
       end
 
-      def post_process
+      def pre_process(_)
+        # optional implementation
+      end
+
+      def post_process(_)
         # optional implementation
       end
 

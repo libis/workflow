@@ -9,7 +9,9 @@ module LIBIS
     class Config
       include Singleton
 
-      attr_accessor :logger, :workdir, :taskdir, :itemdir, :virusscanner
+      attr_accessor :logger, :workdir, :taskdir, :itemdir
+
+      private
 
       def initialize
         Config.require_all(File.join(File.dirname(__FILE__), 'tasks'))
@@ -18,8 +20,9 @@ module LIBIS
         @workdir = './work'
         self.taskdir = './tasks'
         self.itemdir = './items'
-        @virusscanner = {command: 'echo', options: {}}
       end
+
+      public
 
       def set_formatter(formatter = nil)
         @logger.formatter = formatter || proc do |severity, time, progname, msg|
@@ -73,14 +76,6 @@ module LIBIS
 
       def self.itemdir=(dir)
         instance.itemdir = dir
-      end
-
-      def self.virusscanner
-        instance.virusscanner
-      end
-
-      def self.virusscanner=(dir)
-        instance.virusscanner = dir
       end
 
       def self.require_all(dir)

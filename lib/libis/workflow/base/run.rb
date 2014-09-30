@@ -38,7 +38,7 @@ module LIBIS
 
           self.status = :STARTED
 
-          configure_tasks opts
+          configure_tasks self.options
 
           self.tasks.each do |task|
             next if self.failed? and not task.options[:allways_run]

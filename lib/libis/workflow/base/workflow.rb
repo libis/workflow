@@ -103,6 +103,13 @@ module LIBIS
               else
                 options[key].gsub!('%s', Time.now.strftime('%Y%m%d%H%M%S')) if options[key].is_a? String
             end
+            (input[:propagate_to] || []).each do |target|
+              o = options
+              path = target[:class].split('/')
+              path[0...-1].each { |p| o = (o[p] ||= {})}
+              target_key = target[:key].to_sym rescue key
+              (o[path.last] ||= {})[target_key] ||= options[key]
+            end
           end
           options
         end
