@@ -85,7 +85,8 @@ module LIBIS
         o = opts[self.name]
         if o
           self.default_options.each do |k,_|
-            self.options[k] = o[k] if o[k]
+            next unless o.key?(k)
+            self.options[k] = o[k]
           end
           self.tasks.each do |task|
             task.apply_options o
@@ -100,7 +101,7 @@ module LIBIS
       protected
 
       def default_options
-        Task.default_options.merge(self.class.default_options)
+        self.class.default_options.merge(Task.default_options)
       end
 
       def log_started(item)

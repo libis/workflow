@@ -108,7 +108,9 @@ module LIBIS
               path = target[:class].split('/')
               path[0...-1].each { |p| o = (o[p] ||= {})}
               target_key = target[:key].to_sym rescue key
-              (o[path.last] ||= {})[target_key] ||= options[key]
+              o[path.last] ||= {}
+              o = o[path.last]
+              o[target_key] ||= options[key]
             end
           end
           options
