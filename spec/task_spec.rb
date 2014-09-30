@@ -13,7 +13,7 @@ describe 'Task' do
     task = ::LIBIS::Workflow::Task.new nil
 
     expect(task.parent).to eq nil
-    expect(task.name).to eq 'LIBIS::Workflow::Task'
+    expect(task.name).to eq 'Task'
     expect(task.options[:abort_on_error]).to eq false
 
   end

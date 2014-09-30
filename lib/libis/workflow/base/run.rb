@@ -38,6 +38,8 @@ module LIBIS
 
           self.status = :STARTED
 
+          configure_tasks opts
+
           self.tasks.each do |task|
             next if self.failed? and not task.options[:allways_run]
             task.run self
@@ -45,6 +47,12 @@ module LIBIS
 
           self.status = :DONE unless self.failed?
 
+        end
+
+        protected
+
+        def configure_tasks(opts)
+          self.tasks.each { |task| task.apply_options opts }
         end
 
       end

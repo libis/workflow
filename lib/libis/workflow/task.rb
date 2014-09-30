@@ -13,6 +13,10 @@ module LIBIS
 
       attr_accessor :parent, :name, :options, :workitem, :tasks
 
+      def self.task_classes
+        ObjectSpace.each_object(::Class).select {|klass| klass < self}
+      end
+
       def initialize(parent, cfg = {})
         self.parent = parent
         self.tasks = []
@@ -30,9 +34,10 @@ module LIBIS
         return if item.failed? unless options[:allways_run]
 
         if options[:subitems]
+            log_started(item)
             item.status = to_status :started
             run_subitems(item)
-            item.status = item.failed? ? to_status(:failed) : to_status(:done)
+            item.failed? ? log_failed(item) : log_done(item)
         else
           run_item(item)
         end
@@ -67,19 +72,40 @@ module LIBIS
 
         run_subitems(item) if options[:recursive]
 
-        if item.failed?
-          log_failed item
-        else
-          log_done item
-        end
+        log_done item unless item.failed?
 
+      end
+
+      def names
+        (self.parent.names rescue Array.new).push(name).compact
+      end
+
+      def apply_options(opts)
+        o = opts[self.name] || opts[self.name.to_sym]
+        if o
+          self.default_options.each do |k,_|
+            self.options[k] = o[k.to_s] if o[k.to_s]
+            self.options[k] = o[k.to_s.to_sym] if o[k.to_s.to_sym]
+          end
+          self.tasks.each do |task|
+            task.apply_options o
+          end
+        end
+      end
+
+      def Task.default_options
+        {abort_on_error: false, always_run: false, subitems: false, recursive: false}
       end
 
       protected
 
+      def default_options
+        Task.default_options.merge(self.class.default_options)
+      end
+
       def log_started(item)
         item.status = to_status :started
-        debug 'Started'
+        debug 'Started', item
       end
 
       def log_failed(item)
@@ -90,10 +116,6 @@ module LIBIS
       def log_done(item)
         debug 'Completed', item
         item.status = to_status :done
-      end
-
-      def default_options
-        {abort_on_error: false, always_run: false, subitems: false, recursive: false}
       end
 
       def process
@@ -142,13 +164,14 @@ module LIBIS
           end
         end
         if failed > 0
-          warn '%d item(s) failed', failed
+          warn '%d subitem(s) failed', parent_item, failed
           if failed == items.count
-            error 'All child items have failed'
+            error 'All subitems have failed', parent_item
             log_failed parent_item
+            return
           end
         end
-        debug '%d of %d items passed', parent_item, passed, items.count if items.count > 0
+        debug '%d of %d subitems passed', parent_item, passed, items.count if items.count > 0
       end
 
       def run_subtasks(item)
@@ -167,7 +190,7 @@ module LIBIS
       end
 
       def configure(cfg)
-        self.name = cfg[:name] || cfg[:class] || self.class.name
+        self.name = cfg[:name] || (cfg[:class] || self.class).to_s.split('::').last
         self.options =
             self.default_options.merge(
                 cfg[:options] || {}
@@ -190,10 +213,6 @@ module LIBIS
       def item_type?(klass, item = nil)
         item ||= self.workitem
         item.is_a? klass.to_s.constantize
-      end
-
-      def names
-        (self.parent.names rescue Array.new).push(name).compact
       end
 
       private

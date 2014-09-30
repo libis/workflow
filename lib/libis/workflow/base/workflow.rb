@@ -71,7 +71,7 @@ module LIBIS
           run_object.options = opts
           run_object.save
 
-          run_object.run
+          run_object.run opts
 
           run_object
         end
