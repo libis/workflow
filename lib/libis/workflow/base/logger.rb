@@ -34,7 +34,7 @@ module LIBIS
           item = self.workitem
           item = args.shift if args.size > 0 and args[0].is_a?(WorkItem)
 
-          item.log_message severity, to_msg(msg), *args
+          item.log_message(severity, to_msg(msg), *args) if item
         end
 
         def to_msg(msg)
