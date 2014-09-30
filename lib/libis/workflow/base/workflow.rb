@@ -27,7 +27,7 @@ module LIBIS
         def config=(_); raise RuntimeError.new "Method not implemented: #{caller[0]}"; end
 
         def configure(cfg)
-          self.config.merge! input: [], tasks: [], run_object: '::LIBIS::Workflow::WorkItem'
+          self.config.merge! input: [], tasks: []
           self.config.merge! cfg
           self.name = self.config.delete(:name) || self.class.name
           self.description = self.config.delete(:description) || ''
