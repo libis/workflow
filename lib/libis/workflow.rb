@@ -15,6 +15,8 @@ module LIBIS
     autoload :Run, 'libis/workflow/run'
     autoload :Task, 'libis/workflow/task'
 
+    autoload :Parameter, 'libis/workflow/parameter'
+
     autoload :Worker, 'libis/workflow/worker'
 
     def self.configure
@@ -23,3 +25,4 @@ module LIBIS
 
   end
 end
+

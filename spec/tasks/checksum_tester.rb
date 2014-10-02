@@ -6,9 +6,7 @@ require 'libis/workflow/workitems'
 
 class ChecksumTester < ::LIBIS::Workflow::Task
 
-  def self.default_options
-    {checksum_type: 'MD5'}
-  end
+  parameter checksum_type: 'MD5'
 
   def process(item)
     return unless item.is_a? TestFileItem

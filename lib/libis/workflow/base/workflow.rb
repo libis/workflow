@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+require 'libis/workflow/parameter'
+
 module LIBIS
   module Workflow
     module Base
@@ -42,11 +44,9 @@ module LIBIS
         end
 
         def input
-          self.config[:input]
-        end
-
-        def inputs_required
-          (self.input || {}).reject { |_, input| input.has_key?(:default) }
+          self.config[:input].inject([]) do |a,v|
+            a << ::LIBIS::Workflow::Parameter.from_hash({name: v.first}.merge(v.last))
+          end
         end
 
         def run_name(timestamp = Time.now)
@@ -79,31 +79,12 @@ module LIBIS
         # @param [Hash] opts
         def prepare_input(opts)
           options = opts.dup
-          interactive = options.delete :interactive
-          (self.input || {}).each do |key, input|
+          self.input.each do |parameter|
+            key = parameter[:name]
             # provided in opts
-            unless options.has_key? key
-              if input.has_key? :default
-                # not provided in opts, but default exists
-                options[key] = input[:default]
-              else
-                raise StandardError.new "input option '#{key}' has no value." unless interactive
-                # ask user
-                puts input[:description] if input[:description]
-                print "#{key} : "
-                value = STDIN.gets.strip
-                options[key] = value
-              end
-            end
-            case input[:type]
-              when 'Time'
-                options[key] = self.class.s_to_time options[key]
-              when 'Boolean'
-                options[key] = %w'true yes t y 1'.include? options[key].downcase if options[key].is_a?(String)
-              else
-                options[key].gsub!('%s', Time.now.strftime('%Y%m%d%H%M%S')) if options[key].is_a? String
-            end
-            (input[:propagate_to] || []).each do |target|
+            options[key] = parameter[:default] unless options.has_key? key
+            options[key] = parameter.parse(options[key])
+            (parameter[:propagate_to] || []).each do |target|
               o = options
               path = target[:class].split('/')
               path[0...-1].each { |p| o = (o[p] ||= {})}
@@ -114,13 +95,6 @@ module LIBIS
             end
           end
           options
-        end
-
-        # @param [String] str
-        # @return [Time]
-        def self.s_to_time(str)
-          d = str.split %r'[/ :.-]'
-          Time.new *d
         end
 
         def tasks(parent = nil)

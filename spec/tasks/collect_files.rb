@@ -5,9 +5,7 @@ require_relative '../items'
 
 class CollectFiles < ::LIBIS::Workflow::Task
 
-  def self.default_options
-    {location: '.'}
-  end
+  parameter location: '.', description: 'Directory path to collect files from.'
 
   def process(item)
     if item.is_a? TestRun

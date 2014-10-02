@@ -4,14 +4,21 @@ require 'backports/rails/string'
 
 require 'libis/workflow'
 require 'libis/workflow/base/logger'
+require 'libis/workflow/base/parameter_container'
 
 module LIBIS
   module Workflow
 
     class Task
       include Base::Logger
+      extend ParameterContainer
 
       attr_accessor :parent, :name, :options, :workitem, :tasks
+
+      parameter abort_on_error: false, description: 'Stop all tasks when an error occurs.'
+      parameter allways_run: false, description: 'Run this task, even if the item failed a previous task.'
+      parameter subitems: false, description: 'Do not process the given item, but only the subitems.'
+      parameter recursive: false, description: 'Run the task on all subitems recursively.'
 
       def self.task_classes
         ObjectSpace.each_object(::Class).select {|klass| klass < self}
@@ -83,25 +90,23 @@ module LIBIS
 
       def apply_options(opts)
         o = opts[self.name]
-        if o
-          self.default_options.each do |k,_|
-            next unless o.key?(k)
-            self.options[k] = o[k]
-          end
-          self.tasks.each do |task|
-            task.apply_options o
-          end
+        return unless o and o.is_a? Hash
+        self.default_options.each do |k,_|
+          next unless o.key?(k)
+          self.options[k] = o[k]
         end
-      end
-
-      def Task.default_options
-        {abort_on_error: false, always_run: false, subitems: false, recursive: false}
+        self.tasks.each do |task|
+          task.apply_options o
+        end
       end
 
       protected
 
       def default_options
-        self.class.default_options.merge(Task.default_options)
+        self.class.get_parameters.inject({}) do |hash, parameter|
+          hash[parameter.first] = parameter.last[:default]
+          hash
+        end
       end
 
       def log_started(item)
@@ -109,8 +114,8 @@ module LIBIS
         debug 'Started', item
       end
 
-      def log_failed(item)
-        warn 'Failed', item
+      def log_failed(item, message = nil)
+        warn (message || 'Failed'), item
         item.status = to_status :failed
       end
 
