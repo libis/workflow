@@ -44,8 +44,9 @@ module LIBIS
         end
 
         def input
-          self.config[:input].inject([]) do |a,v|
-            a << ::LIBIS::Workflow::Parameter.from_hash({name: v.first}.merge(v.last))
+          self.config[:input].inject({}) do |hash, input_def|
+            hash[input_def.first] = ::LIBIS::Workflow::Parameter.from_hash({name: input_def.first}.merge(input_def.last))
+            hash
           end
         end
 
@@ -79,8 +80,8 @@ module LIBIS
         # @param [Hash] opts
         def prepare_input(opts)
           options = opts.dup
-          self.input.each do |parameter|
-            key = parameter[:name]
+          self.input.each do |key, parameter|
+            key
             # provided in opts
             options[key] = parameter[:default] unless options.has_key? key
             options[key] = parameter.parse(options[key])
