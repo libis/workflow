@@ -172,7 +172,7 @@ module LIBIS
                                      [0, '']
                                    end
         task = msg[:task] || '*UNKNOWN*'
-        message_text = (message_text % args rescue ((message_text + ' - %s') % args.to_s))
+        message_text = (message_text % args rescue "#{message_text} - #{args}")
 
         self.add_log severity: severity, id: message_id.to_i, text: message_text, task: task
         Config.logger.add(severity, message_text, ('%s - %s ' % [task, (self.to_s rescue '')]))

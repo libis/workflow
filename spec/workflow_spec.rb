@@ -41,13 +41,13 @@ describe 'TestWorkflow' do
         ],
         run_object: 'TestRun',
         input: {
-            dirname: {default: '.', propagate_to: [{class: 'CollectFiles', key: 'location'}]},
-            checksum_type: {default: 'SHA1', propagate_to: [{class: 'ProcessFiles/ChecksumTester'}]}
+            dirname: {default: '.', propagate_to: 'CollectFiles#location'},
+            checksum_type: {default: 'SHA1', propagate_to: 'ChecksumTester'}
         }
     )
 
     # noinspection RubyStringKeysInHashInspection
-    @run = @workflow.run(dirname: DIRNAME, 'ProcessFiles' => {'ChecksumTester' => {checksum_type: 'SHA2'}})
+    @run = @workflow.run(dirname: DIRNAME, checksum_type: 'SHA2')
     puts @logoutput.string
 
   end

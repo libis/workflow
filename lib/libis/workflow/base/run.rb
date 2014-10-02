@@ -35,10 +35,9 @@ module LIBIS
           self.options = workflow.prepare_input(self.options.merge(opts))
 
           self.tasks = self.workflow.tasks(self)
+          configure_tasks self.options
 
           self.status = :STARTED
-
-          configure_tasks self.options
 
           self.tasks.each do |task|
             next if self.failed? and not task.options[:allways_run]

@@ -85,14 +85,14 @@ module LIBIS
             # provided in opts
             options[key] = parameter[:default] unless options.has_key? key
             options[key] = parameter.parse(options[key])
-            (parameter[:propagate_to] || []).each do |target|
-              o = options
-              path = target[:class].split('/')
-              path[0...-1].each { |p| o = (o[p] ||= {})}
-              target_key = target[:key].to_sym rescue key
-              o[path.last] ||= {}
-              o = o[path.last]
-              o[target_key] ||= options[key]
+            propagate_to = []
+            propagate_to = parameter[:propagate_to] if parameter[:propagate_to].is_a? Array
+            propagate_to = [parameter[:propagate_to]] if parameter[:propagate_to].is_a? String
+            propagate_to.each do |target|
+              task_name, param_name = target.split('#')
+              param_name ||= key
+              options[task_name] ||= {}
+              options[task_name][param_name.to_sym] = options[key]
             end
           end
           options

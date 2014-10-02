@@ -26,7 +26,7 @@ module LIBIS
       end
 
       def get_parameters
-        ancestors.inject({}) do |hash, ancestor|
+        ancestors.reverse.inject({}) do |hash, ancestor|
           hash.merge! ancestor.parameters rescue nil
           hash
         end

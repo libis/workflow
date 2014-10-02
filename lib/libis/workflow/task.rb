@@ -89,14 +89,15 @@ module LIBIS
       end
 
       def apply_options(opts)
-        o = opts[self.name]
-        return unless o and o.is_a? Hash
+        o = opts[self.name] || opts[self.names.join('/')]
+
         self.default_options.each do |k,_|
           next unless o.key?(k)
           self.options[k] = o[k]
-        end
+        end if o and o.is_a? Hash
+
         self.tasks.each do |task|
-          task.apply_options o
+          task.apply_options opts
         end
       end
 
