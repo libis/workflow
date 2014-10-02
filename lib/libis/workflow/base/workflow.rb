@@ -45,7 +45,7 @@ module LIBIS
 
         def input
           self.config[:input].inject({}) do |hash, input_def|
-            hash[input_def.first] = ::LIBIS::Workflow::Parameter.from_hash({name: input_def.first}.merge(input_def.last))
+            hash[input_def.first.to_sym] = ::LIBIS::Workflow::Parameter.from_hash({name: input_def.first}.merge(input_def.last))
             hash
           end
         end
