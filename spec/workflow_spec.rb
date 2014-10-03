@@ -35,8 +35,8 @@ describe 'TestWorkflow' do
                 subitems: true,
                 recursive: false,
                 tasks: [
-                    {class: 'ChecksumTester',  recursive: true},
-                    {class: 'CamelizeName',  recursive: true}
+                    {class: 'ChecksumTester', recursive: true},
+                    {class: 'CamelizeName', recursive: true}
                 ]
             }
         ],
@@ -69,14 +69,6 @@ describe 'TestWorkflow' do
     expect(@run.items.first.class).to eq TestDirItem
     expect(@run.items.first.count).to eq 3
     expect(@run.items.first.first.class).to eq TestFileItem
-
-    puts @run.name, @run.status_log
-    puts @run.items.first.name, @run.items.first.status_log
-    puts @run.items.first.first.name, @run.items.first.first.status_log
-
-    puts @run.name, @run.log_history
-    puts @run.items.first.name, @run.items.first.log_history
-    puts @run.items.first.first.name, @run.items.first.first.log_history
 
     expect(@run.items.first.name).to eq 'Items'
 
@@ -150,6 +142,92 @@ STR
     expect(@run.status_log.count).to eq 6
     expect(@run.items.first.log_history.count).to eq 22
     expect(@run.items.first.status_log.count).to eq 8
+
+    [
+        {task: '', text: :STARTED},
+        {task: 'CollectFiles', text: :Started},
+        {task: 'CollectFiles', text: :Done},
+        {task: 'ProcessFiles', text: :Started},
+        {task: 'ProcessFiles', text: :Done},
+        {task: '', :text => :DONE},
+    ].each_with_index do |h, i|
+      h.keys.each { |key| expect(@run.status_log[i][key]).to eq h[key] }
+    end
+
+    [
+        {task: 'CollectFiles', text: :Started},
+        {task: 'CollectFiles', text: :Done},
+        {task: 'ProcessFiles', text: :Started},
+        {task: 'ChecksumTester', text: :Started},
+        {task: 'ChecksumTester', text: :Done},
+        {task: 'CamelizeName', text: :Started},
+        {task: 'CamelizeName', text: :Done},
+        {task: 'ProcessFiles', text: :Done},
+    ].each_with_index do |h, i|
+      h.keys.each { |key| expect(@run.items.first.status_log[i][key]).to eq h[key] }
+    end
+
+    [
+        {task: 'CollectFiles', text: :Started},
+        {task: 'CollectFiles', text: :Done},
+        {task: 'ChecksumTester', text: :Started},
+        {task: 'ChecksumTester', text: :Done},
+        {task: 'CamelizeName', text: :Started},
+        {task: 'CamelizeName', text: :Done},
+    ].each_with_index do |h, i|
+      h.keys.each { |key| expect(@run.items.first.first.status_log[i][key]).to eq h[key] }
+    end
+
+    [
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Started'},
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Processing subitem (1/1): items'},
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: '1 of 1 subitems passed'},
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Completed'},
+        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Started'},
+        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Processing subitem (1/1): items'},
+        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: '1 of 1 subitems passed'},
+        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Completed'},
+    ].each_with_index do |h, i|
+      h.keys.each { |key| expect(@run.log_history[i][key]).to eq h[key] }
+    end
+
+    [
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Started'},
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Processing subitem (1/3): test_dir_item.rb'},
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Processing subitem (2/3): test_file_item.rb'},
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Processing subitem (3/3): test_run.rb'},
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: '3 of 3 subitems passed'},
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Completed'},
+        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Started'},
+        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Running subtask (1/2): ChecksumTester'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Started'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Processing subitem (1/3): test_dir_item.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Processing subitem (2/3): test_file_item.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Processing subitem (3/3): test_run.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: '3 of 3 subitems passed'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Completed'},
+        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Running subtask (2/2): CamelizeName'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Started'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Processing subitem (1/3): test_dir_item.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Processing subitem (2/3): test_file_item.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Processing subitem (3/3): test_run.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: '3 of 3 subitems passed'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Completed'},
+        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Completed'},
+    ].each_with_index do |h, i|
+      h.keys.each { |key| expect(@run.items.first.log_history[i][key]).to eq h[key] }
+    end
+
+    [
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Started'},
+        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Completed'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Started'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Completed'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Started'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Completed'},
+    ].each_with_index do |h, i|
+      h.keys.each { |key| expect(@run.items.first.first.log_history[i][key]).to eq h[key] }
+    end
 
   end
 
