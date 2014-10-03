@@ -1,34 +1,38 @@
+require 'LIBIS_Tools'
+
 module LIBIS
   module Workflow
     module Base
       module Logger
+        include ::LIBIS::Tools::Logger
 
-        protected
-
-        def debug(msg, *args)
-          return if (self.options[:quiet] rescue false)
-          message ::Logger::DEBUG, msg, *args
-        end
-
-        def info(msg, *args)
-          return if (self.options[:quiet] rescue false)
-          message ::Logger::INFO, msg, *args
-        end
-
-        def warn(msg, *args)
-          return if (self.options[:quiet] rescue false)
-          message ::Logger::WARN, msg, *args
-        end
-
-        def error(msg, *args)
-          message ::Logger::ERROR, msg, *args
-        end
-
-        def fatal(msg, *args)
-          message ::Logger::FATAL, msg, *args
-        end
-
-        private
+        # protected
+        #
+        # def debug(msg, *args)
+        #   return if (self.options[:quiet] rescue false)
+        #   message ::Logger::DEBUG, msg, *args
+        # end
+        #
+        # def info(msg, *args)
+        #   return if (self.options[:quiet] rescue false)
+        #   message ::Logger::INFO, msg, *args
+        # end
+        #
+        # def warn(msg, *args)
+        #   return if (self.options[:quiet] rescue false)
+        #   message ::Logger::WARN, msg, *args
+        # end
+        #
+        # def error(msg, *args)
+        #   message ::Logger::ERROR, msg, *args
+        # end
+        #
+        # def fatal(msg, *args)
+        #   message ::Logger::FATAL, msg, *args
+        # end
+        #
+        # private
+        #
 
         def message(severity, msg, *args)
           item = self.workitem

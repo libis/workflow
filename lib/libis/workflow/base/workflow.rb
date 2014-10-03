@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-require 'libis/workflow/parameter'
+require 'libis/tools/parameter'
 
 module LIBIS
   module Workflow
@@ -45,7 +45,7 @@ module LIBIS
 
         def input
           self.config[:input].inject({}) do |hash, input_def|
-            hash[input_def.first.to_sym] = ::LIBIS::Workflow::Parameter.from_hash({name: input_def.first}.merge(input_def.last))
+            hash[input_def.first.to_sym] = ::LIBIS::Tools::Parameter.from_hash({name: input_def.first}.merge(input_def.last))
             hash
           end
         end

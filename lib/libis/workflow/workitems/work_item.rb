@@ -58,14 +58,16 @@ module LIBIS
 
       # String representation of the identity of the work item.
       #
-      # You may want to overwrite this method as it tries to call the #name method and returns whatever #inspect returns
-      # if that failes. Typically this should return the key value, file name or id number. If that's what your #name
-      # method returns, you're fine.
+      # You may want to overwrite this method as it tries the :name property or whatever #inspect returns if that
+      # failes. Typically this should return the key value, file name or id number. If that's what your :name property
+      # contains, you're fine.
       #
       # @return [String] string identification for this work item.
-      def to_s
-        self.name rescue self.inspect
+      def name
+        self.properties[:name] || self.inspect
       end
+
+      def to_s; self.name; end
 
       # File name save version of the to_s output. The output should be safe to use as a file name to store work item
       # data. Typical use is when extra file items are created by a task and need to be stored on disk. The default
@@ -80,21 +82,24 @@ module LIBIS
       #
       # @return [Symbol] status code
       def status
-        self.status_log.last[:text].to_sym rescue :START
+        s = self.status_log.last
+        s = "#{s[:task]}#{s[:text]}" rescue 'NOT_STARTED'
+        s.empty? ? :NOT_STARTED : s.to_sym
       end
 
       # Changes the status of the object. As a side effect the status is also logged in the status_log with the current
       # timestamp.
       #
       # @param [Symbol] s
-      def status=(s)
+      def status=(s, task = nil)
+        s, task = s if s.is_a? Array
         s = s.to_sym
         if s != self.status
           self.status_log << {
               timestamp: ::Time.now,
+              task: task.to_s,
               text: s
           }
-          self.status = s
           self.save
         end
       end
@@ -111,8 +116,8 @@ module LIBIS
       # The supplied message structure is expected to contain the following fields:
       # - :severity : ::Logger::Severity value
       # - :id : optional message id
-      # - :test : message text
-      # - :names : list of tasks names (task hierarchy) that submits the message
+      # - :text : message text
+      # - :task : list of tasks names (task hierarchy) that submits the message
       #
       # @param [Hash] message
       def add_log(message = {})
@@ -121,7 +126,7 @@ module LIBIS
         self.save
       end
 
-      alias :<= :add_log
+      def <=(message = {}); self.add_log(message); end
 
       # Iterates over the work item clients and invokes code on each of them.
       def each
@@ -175,7 +180,15 @@ module LIBIS
         message_text = (message_text % args rescue "#{message_text} - #{args}")
 
         self.add_log severity: severity, id: message_id.to_i, text: message_text, task: task
-        Config.logger.add(severity, message_text, ('%s - %s ' % [task, (self.to_s rescue '')]))
+        name = ''
+        begin
+          name = self.to_s
+          name = self.name
+          name = self.names.join('/')
+        rescue
+          # do nothing
+        end
+        Config.logger.add(severity, message_text, ('%s - %s ' % [task, name]))
       end
 
       protected

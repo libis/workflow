@@ -2,16 +2,17 @@
 require 'backports/rails/hash'
 require 'backports/rails/string'
 
+require 'libis/tools/parameter'
+
 require 'libis/workflow'
 require 'libis/workflow/base/logger'
-require 'libis/workflow/base/parameter_container'
 
 module LIBIS
   module Workflow
 
     class Task
       include Base::Logger
-      extend ParameterContainer
+      extend ::LIBIS::Tools::ParameterContainer
 
       attr_accessor :parent, :name, :options, :workitem, :tasks
 
@@ -41,13 +42,14 @@ module LIBIS
         return if item.failed? unless options[:allways_run]
 
         if options[:subitems]
-            log_started(item)
-            item.status = to_status :started
-            run_subitems(item)
-            item.failed? ? log_failed(item) : log_done(item)
+            log_started item
+            run_subitems item
+            log_done(item) unless item.failed?
         else
           run_item(item)
         end
+
+        item.save
 
       end
 
@@ -60,8 +62,7 @@ module LIBIS
           log_started item
 
           pre_process item
-          process item
-          run_subtasks item
+          process_item item
           post_process item
 
         rescue WorkflowError => e
@@ -78,8 +79,6 @@ module LIBIS
           log_failed item
         end
 
-        run_subitems(item) if options[:recursive]
-
         log_done item unless item.failed?
 
       end
@@ -91,9 +90,10 @@ module LIBIS
       def apply_options(opts)
         o = opts[self.name] || opts[self.names.join('/')]
 
-        self.default_options.each do |k,_|
-          next unless o.key?(k)
-          self.options[k] = o[k]
+        self.class.default_values.each do |name,_|
+          next unless o.key?(name)
+          parameter = self.class.get_parameters[name]
+          self.options[name] = parameter.parse(o[name])
         end if o and o.is_a? Hash
 
         self.tasks.each do |task|
@@ -102,13 +102,6 @@ module LIBIS
       end
 
       protected
-
-      def default_options
-        self.class.get_parameters.inject({}) do |hash, parameter|
-          hash[parameter.first] = parameter.last[:default]
-          hash
-        end
-      end
 
       def log_started(item)
         item.status = to_status :started
@@ -123,6 +116,12 @@ module LIBIS
       def log_done(item)
         debug 'Completed', item
         item.status = to_status :done
+      end
+
+      def process_item(item)
+        process item
+        run_subitems(item) if options[:recursive]
+        run_subtasks item
       end
 
       def process(item)
@@ -203,7 +202,7 @@ module LIBIS
       def configure(cfg)
         self.name = cfg[:name] || (cfg[:class] || self.class).to_s.split('::').last
         self.options =
-            self.default_options.merge(
+            self.class.default_values.merge(
                 cfg[:options] || {}
             ).merge(
                 cfg.reject { |k, _| [:options].include? k.to_sym }
@@ -212,6 +211,7 @@ module LIBIS
 
       def to_status(text)
         ((self.name || self.parent.name + 'Worker') + text.to_s.capitalize).to_sym
+        [text.to_s.capitalize, (self.name || self.parent.name + 'Worker')]
       end
 
       def check_item_type(klass, item = nil)

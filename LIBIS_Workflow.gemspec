@@ -26,6 +26,7 @@ Gem::Specification.new do |gem|
 
   gem.add_runtime_dependency 'backports'
   gem.add_runtime_dependency 'sidekiq'
+  gem.add_runtime_dependency 'LIBIS_Tools', '0.0.1'
 
   gem.add_development_dependency 'bundler', '~> 1.6'
   gem.add_development_dependency 'rake'

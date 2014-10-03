@@ -11,11 +11,15 @@ module LIBIS
       include WorkItem
 
       def name
-        File.basename(self.properties[:name]) || self.properties[:link]
+        File.basename(self.properties[:filename]) || self.properties[:link]
       end
 
       def long_name
-        self.properties[:name] || self.properties[:link]
+        self.properties[:filename] || self.properties[:link]
+      end
+
+      def names
+        (self.parent.names rescue Array.new).push(name).compact
       end
 
       def name=(name)
@@ -32,7 +36,7 @@ module LIBIS
         rescue
           # ignored
         end
-        self.properties[:name] = name
+        self.properties[:filename] = name
       end
 
       def link
