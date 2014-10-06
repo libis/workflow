@@ -14,7 +14,9 @@ module LIBIS
         File.basename(self.properties[:filename]) || self.properties[:link]
       end
 
-      def long_name
+      alias_method :filename, :name
+
+      def filepath
         self.properties[:filename] || self.properties[:link]
       end
 
@@ -22,7 +24,7 @@ module LIBIS
         (self.parent.names rescue Array.new).push(name).compact
       end
 
-      def name=(name)
+      def filename=(name)
         begin
           stats = ::File.stat name
           self.properties[:size] = stats.size
