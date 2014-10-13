@@ -107,7 +107,8 @@ module LIBIS
         def instantize_task(parent, cfg)
           task_class = Task
           task_class = cfg[:class].constantize if cfg[:class]
-          task_instance = task_class.new parent, cfg
+          # noinspection RubyArgCount
+          task_instance = task_class.new(parent, cfg)
           cfg[:tasks].map do |task_cfg|
             task_instance << instantize_task(task_instance, task_cfg)
           end rescue nil

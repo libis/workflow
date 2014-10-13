@@ -10,6 +10,7 @@ require 'libis/workflow/base/logger'
 module LIBIS
   module Workflow
 
+    # noinspection RubyTooManyMethodsInspection
     class Task
       include Base::Logger
       extend ::LIBIS::Tools::ParameterContainer
@@ -86,6 +87,8 @@ module LIBIS
       def names
         (self.parent.names rescue Array.new).push(name).compact
       end
+
+      def namepath; self.names.join('/'); end
 
       def apply_options(opts)
         o = opts[self.name] || opts[self.names.join('/')]

@@ -49,7 +49,7 @@ module LIBIS
               {id: msg}
             else
               {text: (msg.to_s rescue '')}
-          end.merge task: self.names.join('/')
+          end.merge task: self.namepath
         end
 
       end

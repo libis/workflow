@@ -69,6 +69,12 @@ module LIBIS
 
       def to_s; self.name; end
 
+      def names
+        (self.parent.names rescue Array.new).push(name).compact
+      end
+
+      def namepath; self.names.join('/'); end
+
       # File name save version of the to_s output. The output should be safe to use as a file name to store work item
       # data. Typical use is when extra file items are created by a task and need to be stored on disk. The default
       # implementation URL-encodes (%xx) all characters except alphanumeric, '.' and '-'.
@@ -184,7 +190,7 @@ module LIBIS
         begin
           name = self.to_s
           name = self.name
-          name = self.names.join('/')
+          name = self.namepath
         rescue
           # do nothing
         end

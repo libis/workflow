@@ -10,18 +10,16 @@ module LIBIS
     module FileItem
       include WorkItem
 
-      def name
+      def filename
         File.basename(self.properties[:filename]) || self.properties[:link]
       end
 
-      alias_method :filename, :name
+      def name
+        self.properties[:name] || self.filename
+      end
 
       def filepath
         self.properties[:filename] || self.properties[:link]
-      end
-
-      def names
-        (self.parent.names rescue Array.new).push(name).compact
       end
 
       def filename=(name)
