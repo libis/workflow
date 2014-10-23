@@ -19,7 +19,7 @@ module LIBIS
       end
 
       def filepath
-        self.properties[:filename] || self.properties[:link]
+        File.join(self.parent.filepath rescue '', filename)
       end
 
       def filename=(name)
@@ -32,11 +32,19 @@ module LIBIS
           self.properties[:mode] = stats.mode
           self.properties[:uid] = stats.uid
           self.properties[:gid] = stats.gid
-          self.properties[:checksum] = ::Digest::MD5.hexdigest(File.read(name)) if File.file? name
+          set_checksum(:MD5, ::Digest::MD5.hexdigest(File.read(name))) if File.file?(name)
         rescue
           # ignored
         end
         self.properties[:filename] = name
+      end
+
+      def checksum(checksum_type)
+        self.properties[('checksum_' + checksum_type.to_s.downcase).to_sym]
+      end
+
+      def set_checksum(checksum_type, value)
+        self.properties[('checksum_' + checksum_type.to_s.downcase).to_sym] = value
       end
 
       def link

@@ -28,6 +28,14 @@ module LIBIS
           self.workflow.run_name(self.start_date)
         end
 
+        def names
+          Array.new
+        end
+
+        def namepath
+          self.name
+        end
+
         def run(opts = {})
 
           self.start_date = Time.now

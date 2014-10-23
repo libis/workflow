@@ -145,7 +145,7 @@ module LIBIS
       end
 
       def get_work_dir
-        get_root_item.get_work_dir
+        get_root_item.work_dir
       end
 
       def capture_cmd(cmd, *opts)

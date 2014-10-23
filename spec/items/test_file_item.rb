@@ -6,22 +6,14 @@ require 'libis/workflow/workitems'
 class TestFileItem
   include ::LIBIS::Workflow::FileItem
 
-  def name=(file)
+  def filename=(file)
     raise RuntimeError, "'#{file}' is not a file" unless File.file? file
+    set_checksum :SHA256, ::LIBIS::Tools::Checksum.hexdigest(file, :SHA256)
     super file
-    properties[:checksum] = ::LIBIS::Tools::Checksum.hexdigest(file, :SHA256)
   end
 
   def name
     self.properties[:name] || super
-  end
-
-  def filesize
-    properties[:size]
-  end
-
-  def fixity_check(checksum)
-    properties[:checksum] == checksum
   end
 
 end
