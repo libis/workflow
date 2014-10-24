@@ -18,8 +18,16 @@ module LIBIS
         self.properties[:name] || self.filename
       end
 
+      def filelist
+        (self.parent.filelist rescue Array.new).push(filename).compact
+      end
+
       def filepath
-        File.join(self.parent.filepath rescue '', filename)
+        self.filelist.join('/')
+      end
+
+      def fullpath
+        self.properties[:filename]
       end
 
       def filename=(name)
