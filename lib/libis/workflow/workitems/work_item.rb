@@ -89,21 +89,20 @@ module LIBIS
       # @return [Symbol] status code
       def status
         s = self.status_log.last
-        s = "#{s[:task]}#{s[:text]}" rescue 'NOT_STARTED'
-        s.empty? ? :NOT_STARTED : s.to_sym
+        status_label((s[:text] rescue nil), (s[:tasklist] rescue nil))
       end
 
       # Changes the status of the object. As a side effect the status is also logged in the status_log with the current
       # timestamp.
       #
       # @param [Symbol] s
-      def status=(s, task = nil)
-        s, task = s if s.is_a? Array
+      def status=(s, tasklist = nil)
+        s, tasklist = s if s.is_a? Array
         s = s.to_sym
-        if s != self.status
+        if status_label(s, tasklist) != self.status
           self.status_log << {
               timestamp: ::Time.now,
-              task: task.to_s,
+              tasklist: tasklist,
               text: s
           }
           self.save
@@ -223,6 +222,10 @@ module LIBIS
         }
       end
 
+      def status_label(text, tasklist)
+        s = "#{tasklist.last rescue ''}#{text}" rescue :NOT_STARTED
+        s.empty? ? :NOT_STARTED : s.to_sym
+      end
     end
   end
 end

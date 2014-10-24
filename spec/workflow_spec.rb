@@ -144,36 +144,36 @@ STR
     expect(@run.items.first.status_log.count).to eq 8
 
     [
-        {task: '', text: :STARTED},
-        {task: 'CollectFiles', text: :Started},
-        {task: 'CollectFiles', text: :Done},
-        {task: 'ProcessFiles', text: :Started},
-        {task: 'ProcessFiles', text: :Done},
-        {task: '', :text => :DONE},
+        {tasklist: nil, text: :STARTED},
+        {tasklist: %w'CollectFiles', text: :Started},
+        {tasklist: %w'CollectFiles', text: :Done},
+        {tasklist: %w'ProcessFiles', text: :Started},
+        {tasklist: %w'ProcessFiles', text: :Done},
+        {tasklist: nil, :text => :DONE},
     ].each_with_index do |h, i|
       h.keys.each { |key| expect(@run.status_log[i][key]).to eq h[key] }
     end
 
     [
-        {task: 'CollectFiles', text: :Started},
-        {task: 'CollectFiles', text: :Done},
-        {task: 'ProcessFiles', text: :Started},
-        {task: 'ChecksumTester', text: :Started},
-        {task: 'ChecksumTester', text: :Done},
-        {task: 'CamelizeName', text: :Started},
-        {task: 'CamelizeName', text: :Done},
-        {task: 'ProcessFiles', text: :Done},
+        {tasklist: %w'CollectFiles', text: :Started},
+        {tasklist: %w'CollectFiles', text: :Done},
+        {tasklist: %w'ProcessFiles', text: :Started},
+        {tasklist: %w'ProcessFiles ChecksumTester', text: :Started},
+        {tasklist: %w'ProcessFiles ChecksumTester', text: :Done},
+        {tasklist: %w'ProcessFiles CamelizeName', text: :Started},
+        {tasklist: %w'ProcessFiles CamelizeName', text: :Done},
+        {tasklist: %w'ProcessFiles', text: :Done},
     ].each_with_index do |h, i|
       h.keys.each { |key| expect(@run.items.first.status_log[i][key]).to eq h[key] }
     end
 
     [
-        {task: 'CollectFiles', text: :Started},
-        {task: 'CollectFiles', text: :Done},
-        {task: 'ChecksumTester', text: :Started},
-        {task: 'ChecksumTester', text: :Done},
-        {task: 'CamelizeName', text: :Started},
-        {task: 'CamelizeName', text: :Done},
+        {tasklist: %w'CollectFiles', text: :Started},
+        {tasklist: %w'CollectFiles', text: :Done},
+        {tasklist: %w'ProcessFiles ChecksumTester', text: :Started},
+        {tasklist: %w'ProcessFiles ChecksumTester', text: :Done},
+        {tasklist: %w'ProcessFiles CamelizeName', text: :Started},
+        {tasklist: %w'ProcessFiles CamelizeName', text: :Done},
     ].each_with_index do |h, i|
       h.keys.each { |key| expect(@run.items.first.first.status_log[i][key]).to eq h[key] }
     end

@@ -213,8 +213,7 @@ module LIBIS
       end
 
       def to_status(text)
-        ((self.name || self.parent.name + 'Worker') + text.to_s.capitalize).to_sym
-        [text.to_s.capitalize, (self.name || self.parent.name + 'Worker')]
+        [text.to_s.capitalize, self.names]
       end
 
       def check_item_type(klass, item = nil)
