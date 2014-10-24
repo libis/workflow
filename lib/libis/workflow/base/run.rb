@@ -56,11 +56,6 @@ module LIBIS
 
         end
 
-        def restart(task)
-          self.tasks = self.workflow.tasks(self)
-          configure_tasks self.options
-        end
-
         protected
 
         def configure_tasks(opts)
