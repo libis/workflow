@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/Kris-LIBIS/workflow.svg?branch=master)](https://travis-ci.org/Kris-LIBIS/workflow)
 [![Coverage Status](https://img.shields.io/coveralls/Kris-LIBIS/workflow.svg)](https://coveralls.io/r/Kris-LIBIS/workflow)
 [![status](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/status.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
+[![LIBIS_Workflow API Documentation](https://www.omniref.com/ruby/gems/LIBIS_Workflow.png)](https://www.omniref.com/ruby/gems/LIBIS_Workflow)
 
 # LIBIS Workflow
 
