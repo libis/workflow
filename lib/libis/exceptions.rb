@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-module LIBIS
+module Libis
   class WorkflowError < ::RuntimeError
   end
   class WorkflowAbort < ::RuntimeError

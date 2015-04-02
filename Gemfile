@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
-gemspec name: 'LIBIS_Workflow', development_group: :test
+gemspec name: 'libis-workflow', development_group: :test
 

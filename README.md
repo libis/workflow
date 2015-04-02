@@ -1,7 +1,6 @@
+
 [![Build Status](https://travis-ci.org/Kris-LIBIS/workflow.svg?branch=master)](https://travis-ci.org/Kris-LIBIS/workflow)
 [![Coverage Status](https://img.shields.io/coveralls/Kris-LIBIS/workflow.svg)](https://coveralls.io/r/Kris-LIBIS/workflow)
-[![status](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/status.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
-[![LIBIS_Workflow API Documentation](https://www.omniref.com/ruby/gems/LIBIS_Workflow.png)](https://www.omniref.com/ruby/gems/LIBIS_Workflow)
 
 # LIBIS Workflow
 
@@ -12,7 +11,7 @@ LIBIS Workflow framework
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'LIBIS_Workflow'
+    gem 'libis-workflow'
 ```
 
 
@@ -22,29 +21,30 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install LIBIS_Workflow
+    $ gem install 'libis-workflow'
 
 ## Architecture
 
 This gem is essentially a simple, custom workflow system. The core of the workflow are the tasks. You can - and should -
-create your own tasks by creating new classes and include ::LIBIS::Workflow::Task. The ::LIBIS::Workflow::Task module
-and the included ::LIBIS::Workflow::Base::Logger module provide the necessary attributes and methods to make them work
+create your own tasks by creating new classes and include ::Libis::Workflow::Task. The ::Libis::Workflow::Task module
+and the included ::Libis::Workflow::Base::Logger module provide the necessary attributes and methods to make them work
 in the workflow. See the detailed documentation for the modules for more information.
 
-The objects that the tasks will be working on should derive from the ::LIBIS::Workflow::WorkItem class. When working with
-file objects the module ::LIBIS::Workflow::FileItem module can be included for additional file-specific functionality.
+The objects that the tasks will be working on should include the ::Libis::Workflow::WorkItem module.
+When working with file objects the module ::Libis::Workflow::FileItem and/or ::Libis::Workflow::DirItem modules should
+be included for additional file-specific functionality.
 Work items can be organized in different types and a hierarchical structure.
 
-All the tasks will be organized into a ::LIBIS::Workflow::WorkflowDefinition which will be able to execute the tasks in 
+All the tasks will be organized into a ::Libis::Workflow::WorkflowDefinition which will be able to execute the tasks in
 proper order on all the WorkItems supplied/collected. Each task can be implemented with code to run or simply contain a 
 list of child tasks.
 
 Two tasks are predefined:
-::LIBIS::Workflow::Tasks::VirusChecker - runs a virus check on each WorkItem that is also a FileItem.
-::LIBIS::Workflow::Tasks::Analyzer - analyzes the workflow run and summarizes the results. It is always included as the
+::Libis::Workflow::Tasks::VirusChecker - runs a virus check on each WorkItem that is also a FileItem.
+::Libis::Workflow::Tasks::Analyzer - analyzes the workflow run and summarizes the results. It is always included as the
 last task by the workflow unless you supply a closing task called 'Analyzer' yourself.
 
-The whole ingester workflow is configured by a Singleton object ::LIBIS::Workflow::Config which contains settings for
+The whole ingester workflow is configured by a Singleton object ::Libis::Workflow::Config which contains settings for
 logging, paths where tasks and workitems can be found and the path to the virus scanner program.
 
 ## Usage
@@ -52,16 +52,16 @@ logging, paths where tasks and workitems can be found and the path to the virus 
 You should start by including the following line in your source code:
 
 ```ruby
-require 'LIBIS_Workflow'
+    require 'libis-workflow'
 ```
 
-This will load all of the LIBIS Workflow framework into your environment, but including only the required parts is OK as
+This will load all of the Libis Workflow framework into your environment, but including only the required parts is OK as
 well. This is shown in the examples below.
 
 ### Workflows
 
-A ::LIBIS::Workflow::WorkflowDefinition instance contains the definition of a workflow. Once instantiated, it can be run 
-by calling the 'run' method. This will create a ::LIBIS::Workflow::WorkflowRun instance, configure it and call the 'run'
+A ::Libis::Workflow::WorkflowDefinition instance contains the definition of a workflow. Once instantiated, it can be run
+by calling the 'run' method. This will create a ::Libis::Workflow::WorkflowRun instance, configure it and call the 'run'
 method on it. The Workflow constructor takes no arguments, but is should be configured by calling the 'set_config'
 method with the workflow configuration as an argument. The 'run' method takes an option Hash as argument.
 
@@ -81,7 +81,7 @@ is a Hash with:
 * tasks: Array with task definitions of sub-tasks
 * options: Hash with additional task configuration options (see 'Tasks - Configuration' for more info)
 
-If 'class' is not present, the default '::LIBIS::Workflow::Task' with the given name will be instantiated, which simply 
+If 'class' is not present, the default '::Libis::Workflow::Task' with the given name will be instantiated, which simply
 iterates over the child items of the given work item and performs each sub-task on each of the child items. If a 'class'
 value is given, an instance of that class will be created and the task will be handed the work item to process on. See 
 the chapter on 'Tasks' below for more information on tasks.
@@ -124,58 +124,60 @@ work item in sequence until all tasks have completed successfully or a task has 
 Creating your own work items is highly recommended and is fairly easy:
 
 ```ruby
-require 'libis/workflow/workitems'
 
-class MyWorkItem < ::LIBIS::Workflow::WorkItem
+    require 'libis/workflow/workitems'
 
-  attr_accesor :name
+    class MyWorkItem < ::Libis::Workflow::WorkItem
+      attr_accesor :name
 
-  def initialize
-    @name = 'My work item'
-    super # Note: this is important as the base class requires some initialization
-  end
-
-end
+      def initialize
+        @name = 'My work item'
+        super # Note: this is important as the base class requires some initialization
+      end
+    end
 ```
 
-Work items that are file-based should also include the ::LIBIS::Workflow::FileItem module:
+Work items that are file-based should also include the ::Libis::Workflow::FileItem module:
 
 ```ruby
-require 'libis/workflow/workitems'
 
-class MyFileItem < ::LIBIS::Workflow::WorkItem
-  include ::LIBIS::Workflow::FileItem
+    require 'libis/workflow/workitems'
 
-  def initialize(file)
-    filename = file
-    super
-  end
+    class MyFileItem < ::Libis::Workflow::WorkItem
+      include ::Libis::Workflow::FileItem
 
-  def filesize
-    properties[:size]
-  end
+      def initialize(file)
+        filename = file
+        super
+      end
 
-  def fixity_check(checksum)
-    properties[:checksum] == checksum
-  end
+      def filesize
+        properties[:size]
+      end
 
-end
+      def fixity_check(checksum)
+        properties[:checksum] == checksum
+      end
+
+    end
 ```
 
 ## Tasks
 
-Tasks should inherit from ::LIBIS::Workflow::Task and specify the actions it wants to
+Tasks should inherit from ::Libis::Workflow::Task and specify the actions it wants to
 perform on each work item:
 
 ```ruby
-class MyTask < ::LIBIS::Workflow::Task
-  def process_item(item)
-    item.perform_my_action
-  rescue Exception => e
-    item.set_status(to_status(:failed))
-  end
 
-end
+    class MyTask < ::Libis::Workflow::Task
+
+      def process_item(item)
+        item.perform_my_action
+      rescue Exception => e
+        item.set_status(to_status(:failed))
+      end
+
+    end
 ```
 
 You have some options to specify the actions:
@@ -187,7 +189,7 @@ to the method and perform whatever needs to be done on the item.
 
 If the action fails the method is expected to set the item status field to failed. This is also shown in the previous
 example. If the error is so severe that no other child items should be processed, the action can decide to throw an
-exception, preferably a ::LIBIS::Workflow::Exception or a child exception thereof.
+exception, preferably a ::Libis::Workflow::Exception or a child exception thereof.
   
 ### Performing an action on the provided work item
 
@@ -261,10 +263,10 @@ An array of strings with the hierarchical path of tasks leading to the current t
 
 #### (debug/info/warn/error/fatal)(message, *args)
 
-Convenience function for creating log entries. The logger set in ::LIBIS::Workflow::Config is used to dump log messages.
+Convenience function for creating log entries. The logger set in ::Libis::Workflow::Config is used to dump log messages.
 
 The first argument is mandatory and can be:
-* an integer. The integer is used to look up the message text in ::LIBIS::Workflow::MessageRegistry.
+* an integer. The integer is used to look up the message text in ::Libis::Workflow::MessageRegistry.
 * a static string. The message text is used as-is.
 * a string with placement holders as used in String#%. Args can either be an array or a hash. See also Kernel#sprintf.
 
@@ -292,12 +294,3 @@ status field should be set at.
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
-
-[![authors](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/authors.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
-[![views](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.counters/views.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
-[![views 24h](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.counters/views-24h.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
-[![library users](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/library-users.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
-[![xrefs](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/xrefs.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
-[![docs examples](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/docs-examples.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
-[![funcs](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/funcs.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)
-[![dependencies](https://sourcegraph.com/api/repos/github.com/Kris-LIBIS/workflow/.badges/dependencies.png)](https://sourcegraph.com/github.com/Kris-LIBIS/workflow)

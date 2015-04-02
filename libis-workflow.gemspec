@@ -6,12 +6,12 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'libis/workflow/version'
 
 Gem::Specification.new do |gem|
-  gem.name = 'LIBIS_Workflow'
-  gem.version = ::LIBIS::Workflow::VERSION
+  gem.name = 'libis-workflow'
+  gem.version = ::Libis::Workflow::VERSION
   gem.date = Date.today.to_s
 
   gem.summary = %q{LIBIS Workflow framework.}
-  gem.description = %q{A simple custom task/workflow framework.}
+  gem.description = %q{A simple framework to build custom task/workflow solutions.}
 
   gem.author = 'Kris Dekeyser'
   gem.email = 'kris.dekeyser@libis.be'
@@ -24,13 +24,13 @@ Gem::Specification.new do |gem|
 
   gem.require_paths = ['lib']
 
-  gem.add_runtime_dependency 'backports'
-  gem.add_runtime_dependency 'sidekiq'
-  gem.add_runtime_dependency 'LIBIS_Tools', '0.0.1'
+  gem.add_development_dependency 'bundler', '~> 1.6'
+  gem.add_development_dependency 'rake', '~> 10.3'
+  gem.add_development_dependency 'rspec', '~> 3.1'
+  gem.add_development_dependency 'simplecov', '~> 0.9'
+  gem.add_development_dependency 'coveralls', '~> 0.7'
 
-  gem.add_development_dependency 'bundler', '~> 1.7'
-  gem.add_development_dependency 'rake'
-  gem.add_development_dependency 'rspec'
-  gem.add_development_dependency 'coveralls'
+  gem.add_runtime_dependency 'libis-tools', '~> 0.9'
+  gem.add_runtime_dependency 'sidekiq', '~> 3.3'
 
 end

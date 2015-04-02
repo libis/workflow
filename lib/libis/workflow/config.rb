@@ -3,7 +3,7 @@
 require 'singleton'
 require 'logger'
 
-module LIBIS
+module Libis
   module Workflow
 
     class Config

@@ -2,11 +2,11 @@
 
 require 'libis/workflow/workitems/file_item'
 
-module LIBIS
+module Libis
   module Workflow
 
     module DirItem
-      include ::LIBIS::Workflow::FileItem
+      include ::Libis::Workflow::FileItem
     end
   end
 end

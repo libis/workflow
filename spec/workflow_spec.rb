@@ -1,22 +1,18 @@
-# encoding: utf-8
-
-require 'rspec'
-require 'stringio'
-
-require 'LIBIS_Workflow'
-
 require_relative 'spec_helper'
+
+require 'stringio'
 
 describe 'TestWorkflow' do
 
   DIRNAME = File.absolute_path(File.join(File.dirname(__FILE__), 'items'))
 
   before :all do
-    $:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+
+    puts DIRNAME
 
     @logoutput = StringIO.new
 
-    ::LIBIS::Workflow.configure do |cfg|
+    ::Libis::Workflow.configure do |cfg|
       cfg.itemdir = File.join(File.dirname(__FILE__), 'items')
       cfg.taskdir = File.join(File.dirname(__FILE__), 'tasks')
       cfg.workdir = File.join(File.dirname(__FILE__), 'work')
@@ -24,7 +20,7 @@ describe 'TestWorkflow' do
       cfg.logger.level = Logger::DEBUG
     end
 
-    @workflow = ::LIBIS::Workflow::Workflow.new
+    @workflow = ::Libis::Workflow::Workflow.new
     @workflow.configure(
         name: 'TestWorkflow',
         description: 'Workflow for testing',
@@ -57,7 +53,7 @@ describe 'TestWorkflow' do
 
     expect(@workflow.config[:tasks].size).to eq 3
     expect(@workflow.config[:tasks].first[:class]).to eq 'CollectFiles'
-    expect(@workflow.config[:tasks].last[:class]).to eq '::LIBIS::Workflow::Tasks::Analyzer'
+    expect(@workflow.config[:tasks].last[:class]).to eq '::Libis::Workflow::Tasks::Analyzer'
 
   end
 
@@ -132,6 +128,7 @@ STR
     sample_out = sample_out.lines.to_a
     output = @logoutput.string.lines
 
+    puts output.join '\n'
     expect(sample_out.count).to eq output.count
     output.each_with_index do |o, i|
       expect(o[/(?<=\] ).*/]).to eq sample_out[i].strip

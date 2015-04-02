@@ -4,7 +4,7 @@ require 'backports/rails/hash'
 
 require 'libis/workflow/config'
 
-module LIBIS
+module Libis
   module Workflow
 
     # Base module for all work items.

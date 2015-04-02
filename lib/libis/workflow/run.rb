@@ -5,11 +5,11 @@ require 'libis/workflow/workflow'
 
 require 'libis/workflow/base/run'
 
-module LIBIS
+module Libis
   module Workflow
 
     class Run
-      include ::LIBIS::Workflow::Base::Run
+      include ::Libis::Workflow::Base::Run
 
       attr_accessor :start_date, :tasks, :workflow
 

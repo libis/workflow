@@ -4,7 +4,7 @@ require 'digest'
 
 require 'libis/workflow/workitems/work_item'
 
-module LIBIS
+module Libis
   module Workflow
 
     module FileItem

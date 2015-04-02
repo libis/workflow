@@ -2,7 +2,7 @@
 require 'libis/workflow/workitems'
 
 class TestDirItem
-  include ::LIBIS::Workflow::DirItem
+  include ::Libis::Workflow::DirItem
 
   def name=(dir)
     raise RuntimeError, "'#{dir}' is not a directory" unless File.directory? dir

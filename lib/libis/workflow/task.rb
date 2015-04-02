@@ -7,13 +7,13 @@ require 'libis/tools/parameter'
 require 'libis/workflow'
 require 'libis/workflow/base/logger'
 
-module LIBIS
+module Libis
   module Workflow
 
     # noinspection RubyTooManyMethodsInspection
     class Task
       include Base::Logger
-      extend ::LIBIS::Tools::ParameterContainer
+      include ::Libis::Tools::ParameterContainer
 
       attr_accessor :parent, :name, :options, :workitem, :tasks
 
@@ -93,9 +93,9 @@ module LIBIS
       def apply_options(opts)
         o = opts[self.name] || opts[self.names.join('/')]
 
-        self.class.default_values.each do |name,_|
+        default_values.each do |name,_|
           next unless o.key?(name)
-          parameter = self.class.get_parameters[name]
+          parameter = self[name]
           self.options[name] = parameter.parse(o[name])
         end if o and o.is_a? Hash
 
@@ -205,7 +205,7 @@ module LIBIS
       def configure(cfg)
         self.name = cfg[:name] || (cfg[:class] || self.class).to_s.split('::').last
         self.options =
-            self.class.default_values.merge(
+            default_values.merge(
                 cfg[:options] || {}
             ).merge(
                 cfg.reject { |k, _| [:options].include? k.to_sym }
@@ -240,6 +240,17 @@ module LIBIS
         items = (item || workitem).items
         return items if self.options[:always_run]
         items.reject { |i| i.failed? }
+      end
+
+      def default_values
+        self.class.default_values
+      end
+
+      def self.default_values
+        parameters.inject({}) do |hash,parameter|
+          hash[parameter.first] = parameter.last[:default]
+          hash
+        end
       end
 
     end

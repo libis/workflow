@@ -2,7 +2,7 @@
 
 require 'libis/workflow/task'
 
-module LIBIS
+module Libis
   module Workflow
     module Tasks
 

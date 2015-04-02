@@ -9,11 +9,11 @@ require 'libis/workflow/tasks/analyzer'
 
 require 'libis/workflow/base/workflow'
 
-module LIBIS
+module Libis
   module Workflow
 
     class Workflow
-      include ::LIBIS::Workflow::Base::Workflow
+      include ::Libis::Workflow::Base::Workflow
 
       attr_accessor :name, :description, :config
 

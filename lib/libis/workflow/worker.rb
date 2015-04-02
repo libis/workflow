@@ -4,7 +4,7 @@ require 'sidekiq'
 require 'libis/workflow/config'
 require 'libis/workflow/workflow'
 
-module LIBIS
+module Libis
   module Workflow
 
     class Worker
@@ -31,7 +31,7 @@ module LIBIS
       end
 
       def get_workflow(workflow_config)
-        workflow = ::LIBIS::Workflow::Workflow.new
+        workflow = ::Libis::Workflow::Workflow.new
         workflow.configure workflow_config
         workflow
       end

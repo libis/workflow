@@ -2,7 +2,7 @@
 
 require 'singleton'
 
-module LIBIS
+module Libis
   module Workflow
     class MessageRegistry
       include Singleton

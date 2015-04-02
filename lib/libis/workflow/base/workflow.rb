@@ -2,7 +2,7 @@
 
 require 'libis/tools/parameter'
 
-module LIBIS
+module Libis
   module Workflow
     module Base
       module Workflow
@@ -37,7 +37,7 @@ module LIBIS
           self.class.require_all
 
           unless self.config[:tasks].last[:class] && self.config[:tasks].last[:class].split('::').last == 'Analyzer'
-            self.config[:tasks] << {class: '::LIBIS::Workflow::Tasks::Analyzer'}
+            self.config[:tasks] << {class: '::Libis::Workflow::Tasks::Analyzer'}
           end
 
           self.config
@@ -45,7 +45,7 @@ module LIBIS
 
         def input
           self.config[:input].inject({}) do |hash, input_def|
-            hash[input_def.first.to_sym] = ::LIBIS::Tools::Parameter.from_hash({name: input_def.first}.merge(input_def.last))
+            hash[input_def.first.to_sym] = ::Libis::Tools::Parameter.from_hash({name: input_def.first}.merge(input_def.last))
             hash
           end
         end

@@ -4,11 +4,11 @@ require 'fileutils'
 
 require 'libis/workflow/workitems/work_item'
 
-module LIBIS
+module Libis
   module Workflow
     module Base
       module Run
-        include ::LIBIS::Workflow::WorkItem
+        include ::Libis::Workflow::WorkItem
 
         def start_date; raise RuntimeError.new "Method not implemented: #{caller[0]}"; end
         def start_date=(_); raise RuntimeError.new "Method not implemented: #{caller[0]}"; end

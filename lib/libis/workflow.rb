@@ -1,7 +1,7 @@
 # encoding: utf-8
 require 'libis/exceptions'
 
-module LIBIS
+module Libis
   module Workflow
 
     autoload :MessageRegistry, 'libis/workflow/message_registry'
