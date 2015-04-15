@@ -95,7 +95,7 @@ module Libis
 
         default_values.each do |name,_|
           next unless o.key?(name)
-          parameter = self[name]
+          parameter = get_parameter_definition name
           self.options[name] = parameter.parse(o[name])
         end if o and o.is_a? Hash
 
