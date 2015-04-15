@@ -126,7 +126,7 @@ DEBUG -- ProcessFiles - TestRun : 1 of 1 subitems passed
 DEBUG -- ProcessFiles - TestRun : Completed
 STR
     sample_out = sample_out.lines.to_a
-    output = @logoutput.string.lines
+    output = @logoutput.string.lines.to_a
 
     puts output.join '\n'
     expect(sample_out.count).to eq output.count
