@@ -46,7 +46,7 @@ module Libis
         def input
           self.config[:input].inject({}) do |hash, input_def|
             parameter = ::Libis::Tools::Parameter.new input_def.first.to_sym
-            input_def.last.each { |k, v| parameter[k] = v}
+            input_def.last.each { |k, v| parameter[k.to_sym] = v}
             hash[input_def.first.to_sym] = parameter
             hash
           end
