@@ -5,29 +5,20 @@ require 'libis/tools/config'
 module Libis
   module Workflow
 
-    class Config < ::Libis::Tools::Config
+    # noinspection RubyConstantNamingConvention
+    Config = ::Libis::Tools::Config
 
-      private
-
-      def initialize
-        super
-        Config.require_all(File.join(File.dirname(__FILE__), 'tasks'))
-        self[:workdir] = './work'
-        self[:taskdir] = './tasks'
-        self[:itemdir] = './items'
+    Config.define_singleton_method(:require_all) do |dir|
+      Dir.glob(File.join(dir, '*.rb')).each do |filename|
+        # noinspection RubyResolve
+        require filename
       end
-
-      public
-
-      def self.require_all(dir)
-        return unless Dir.exist?(dir)
-        Dir.glob(File.join(dir, '*.rb')).each do |filename|
-          #noinspection RubyResolve
-          require filename
-        end
-      end
-
     end
+
+    Config.require_all(File.join(File.dirname(__FILE__), 'tasks'))
+    Config[:workdir] = './work'
+    Config[:taskdir] = './tasks'
+    Config[:itemdir] = './items'
 
   end
 end
