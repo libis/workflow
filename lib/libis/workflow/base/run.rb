@@ -48,7 +48,7 @@ module Libis
           self.status = :STARTED
 
           self.tasks.each do |task|
-            next if self.failed? and not task.options[:allways_run]
+            next if self.failed? and not task.options[:always_run]
             task.run self
           end
 

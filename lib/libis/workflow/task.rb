@@ -12,13 +12,13 @@ module Libis
 
     # noinspection RubyTooManyMethodsInspection
     class Task
-      include Base::Logger
+      include ::Libis::Workflow::Base::Logger
       include ::Libis::Tools::ParameterContainer
 
       attr_accessor :parent, :name, :options, :workitem, :tasks
 
       parameter abort_on_error: false, description: 'Stop all tasks when an error occurs.'
-      parameter allways_run: false, description: 'Run this task, even if the item failed a previous task.'
+      parameter always_run: false, description: 'Run this task, even if the item failed a previous task.'
       parameter subitems: false, description: 'Do not process the given item, but only the subitems.'
       parameter recursive: false, description: 'Run the task on all subitems recursively.'
 
@@ -40,7 +40,7 @@ module Libis
 
         check_item_type WorkItem, item
 
-        return if item.failed? unless options[:allways_run]
+        return if item.failed? unless options[:always_run]
 
         if options[:subitems]
             log_started item

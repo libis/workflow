@@ -9,7 +9,7 @@ module Libis
       class Analyzer < Task
 
         def default_options
-          { quiet: true, allways_run: true }
+          { quiet: true, always_run: true }
         end
 
         def run(item)
