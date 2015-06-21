@@ -15,8 +15,9 @@ module Libis
       include ::Libis::Workflow::Base::Logger
       include ::Libis::Tools::ParameterContainer
 
-      attr_accessor :parent, :name, :options, :workitem, :tasks
+      attr_accessor :parent, :name, :workitem, :tasks
 
+      parameter quiet: false, description: 'Prevemt generating log output.'
       parameter abort_on_error: false, description: 'Stop all tasks when an error occurs.'
       parameter always_run: false, description: 'Run this task, even if the item failed a previous task.'
       parameter subitems: false, description: 'Do not process the given item, but only the subitems.'
@@ -40,9 +41,9 @@ module Libis
 
         check_item_type WorkItem, item
 
-        return if item.failed? unless options[:always_run]
+        return if item.failed? unless parameter(:always_run)
 
-        if options[:subitems]
+        if parameter(:subitems)
             log_started item
             run_subitems item
             log_done(item) unless item.failed?
@@ -64,7 +65,7 @@ module Libis
 
           pre_process item
           process_item item
-          post_process item
+          post_process workitem
 
         rescue WorkflowError => e
           error e.message
@@ -93,10 +94,11 @@ module Libis
       def apply_options(opts)
         o = opts[self.name] || opts[self.names.join('/')]
 
+
         default_values.each do |name,_|
           next unless o.key?(name)
           parameter = get_parameter_definition name
-          self.options[name] = parameter.parse(o[name])
+          self.parameter(name, parameter.parse(o[name]))
         end if o and o.is_a? Hash
 
         self.tasks.each do |task|
@@ -123,8 +125,8 @@ module Libis
 
       def process_item(item)
         process item
-        run_subitems(item) if options[:recursive]
-        run_subtasks item
+        run_subitems(workitem) if parameter(:recursive)
+        run_subtasks workitem
       end
 
       def process(item)
@@ -168,7 +170,7 @@ module Libis
           run_item item
           if item.failed?
             failed += 1
-            if options[:abort_on_error]
+            if parameter(:abort_on_error)
               error 'Aborting ...', parent_item
               raise WorkflowAbort.new "Aborting: task #{name} failed on #{item}"
             end
@@ -193,7 +195,7 @@ module Libis
           debug 'Running subtask (%d/%d): %s', item, i+1, tasks.count, task.name
           task.run item
           if item.failed?
-            if task.options[:abort_on_error]
+            if task.parameter(:abort_on_error)
               error 'Aborting ...'
               raise WorkflowAbort.new "Aborting: task #{task.name} failed on #{item}"
             end
@@ -204,12 +206,11 @@ module Libis
 
       def configure(cfg)
         self.name = cfg[:name] || (cfg[:class] || self.class).to_s.split('::').last
-        self.options =
-            default_values.merge(
-                cfg[:options] || {}
-            ).merge(
-                cfg.reject { |k, _| [:options].include? k.to_sym }
-            ).symbolize_keys!
+        default_values.merge(
+            cfg[:options] || {}
+        ).merge(
+            cfg.reject { |k, _| [:options].include? k.to_sym }
+        ).symbolize_keys!.each { |k,v| parameter(k, v) }
       end
 
       def to_status(text)
@@ -232,13 +233,13 @@ module Libis
 
       def subtasks(item = nil)
         self.tasks.map do |task|
-          ((item || self.workitem).failed? and not task.options[:always_run]) ? nil : task
+          ((item || self.workitem).failed? and not task.parameter(:always_run)) ? nil : task
         end.compact
       end
 
       def subitems(item = nil)
         items = (item || workitem).items
-        return items if self.options[:always_run]
+        return items if self.parameter(:always_run)
         items.reject { |i| i.failed? }
       end
 

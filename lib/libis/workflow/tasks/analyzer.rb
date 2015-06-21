@@ -8,14 +8,14 @@ module Libis
 
       class Analyzer < Task
 
-        def default_options
-          { quiet: true, always_run: true }
-        end
+        parameter quiet: true
+        parameter always_run: true
 
         def run(item)
 
           item.properties[:ingest_failed] = item.failed?
 
+          item.summary = {}
           item.log_history.each do |log|
             level = log[:severity]
             item.summary[level] ||= 0
@@ -29,6 +29,13 @@ module Libis
               item.summary[level] += (count || 0)
             end
           end
+
+        rescue Exception => ex
+
+          puts 'Failed to analyze item: %s - %s' % [item.class, item.name]
+          puts 'Exception: %s' % ex.message
+
+        ensure
 
           item.save
 
