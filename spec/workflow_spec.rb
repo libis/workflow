@@ -4,24 +4,22 @@ require 'stringio'
 
 describe 'TestWorkflow' do
 
-  DIRNAME = File.absolute_path(File.join(File.dirname(__FILE__), 'items'))
+  let(:dirname) { File.absolute_path(File.join(File.dirname(__FILE__), 'items')) }
 
-  before :all do
+  let(:logoutput) { StringIO.new }
 
-    puts DIRNAME
-
-    @logoutput = StringIO.new
-
+  let(:workflow) {
+    # noinspection RubyResolve
     ::Libis::Workflow.configure do |cfg|
       cfg.itemdir = File.join(File.dirname(__FILE__), 'items')
       cfg.taskdir = File.join(File.dirname(__FILE__), 'tasks')
       cfg.workdir = File.join(File.dirname(__FILE__), 'work')
-      cfg.logger = Logger.new @logoutput
+      cfg.logger = Logger.new logoutput
       cfg.logger.level = Logger::DEBUG
     end
 
-    @workflow = ::Libis::Workflow::Workflow.new
-    @workflow.configure(
+    workflow = ::Libis::Workflow::Workflow.new
+    workflow.configure(
         name: 'TestWorkflow',
         description: 'Workflow for testing',
         tasks: [
@@ -42,33 +40,30 @@ describe 'TestWorkflow' do
             checksum_type: {default: 'SHA1', propagate_to: 'ChecksumTester'}
         }
     )
+    workflow
+  }
 
-    # noinspection RubyStringKeysInHashInspection
-    @run = @workflow.run(dirname: DIRNAME, checksum_type: 'SHA256')
-    puts @logoutput.string
-
-  end
+  let!(:run) {
+    workflow.run(dirname: dirname, checksum_type: 'SHA256')
+  }
 
   it 'should contain three tasks' do
-
-    expect(@workflow.config[:tasks].size).to eq 3
-    expect(@workflow.config[:tasks].first[:class]).to eq 'CollectFiles'
-    expect(@workflow.config[:tasks].last[:class]).to eq '::Libis::Workflow::Tasks::Analyzer'
-
+    expect(workflow.config[:tasks].size).to eq 3
+    expect(workflow.config[:tasks].first[:class]).to eq 'CollectFiles'
+    expect(workflow.config[:tasks].last[:class]).to eq '::Libis::Workflow::Tasks::Analyzer'
   end
 
   # noinspection RubyResolve
   it 'should camelize the workitem name' do
+    expect(run.options[:dirname]).to eq dirname
+    expect(run.items.count).to eq 1
+    expect(run.items.first.class).to eq TestDirItem
+    expect(run.items.first.count).to eq 3
+    expect(run.items.first.first.class).to eq TestFileItem
 
-    expect(@run.options[:dirname]).to eq DIRNAME
-    expect(@run.items.count).to eq 1
-    expect(@run.items.first.class).to eq TestDirItem
-    expect(@run.items.first.count).to eq 3
-    expect(@run.items.first.first.class).to eq TestFileItem
+    expect(run.items.first.name).to eq 'Items'
 
-    expect(@run.items.first.name).to eq 'Items'
-
-    @run.items.first.each_with_index do |x, i|
+    run.items.first.each_with_index do |x, i|
       expect(x.name).to eq %w'TestDirItem.rb TestFileItem.rb TestRun.rb'[i]
     end
   end
@@ -126,19 +121,18 @@ DEBUG -- ProcessFiles - TestRun : 1 of 1 subitems passed
 DEBUG -- ProcessFiles - TestRun : Completed
 STR
     sample_out = sample_out.lines.to_a
-    output = @logoutput.string.lines.to_a
+    output = logoutput.string.lines.to_a
 
-    puts output.join '\n'
     expect(sample_out.count).to eq output.count
     output.each_with_index do |o, i|
       expect(o[/(?<=\] ).*/]).to eq sample_out[i].strip
     end
 
-    expect(@run.summary['DEBUG']).to eq 48
-    expect(@run.log_history.count).to eq 8
-    expect(@run.status_log.count).to eq 6
-    expect(@run.items.first.log_history.count).to eq 22
-    expect(@run.items.first.status_log.count).to eq 8
+    expect(run.summary['DEBUG']).to eq 48
+    expect(run.log_history.count).to eq 8
+    expect(run.status_log.count).to eq 6
+    expect(run.items.first.log_history.count).to eq 22
+    expect(run.items.first.status_log.count).to eq 8
 
     [
         {tasklist: nil, text: :STARTED},
@@ -148,7 +142,7 @@ STR
         {tasklist: %w'ProcessFiles', text: :Done},
         {tasklist: nil, :text => :DONE},
     ].each_with_index do |h, i|
-      h.keys.each { |key| expect(@run.status_log[i][key]).to eq h[key] }
+      h.keys.each { |key| expect(run.status_log[i][key]).to eq h[key] }
     end
 
     [
@@ -161,7 +155,7 @@ STR
         {tasklist: %w'ProcessFiles CamelizeName', text: :Done},
         {tasklist: %w'ProcessFiles', text: :Done},
     ].each_with_index do |h, i|
-      h.keys.each { |key| expect(@run.items.first.status_log[i][key]).to eq h[key] }
+      h.keys.each { |key| expect(run.items.first.status_log[i][key]).to eq h[key] }
     end
 
     [
@@ -172,7 +166,7 @@ STR
         {tasklist: %w'ProcessFiles CamelizeName', text: :Started},
         {tasklist: %w'ProcessFiles CamelizeName', text: :Done},
     ].each_with_index do |h, i|
-      h.keys.each { |key| expect(@run.items.first.first.status_log[i][key]).to eq h[key] }
+      h.keys.each { |key| expect(run.items.first.first.status_log[i][key]).to eq h[key] }
     end
 
     [
@@ -185,7 +179,7 @@ STR
         {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: '1 of 1 subitems passed'},
         {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Completed'},
     ].each_with_index do |h, i|
-      h.keys.each { |key| expect(@run.log_history[i][key]).to eq h[key] }
+      h.keys.each { |key| expect(run.log_history[i][key]).to eq h[key] }
     end
 
     [
@@ -212,7 +206,7 @@ STR
         {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Completed'},
         {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Completed'},
     ].each_with_index do |h, i|
-      h.keys.each { |key| expect(@run.items.first.log_history[i][key]).to eq h[key] }
+      h.keys.each { |key| expect(run.items.first.log_history[i][key]).to eq h[key] }
     end
 
     [
@@ -223,7 +217,7 @@ STR
         {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Started'},
         {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Completed'},
     ].each_with_index do |h, i|
-      h.keys.each { |key| expect(@run.items.first.first.log_history[i][key]).to eq h[key] }
+      h.keys.each { |key| expect(run.items.first.first.log_history[i][key]).to eq h[key] }
     end
 
   end
