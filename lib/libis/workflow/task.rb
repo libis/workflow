@@ -3,9 +3,9 @@ require 'backports/rails/hash'
 require 'backports/rails/string'
 
 require 'libis/tools/parameter'
+require 'libis/tools/extend/hash'
 
 require 'libis/workflow'
-require 'libis/workflow/base/logger'
 
 module Libis
   module Workflow
@@ -39,7 +39,7 @@ module Libis
 
       def run(item)
 
-        check_item_type WorkItem, item
+        check_item_type ::Libis::Workflow::Base::WorkItem, item
 
         return if item.failed? unless parameter(:always_run)
 
@@ -64,8 +64,9 @@ module Libis
           log_started item
 
           pre_process item
-          process_item item
-          post_process workitem
+          i = process_item item
+          item = i if i.is_a? Libis::Workflow::Base::WorkItem
+          post_process item
 
         rescue WorkflowError => e
           error e.message
@@ -92,14 +93,20 @@ module Libis
       def namepath; self.names.join('/'); end
 
       def apply_options(opts)
-        o = opts[self.name] || opts[self.names.join('/')]
+        o = {}
+        o.merge!(opts[self.class.to_s] || {})
+        o.merge!(opts[self.name] || opts[self.names.join('/')] || {})
+        o.key_strings_to_symbols! recursive: true
 
-
-        default_values.each do |name,_|
-          next unless o.key?(name)
-          parameter = get_parameter_definition name
-          self.parameter(name, parameter.parse(o[name]))
-        end if o and o.is_a? Hash
+        if o and o.is_a? Hash
+          default_values.each do |name, _|
+            next unless o.key?(name)
+            next unless o[name]
+            parameter = get_parameter_definition name
+            next unless (value = parameter.parse(o[name]))
+            self.parameter(name, value)
+          end
+        end
 
         self.tasks.each do |task|
           task.apply_options opts
@@ -110,16 +117,14 @@ module Libis
 
       def log_started(item)
         item.status = to_status :started
-        debug 'Started', item
       end
 
       def log_failed(item, message = nil)
-        warn (message || 'Failed'), item
+        warn (message), item if message
         item.status = to_status :failed
       end
 
       def log_done(item)
-        debug 'Completed', item
         item.status = to_status :done
       end
 
@@ -210,7 +215,7 @@ module Libis
             cfg[:options] || {}
         ).merge(
             cfg.reject { |k, _| [:options].include? k.to_sym }
-        ).symbolize_keys!.each { |k,v| parameter(k, v) }
+        ).symbolize_keys!.each { |k,v| self[k] = v }
       end
 
       def to_status(text)
@@ -248,7 +253,7 @@ module Libis
       end
 
       def self.default_values
-        parameters.inject({}) do |hash,parameter|
+        parameter_defs.inject({}) do |hash,parameter|
           hash[parameter.first] = parameter.last[:default]
           hash
         end

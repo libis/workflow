@@ -4,16 +4,17 @@ require 'stringio'
 
 describe 'TestWorkflow' do
 
-  let(:dirname) { File.absolute_path(File.join(File.dirname(__FILE__), 'items')) }
+  let(:basedir) { File.absolute_path File.join(File.dirname(__FILE__)) }
+  let(:dirname) { File.join(basedir, 'items') }
 
   let(:logoutput) { StringIO.new }
 
   let(:workflow) {
     # noinspection RubyResolve
     ::Libis::Workflow.configure do |cfg|
-      cfg.itemdir = File.join(File.dirname(__FILE__), 'items')
-      cfg.taskdir = File.join(File.dirname(__FILE__), 'tasks')
-      cfg.workdir = File.join(File.dirname(__FILE__), 'work')
+      cfg.itemdir = dirname
+      cfg.taskdir = File.join(basedir, 'tasks')
+      cfg.workdir = File.join(basedir, 'work')
       cfg.logger = Logger.new logoutput
       cfg.logger.level = Logger::DEBUG
     end
@@ -25,9 +26,7 @@ describe 'TestWorkflow' do
         tasks: [
             {class: 'CollectFiles', recursive: true},
             {
-                name: 'ProcessFiles',
-                subitems: true,
-                recursive: false,
+                name: 'ProcessFiles', subitems: true, recursive: false,
                 tasks: [
                     {class: 'ChecksumTester', recursive: true},
                     {class: 'CamelizeName', recursive: true}
@@ -71,54 +70,24 @@ describe 'TestWorkflow' do
   it 'should return expected debug output' do
 
     sample_out = <<STR
-DEBUG -- CollectFiles - TestRun : Started
 DEBUG -- CollectFiles - TestRun : Processing subitem (1/1): items
-DEBUG -- CollectFiles - items : Started
 DEBUG -- CollectFiles - items : Processing subitem (1/3): test_dir_item.rb
-DEBUG -- CollectFiles - items/test_dir_item.rb : Started
-DEBUG -- CollectFiles - items/test_dir_item.rb : Completed
 DEBUG -- CollectFiles - items : Processing subitem (2/3): test_file_item.rb
-DEBUG -- CollectFiles - items/test_file_item.rb : Started
-DEBUG -- CollectFiles - items/test_file_item.rb : Completed
 DEBUG -- CollectFiles - items : Processing subitem (3/3): test_run.rb
-DEBUG -- CollectFiles - items/test_run.rb : Started
-DEBUG -- CollectFiles - items/test_run.rb : Completed
 DEBUG -- CollectFiles - items : 3 of 3 subitems passed
-DEBUG -- CollectFiles - items : Completed
 DEBUG -- CollectFiles - TestRun : 1 of 1 subitems passed
-DEBUG -- CollectFiles - TestRun : Completed
-DEBUG -- ProcessFiles - TestRun : Started
 DEBUG -- ProcessFiles - TestRun : Processing subitem (1/1): items
-DEBUG -- ProcessFiles - items : Started
 DEBUG -- ProcessFiles - items : Running subtask (1/2): ChecksumTester
-DEBUG -- ProcessFiles/ChecksumTester - items : Started
 DEBUG -- ProcessFiles/ChecksumTester - items : Processing subitem (1/3): test_dir_item.rb
-DEBUG -- ProcessFiles/ChecksumTester - items/test_dir_item.rb : Started
-DEBUG -- ProcessFiles/ChecksumTester - items/test_dir_item.rb : Completed
 DEBUG -- ProcessFiles/ChecksumTester - items : Processing subitem (2/3): test_file_item.rb
-DEBUG -- ProcessFiles/ChecksumTester - items/test_file_item.rb : Started
-DEBUG -- ProcessFiles/ChecksumTester - items/test_file_item.rb : Completed
 DEBUG -- ProcessFiles/ChecksumTester - items : Processing subitem (3/3): test_run.rb
-DEBUG -- ProcessFiles/ChecksumTester - items/test_run.rb : Started
-DEBUG -- ProcessFiles/ChecksumTester - items/test_run.rb : Completed
 DEBUG -- ProcessFiles/ChecksumTester - items : 3 of 3 subitems passed
-DEBUG -- ProcessFiles/ChecksumTester - items : Completed
 DEBUG -- ProcessFiles - items : Running subtask (2/2): CamelizeName
-DEBUG -- ProcessFiles/CamelizeName - items : Started
 DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (1/3): test_dir_item.rb
-DEBUG -- ProcessFiles/CamelizeName - Items/test_dir_item.rb : Started
-DEBUG -- ProcessFiles/CamelizeName - Items/TestDirItem.rb : Completed
 DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (2/3): test_file_item.rb
-DEBUG -- ProcessFiles/CamelizeName - Items/test_file_item.rb : Started
-DEBUG -- ProcessFiles/CamelizeName - Items/TestFileItem.rb : Completed
 DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (3/3): test_run.rb
-DEBUG -- ProcessFiles/CamelizeName - Items/test_run.rb : Started
-DEBUG -- ProcessFiles/CamelizeName - Items/TestRun.rb : Completed
 DEBUG -- ProcessFiles/CamelizeName - Items : 3 of 3 subitems passed
-DEBUG -- ProcessFiles/CamelizeName - Items : Completed
-DEBUG -- ProcessFiles - Items : Completed
 DEBUG -- ProcessFiles - TestRun : 1 of 1 subitems passed
-DEBUG -- ProcessFiles - TestRun : Completed
 STR
     sample_out = sample_out.lines.to_a
     output = logoutput.string.lines.to_a
@@ -128,10 +97,10 @@ STR
       expect(o[/(?<=\] ).*/]).to eq sample_out[i].strip
     end
 
-    expect(run.summary['DEBUG']).to eq 48
-    expect(run.log_history.count).to eq 8
+    expect(run.summary['DEBUG']).to eq 18
+    expect(run.log_history.count).to eq 4
     expect(run.status_log.count).to eq 6
-    expect(run.items.first.log_history.count).to eq 22
+    expect(run.items.first.log_history.count).to eq 14
     expect(run.items.first.status_log.count).to eq 8
 
     [
@@ -170,55 +139,35 @@ STR
     end
 
     [
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Started'},
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Processing subitem (1/1): items'},
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: '1 of 1 subitems passed'},
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Completed'},
-        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Started'},
-        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Processing subitem (1/1): items'},
-        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: '1 of 1 subitems passed'},
-        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Completed'},
+        {severity: 'DEBUG', task: 'CollectFiles', message: 'Processing subitem (1/1): items'},
+        {severity: 'DEBUG', task: 'CollectFiles', message: '1 of 1 subitems passed'},
+        {severity: 'DEBUG', task: 'ProcessFiles', message: 'Processing subitem (1/1): items'},
+        {severity: 'DEBUG', task: 'ProcessFiles', message: '1 of 1 subitems passed'},
     ].each_with_index do |h, i|
       h.keys.each { |key| expect(run.log_history[i][key]).to eq h[key] }
     end
 
     [
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Started'},
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Processing subitem (1/3): test_dir_item.rb'},
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Processing subitem (2/3): test_file_item.rb'},
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Processing subitem (3/3): test_run.rb'},
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: '3 of 3 subitems passed'},
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Completed'},
-        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Started'},
-        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Running subtask (1/2): ChecksumTester'},
-        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Started'},
-        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Processing subitem (1/3): test_dir_item.rb'},
-        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Processing subitem (2/3): test_file_item.rb'},
-        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Processing subitem (3/3): test_run.rb'},
-        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: '3 of 3 subitems passed'},
-        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Completed'},
-        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Running subtask (2/2): CamelizeName'},
-        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Started'},
-        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Processing subitem (1/3): test_dir_item.rb'},
-        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Processing subitem (2/3): test_file_item.rb'},
-        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Processing subitem (3/3): test_run.rb'},
-        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: '3 of 3 subitems passed'},
-        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Completed'},
-        {severity: 'DEBUG', task: 'ProcessFiles', id: 0, message: 'Completed'},
+        {severity: 'DEBUG', task: 'CollectFiles', message: 'Processing subitem (1/3): test_dir_item.rb'},
+        {severity: 'DEBUG', task: 'CollectFiles', message: 'Processing subitem (2/3): test_file_item.rb'},
+        {severity: 'DEBUG', task: 'CollectFiles', message: 'Processing subitem (3/3): test_run.rb'},
+        {severity: 'DEBUG', task: 'CollectFiles', message: '3 of 3 subitems passed'},
+        {severity: 'DEBUG', task: 'ProcessFiles', message: 'Running subtask (1/2): ChecksumTester'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', message: 'Processing subitem (1/3): test_dir_item.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', message: 'Processing subitem (2/3): test_file_item.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', message: 'Processing subitem (3/3): test_run.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', message: '3 of 3 subitems passed'},
+        {severity: 'DEBUG', task: 'ProcessFiles', message: 'Running subtask (2/2): CamelizeName'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', message: 'Processing subitem (1/3): test_dir_item.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', message: 'Processing subitem (2/3): test_file_item.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', message: 'Processing subitem (3/3): test_run.rb'},
+        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', message: '3 of 3 subitems passed'},
     ].each_with_index do |h, i|
       h.keys.each { |key| expect(run.items.first.log_history[i][key]).to eq h[key] }
     end
 
-    [
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Started'},
-        {severity: 'DEBUG', task: 'CollectFiles', id: 0, message: 'Completed'},
-        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Started'},
-        {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', id: 0, message: 'Completed'},
-        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Started'},
-        {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', id: 0, message: 'Completed'},
-    ].each_with_index do |h, i|
-      h.keys.each { |key| expect(run.items.first.first.log_history[i][key]).to eq h[key] }
-    end
+    # noinspection RubyResolve
+    expect(run.items.first.first.log_history).to be_empty
 
   end
 

@@ -26,26 +26,35 @@ Or install it yourself as:
 ## Architecture
 
 This gem is essentially a simple, custom workflow system. The core of the workflow are the tasks. You can - and should -
-create your own tasks by creating new classes and include ::Libis::Workflow::Task. The ::Libis::Workflow::Task module
+create your own tasks by creating new classes inherited from ::Libis::Workflow::Task. The ::Libis::Workflow::Task class
 and the included ::Libis::Workflow::Base::Logger module provide the necessary attributes and methods to make them work
-in the workflow. See the detailed documentation for the modules for more information.
+in the workflow. See the detailed documentation for the class and module for more information.
 
-The objects that the tasks will be working on should include the ::Libis::Workflow::WorkItem module.
-When working with file objects the module ::Libis::Workflow::FileItem and/or ::Libis::Workflow::DirItem modules should
-be included for additional file-specific functionality.
-Work items can be organized in different types and a hierarchical structure.
+The objects that the tasks will be working on should include the ::Libis::Workflow::Base::WorkItem module.
+When working with file objects the module ::Libis::Workflow::Base::FileItem and/or ::Libis::Workflow::Base::DirItem 
+modules should be included for additional file-specific functionality.
+Work items can be organized in different types and a hierarchical structure. A simple implementation of work items with
+in-memory storage is provided as classes ::Libis::Workflow::WorkItem, ::Libis::Workflow::FileItem and 
+::Libis::Workflow::DirItem. 
 
-All the tasks will be organized into a ::Libis::Workflow::WorkflowDefinition which will be able to execute the tasks in
-proper order on all the WorkItems supplied/collected. Each task can be implemented with code to run or simply contain a 
-list of child tasks.
+All the tasks will be organized into a workflow object for which a base module ::Libis::Workflow::Base::Workflow is
+provided. It contains all the basic logic required for proper configuration and operation. Again a in-memory 
+implementation is provided in the class ::Libis::Workflow::Workflow for your convenience to be used as-is or to derive
+your own from.
 
-Two tasks are predefined:
-::Libis::Workflow::Tasks::VirusChecker - runs a virus check on each WorkItem that is also a FileItem.
+The workflow object will be able to execute the tasks in proper order on all the WorkItems supplied/collected. Each 
+task can be implemented with code to run or simply contain a list of child tasks. When a workflow is executed a special
+run object is created that captures the configuration, logs and workitems generated while executing the tasks. Essential
+logic is provided in the module ::Libis::Workflow::Base::Run with a simple in-memory implementation in 
+::Libis::Workflow::Run. The run object's class name has to be provided to the workflow configuration so that the 
+workflow can instantiate the correct object.
+
+One tasks is predefined:
 ::Libis::Workflow::Tasks::Analyzer - analyzes the workflow run and summarizes the results. It is always included as the
 last task by the workflow unless you supply a closing task called 'Analyzer' yourself.
 
 The whole ingester workflow is configured by a Singleton object ::Libis::Workflow::Config which contains settings for
-logging, paths where tasks and workitems can be found and the path to the virus scanner program.
+logging and paths where tasks and workitems can be found.
 
 ## Usage
 
@@ -60,17 +69,20 @@ well. This is shown in the examples below.
 
 ### Workflows
 
-A ::Libis::Workflow::WorkflowDefinition instance contains the definition of a workflow. Once instantiated, it can be run
-by calling the 'run' method. This will create a ::Libis::Workflow::WorkflowRun instance, configure it and call the 'run'
-method on it. The Workflow constructor takes no arguments, but is should be configured by calling the 'set_config'
-method with the workflow configuration as an argument. The 'run' method takes an option Hash as argument.
+An implementation of ::Libis::Workflow::Base::Workflow contains the definition of a workflow. Once instantiated, it can 
+be run by calling the 'run' method. This will create an intance of an implementation of ::Libis::Workflow::Base::Run, 
+configure it and call the 'run' method on it. The Workflow constructor takes no arguments, but is should be configured 
+by calling the 'configure' method with the workflow configuration as an argument. The 'run' method takes an option Hash 
+as argument.
 
 #### Workflow configuration
 
 A workflow configuration is a Hash with:
+* name: String to identify the workflow
+* description: String with detailed textual information
 * tasks: Array of task descriptions
-* start_object: String with class name of the starting object to be created. An istance of this class will be created
-  for each run and serves as the root work item for that particular run. 
+* run_object: String with class name of the ::Libis::Workflow::Base::Run implementation to be created. An istance of 
+  this class will be created for each run and serves as the root work item for that particular run. 
 * input: Hash with input variable definitions
 
 ##### Task description
@@ -79,7 +91,15 @@ is a Hash with:
 * class: String with class name of the task
 * name: String with the name of the task
 * tasks: Array with task definitions of sub-tasks
-* options: Hash with additional task configuration options (see 'Tasks - Configuration' for more info)
+* any task parameter values. Each task can define parameters that configure the task. It is using the 
+  ::Libis::Tools::Parameter class for this.
+  
+The ::Libis::Workflow::Task base class allready defines the following parameters:
+* quiet: Prevent generating log output. Default: false
+* abort_on_error: Stop all tasks when an error occurs. Default: false
+* always_run: Run this task, even if the item failed a previous task. Default: false
+* subitems: Do not process the given item, but only the subitems. Default: false
+* recursive: Run the task on all subitems recursively. Default: false
 
 If 'class' is not present, the default '::Libis::Workflow::Task' with the given name will be instantiated, which simply
 iterates over the child items of the given work item and performs each sub-task on each of the child items. If a 'class'
@@ -88,28 +108,17 @@ the chapter on 'Tasks' below for more information on tasks.
 
 ##### Input variable definition
 
-The key of the input Hash is the unique id of the variable. The value is a Hash with:
-* name: String with the name of the input variable
-  This value is used for display only
-* description: String with descriptive text explaining the use/meaning of the variable
-* type: String with the type of the variable
-  Currently only 'String', 'Time' and 'Boolean' are supported. If the value is not present, 'String' is asumed.
-* default: String with the default value
-  If the default value contains the string %s, it will be replaced with the current time in the format yymmddHHMMSS when
-  the workflow is started.  For boolean values, 'true', 'yes', 't', 'y' and 1 are all interpreted as boolean true.
+The input variables define parameters for the workflow. When a workflow is run, it can give values for any of these
+input variable and the workflow run will use the new values instead of the defaults.
 
-All of these Hash keys are optional. Each input variable key and value will be added to the root work item's option Hash.
+The key of the input Hash is the unique name of the variable. The value is another Hash with the parameter definition.
+See ::Libis::Tools::Parameter for the content of this Hash.
 
-#### Options
-
-The option Hash contains special run-time configuration parameters for the workflow:
-* action: String with the action that should be taken. Currently only 'start' is supported. In the future support for
-  'restart' and 'continue' will be added.
-* interactive: Boolean that indicates if the user should be queried to input values for variables that have no value set.
-  This will pause the workflow run and is therefore not compatible with scheduling the workflow. For unattended runs the
-  options should be set to false, causing the run to throw an exception if an input variable is missing a value.
-  
-Remaining values are considered to be (default) values for the input variables.
+An additional property of the parameters is the 'propagate_to' property. It defines how the workflow run should push 
+the values set for the input parameters to the parameters on the tasks. These task parameters can be addressed by a 
+'<Task class or Task name>[#<parameter name>]' string. If necessary the task class or name may be specified as a full 
+path with '/' separators. The parameter name part is optional and considered to be the same as the input parameter name 
+if absent.
 
 #### Run-time configuration
 
@@ -125,7 +134,7 @@ Creating your own work items is highly recommended and is fairly easy:
 
 ```ruby
 
-    require 'libis/workflow/workitems'
+    require 'libis/workflow'
 
     class MyWorkItem < ::Libis::Workflow::WorkItem
       attr_accesor :name
@@ -137,13 +146,81 @@ Creating your own work items is highly recommended and is fairly easy:
     end
 ```
 
-Work items that are file-based should also include the ::Libis::Workflow::FileItem module:
+or if a custom storage implementation is desired, a number of data items and methods require implementation:
 
 ```ruby
 
-    require 'libis/workflow/workitems'
+    require 'libis/workflow'
 
-    class MyFileItem < ::Libis::Workflow::WorkItem
+    class MyWorkItem < MyStorageItem 
+      include ::Libis::Workflow::Base::WorkItem
+
+      stored_attribute :parent
+      stored_attribute :items
+      stored_attribute :options
+      stored_attribute :properties
+      stored_attribute :log_history
+      stored_attribute :status_log
+      stored_attribute :summary
+
+      def initialize
+        self.parent = nil
+        self.items = []
+        self.options = {}
+        self.properties = {}
+        self.log_history = []
+        self.status_log = []
+        self.summary = {}
+      end
+
+      protected
+
+      def add_log_entry(msg)
+        self.log_history << msg.merge(c_at: ::Time.now)
+      end
+
+      def add_status_log(message, tasklist = nil)
+        self.status_log << { timestamp: ::Time.now, tasklist: tasklist, text: message }.cleanup
+      end
+
+      def status_label(status_entry)
+        "#{status_entry[:tasklist].last rescue nil}#{status_entry[:text] rescue nil}"
+      end
+
+    end
+```
+
+Work items that are file-based can derive from the ::Libis::Workflow::FileItem class:
+
+```ruby
+
+    require 'libis/workflow'
+
+    class MyFileItem < ::Libis::Workflow::FileItem
+
+      def initialize(file)
+        filename = file
+        super
+      end
+
+      def filesize
+        properties[:size]
+      end
+
+      def fixity_check(checksum)
+        properties[:checksum] == checksum
+      end
+
+    end
+```
+
+or include the ::Libis::Workflow::Base::FileItem module:
+
+```ruby
+
+    require 'libis/workflow'
+
+    class MyFileItem < MyWorkItem 
       include ::Libis::Workflow::FileItem
 
       def initialize(file)
@@ -162,6 +239,8 @@ Work items that are file-based should also include the ::Libis::Workflow::FileIt
     end
 ```
 
+
+
 ## Tasks
 
 Tasks should inherit from ::Libis::Workflow::Task and specify the actions it wants to
@@ -172,69 +251,85 @@ perform on each work item:
     class MyTask < ::Libis::Workflow::Task
 
       def process_item(item)
-        item.perform_my_action
+        if do_something(item)
+          info "Did something"
+        else
+          raise ::Libis::WorkflowError, "Something went wrong" 
+        end
       rescue Exception => e
-        item.set_status(to_status(:failed))
+        error "Fatal problem, aborting" 
+        raise ::Libis::WorkflowAbort, "Fatal problem"  
+      ensure
+        item
       end
 
     end
 ```
 
-You have some options to specify the actions:
+As seen above, the task should define a method called process_item that takes one argument. The argument will be a 
+reference to the work item that it needs to perform an action on. The task has several option to progress after 
+performing its actions:
+* return. This is considered a normal and successful operation result. If the item was replaced by a new item or if the 
+ item tree has changed, it is recommended to return the new item. After a successful return the item's status will be 
+ set to 'done' for the given task.
+* raise a ::Libis::WorkflowError. Indicates that something went wrong during the processing of the item. The item's 
+ status will be set to failed for the given task and the exception message will be printed in the error log. Processing 
+ will continue with the next item. This action is recommended for temporary or recoverable errors.
+* raise a ::Libis::WorkflowAbort. A severe and fatal error has occured. Processing will abort immediately and the 
+ failure status will be escalated to all items up the item hierarchy. Due to the escalating behaviour, no message is 
+ printed in the error log automatically, so it is up to the task to an appropriate log the error itself.
+* raise any other Exception. Should be avoided, but if it happens nevertheless, it will cause the item to fail for the 
+ given task and the exception message to be logged in the error log. It will attempt to process the other items.
 
-### Performing an action on each child item of the provided work item
+### Controlling behavior with parameters
 
-In that case the task should provide a 'process_item' method as above. Each child item will be passed as the argument
-to the method and perform whatever needs to be done on the item.
+You have some options to control how the task will behave in special cases. These are controlled using parameters on 
+the task, which can be set (and fixed with the 'frozen' option) on the task, but can be configured at run-time with the 
+help of workflow input parameters and run options.
 
-If the action fails the method is expected to set the item status field to failed. This is also shown in the previous
-example. If the error is so severe that no other child items should be processed, the action can decide to throw an
-exception, preferably a ::Libis::Workflow::Exception or a child exception thereof.
+#### Performing an action on the work item and all child items recursively
+
+With the 'recursive' parameter set to true, your task's process_item method will be called for the work item and then 
+once for each child and each child's children recursively.
   
-### Performing an action on the provided work item
+#### Performing an action only on the child items, skipping the work item itself
 
-If the task wants to perform an action on the work item directly, it should define a 'process' method. The work item is
-available to the method as class instance variable 'workitem'. Again the method is responsible to communicate errors
-with a failed status or by throwing an exception.
+The parameter 'subitems' decides if the item handed over to the task will be processed or if it will process only it's 
+child items. This will only work once, not recursively, but by organizing tasks hierarchically with 'subitems' set to 
+true, it is possible to make sure that only items on a certain hierarchy level are performed. Recommended for workflows 
+where a well-known and fixed hierarchical structure has to be processed selectively.
 
-### Combining both
+Alternatively the 'recursive' option can be set and the 'process_item' method could check for certain item types, 
+properties or hierarchy levels to decide to perform the operation. This approach is more flexible but harder to 
+understand unless well documented.
 
-It is possible to perform some action on the parent work item first and then process each child item. Processing the
-child items should be done in process_item as usual, but processing the parent item can be done either by defining a
-pre_process method or a process method that ends with a 'super' call. Using this should be an exception as it is
-recommended to create a seperate task to process the child work items.
+#### Preventing any logging output from the task
 
-### Default behaviour
+Logging output can be blocked on a task-by-task basis by setting the 'quiet' parameter to true. Probably not usefull 
+except for the Analyzer task where the parameter is fixed to true. Logging output would otherwise intervene with the 
+log summary processing performed by the task.
 
-The default implementation of 'process' is to call 'pre_process' and then call 'process_item' on each child item.
-
-The default implementation for 'process_item' is to run each child task for each given child item. This will raise an
-exception unless the workflow has defined some sub-tasks for this task. This means that in the workflow definition tree
-each leaf task should either implement it's own 'process_item' method or override the 'process' method. Only non-leaf
-nodes in the workflow definition tree are allowed to use the default implementation (by defining only 'name' and 'tasks'
-value). See above on 'Workflow configuration' for more info.
-
-### Configuration
-
-The task takes some options that determine how the task will be handling special cases. The options should be passed to
-the Task constructor as part of the initialization. The workflow configuration will take care of that.
-
-* quiet: Boolean - default: false
-* always_run: Boolean - default: false
-* items_first: Boolean - default: false
-
-The quiet option surpresses all logging for this task.
-
-When the option always_run is set, the task will run even when a previous task failed to run on the item before. Note
-that successfully running such a task will unmark the item as failed. The status history of the item will show which
-tasks failed. Only use this option if you are sure the task will fully recover if the previous tasks failed or did not
-run due to a previous failure.
+#### Aborting the task whenever any item fails
  
-The items_fist option determines the processing order. If a task has multiple subtasks and the given workitem has 
-multiple subitems, setting the items_first option will cause it to take the first subitem, run the first subtask on it,
-then the second subtask and so on. Next it will run the first, second, ... subtask on the second subitem and so on. If
-the option is not set or set to false, the first subtask will run on each subitem, then the second subtask on each 
-subitem, and so on.
+When a task is so critical in the workflow process that any failure renders further processing useless, the parameter 
+'abort_on_error' can be turned on. Raising a ::Libis::WorkflowAbort exception would perform the same thing, but the 
+parameter makes the configuration more flexible.
+
+#### Always running a task, even on items that failed in an earlier stage in the workflow
+
+The opposite of aborting on error, the parameter 'always_run' can be set to true to force a task to process the items 
+even if the item has a failed status from a previous task. Note that this will cause the item's status to no longer be 
+failing until a task fails on the item again. The old failed status will be tracable in the status history.
+
+The parameter only configures the task on which it is set. If the task is a subtask it will only be forced to run if 
+any of it's previous sibling tasks failed. In order to force the run, even if the item failed in another branch of the 
+task hiearchy, the parent tasks should have their 'always_run' parameter also set to true.
+
+### Pre- and postprocessing
+
+The default implementation of 'process' is to call 'pre_process' and then call 'process_item' on each child item, 
+followed by calling 'post_process'. The methods 'pre_process' and 'post_process' are no-operation methods by default, 
+but can be overwritten if needed.
 
 ### Convenience functions
 
@@ -260,6 +355,7 @@ stderr string.
 #### names()
 
 An array of strings with the hierarchical path of tasks leading to the current task. Can be usefull for log messages.
+The method 'namepath' returns a '/' separated path of tasks.
 
 #### (debug/info/warn/error/fatal)(message, *args)
 

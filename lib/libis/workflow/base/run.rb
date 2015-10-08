@@ -2,23 +2,31 @@
 
 require 'fileutils'
 
-require 'libis/workflow/workitems/work_item'
+require 'libis/workflow/base/work_item'
 
 module Libis
   module Workflow
     module Base
+
+      # Base module for all workflow runs. It is created by an associated workflow when the workflow is executed.
+      #
+      # This module lacks the implementation for the data attributes. It functions as an interface that describes the
+      # common functionality regardless of the storage implementation. These attributes require some implementation:
+      #
+      # - start_date: [Time] the timestamp of the execution of the run
+      # - workflow: [Object] a reference to the Workflow this Run belongs to
+      #
+      # Note that ::Libis::Workflow::Base::WorkItem is a parent module and therefore requires implementation of the
+      # attributes of that module too.
+      #
+      # A simple in-memory implementation can be found in ::Libis::Workflow::Run
       module Run
-        include ::Libis::Workflow::WorkItem
+        include ::Libis::Workflow::Base::WorkItem
 
-        def start_date; raise RuntimeError.new "Method not implemented: #{caller[0]}"; end
-        def start_date=(_); raise RuntimeError.new "Method not implemented: #{caller[0]}"; end
-
-        def tasks; raise RuntimeError.new "Method not implemented: #{caller[0]}"; end
-        def tasks=(_); raise RuntimeError.new "Method not implemented: #{caller[0]}"; end
-
-        def workflow; raise RuntimeError.new "Method not implemented: #{caller[0]}"; end
+        attr_accessor :tasks
 
         def work_dir
+          # noinspection RubyResolve
           dir = File.join(Config.workdir, self.name)
           FileUtils.mkpath dir unless Dir.exist?(dir)
           dir
@@ -36,6 +44,9 @@ module Libis
           self.name
         end
 
+        # Execute the workflow.
+        # @param [Hash] opts a list with parameter name and value tuples that specify the values for the workflow input
+        #     parameters.
         def run(opts = {})
 
           self.start_date = Time.now
@@ -48,6 +59,7 @@ module Libis
           self.status = :STARTED
 
           self.tasks.each do |task|
+            # note: do not return as we want to give any remaining task in the queue the oportunity to run
             next if self.failed? and not task.parameter(:always_run)
             task.run self
           end

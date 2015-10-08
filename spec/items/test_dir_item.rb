@@ -1,8 +1,7 @@
 # encoding: utf-8
-require 'libis/workflow/workitems'
+require 'libis/workflow/dir_item'
 
-class TestDirItem
-  include ::Libis::Workflow::DirItem
+class TestDirItem < ::Libis::Workflow::DirItem
 
   def name=(dir)
     raise RuntimeError, "'#{dir}' is not a directory" unless File.directory? dir

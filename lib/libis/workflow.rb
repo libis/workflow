@@ -7,15 +7,22 @@ module Libis
     autoload :MessageRegistry, 'libis/workflow/message_registry'
     autoload :Config, 'libis/workflow/config'
 
-    autoload :WorkItem, 'libis/workflow/workitems/work_item'
-    autoload :FileItem, 'libis/workflow/workitems/file_item'
-    autoload :DirItem, 'libis/workflow/workitems/dir_item'
+    module Base
+      autoload :WorkItem, 'libis/workflow/base/work_item'
+      autoload :FileItem, 'libis/workflow/base/file_item'
+      autoload :DirItem, 'libis/workflow/base/dir_item'
+      autoload :Logger, 'libis/workflow/base/logger'
+      autoload :Run, 'libis/workflow/base/run'
+      autoload :Workflow, 'libis/workflow/base/workflow'
+    end
+
+    autoload :WorkItem, 'libis/workflow/work_item'
+    autoload :FileItem, 'libis/workflow/file_item'
+    autoload :DirItem, 'libis/workflow/dir_item'
 
     autoload :Workflow, 'libis/workflow/workflow'
     autoload :Run, 'libis/workflow/run'
     autoload :Task, 'libis/workflow/task'
-
-    autoload :Parameter, 'libis/workflow/parameter'
 
     autoload :Worker, 'libis/workflow/worker'
 
@@ -25,4 +32,3 @@ module Libis
 
   end
 end
-

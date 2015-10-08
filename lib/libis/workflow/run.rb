@@ -4,20 +4,19 @@ require 'libis/workflow/config'
 require 'libis/workflow/workflow'
 
 require 'libis/workflow/base/run'
+require 'libis/workflow/work_item'
 
 module Libis
   module Workflow
 
-    class Run
+    class Run < ::Libis::Workflow::WorkItem
       include ::Libis::Workflow::Base::Run
 
-      attr_accessor :start_date, :tasks, :workflow
+      attr_accessor :start_date, :workflow
 
       def initialize
         @start_date = Time.now
-        @tasks = nil
         @workflow = nil
-        # noinspection RubySuperCallWithoutSuperclassInspection
         super
       end
 
