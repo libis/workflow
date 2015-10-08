@@ -8,8 +8,11 @@ module Libis
 
       class Analyzer < Task
 
-        parameter quiet: true
-        parameter always_run: true
+        parameter quiet: true, frozen: true
+        parameter abort_on_error: false, frozen: true
+        parameter always_run: true, frozen: true
+        parameter subitems: false, frozen: true
+        parameter recursive: false, frozen: true
 
         def run(item)
 
@@ -30,7 +33,7 @@ module Libis
             end
           end
 
-        rescue Exception => ex
+        rescue RuntimeError => ex
 
           puts 'Failed to analyze item: %s - %s' % [item.class, item.name]
           puts 'Exception: %s' % ex.message
