@@ -12,11 +12,11 @@ module Libis
     class Run < ::Libis::Workflow::WorkItem
       include ::Libis::Workflow::Base::Run
 
-      attr_accessor :start_date, :workflow
+      attr_accessor :start_date, :job
 
       def initialize
         @start_date = Time.now
-        @workflow = nil
+        @job = nil
         super
       end
 

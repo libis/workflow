@@ -12,6 +12,7 @@ module Libis
       autoload :FileItem, 'libis/workflow/base/file_item'
       autoload :DirItem, 'libis/workflow/base/dir_item'
       autoload :Logger, 'libis/workflow/base/logger'
+      autoload :Job, 'libis/workflow/base/job'
       autoload :Run, 'libis/workflow/base/run'
       autoload :Workflow, 'libis/workflow/base/workflow'
     end
@@ -21,6 +22,7 @@ module Libis
     autoload :DirItem, 'libis/workflow/dir_item'
 
     autoload :Workflow, 'libis/workflow/workflow'
+    autoload :Job, 'libis/workflow/job'
     autoload :Run, 'libis/workflow/run'
     autoload :Task, 'libis/workflow/task'
 

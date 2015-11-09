@@ -33,7 +33,6 @@ describe 'TestWorkflow' do
                 ]
             }
         ],
-        run_object: 'TestRun',
         input: {
             dirname: {default: '.', propagate_to: 'CollectFiles#location'},
             checksum_type: {default: 'SHA1', propagate_to: 'ChecksumTester'}
@@ -42,8 +41,20 @@ describe 'TestWorkflow' do
     workflow
   }
 
+  let(:job) {
+    job = ::Libis::Workflow::Job.new
+    job.configure(
+        name: 'TestJob',
+        description: 'Job for testing',
+        workflow: workflow,
+        run_object: 'TestRun',
+        input: {dirname: dirname, checksum_type: 'SHA256'},
+    )
+    job
+  }
+
   let!(:run) {
-    workflow.run(dirname: dirname, checksum_type: 'SHA256')
+    job.execute
   }
 
   it 'should contain three tasks' do

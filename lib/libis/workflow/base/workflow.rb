@@ -19,8 +19,6 @@ module Libis
       # - config: [Hash] detailed configuration for the workflow. The application assumes it behaves as a Hash and will
       #     access it with [], merge! and delete methods. If your implementation decides to implement it with another
       #     object, it should implement above methods. The config Hash requires the following keys:
-      #   - run_object: [String] the full class name of the Run implementation object that should be created when the
-      #       Workflow is executed.
       #   - input: [Hash] all input parameter definitions where the key is the parameter name and the value is another
       #       Hash with arguments for the parameter definition. It typically contains the following arguments:
       #       - default: default value if no value specified when the workflow is executed
@@ -46,6 +44,9 @@ module Libis
       #       ::Libis::Workflow::Task class will be instatiated. It will do nothing itself, but will execute the
       #       subtasks on the item(s). In such case a 'name' is mandatory.
       #
+      # These values should be set by calling the #configure method which takes a Hash as argument with :name,
+      # :description, :input and :tasks keys.
+      #
       # A minimal in-memory implementation could be:
       #
       # class Workflow
@@ -55,7 +56,7 @@ module Libis
       #
       #   def initialize
       #     @name = ''
-      #     @descripition = ''
+      #     @description = ''
       #     @config = Hash.new
       #   end
       #
@@ -105,44 +106,15 @@ module Libis
           {}
         end
 
-        def run_name(timestamp = Time.now)
-          "#{self.workflow.name}-#{timestamp.strftime('%Y%m%d%H%M%S')}"
-        end
-
-        def perform(opts = {})
-          self.run opts
-        end
-
-        def create_run_object
-          self.config[:run_object].constantize.new
-        end
-
-        # @param [Hash] opts
-        def run(opts = {})
-
-          run_object = self.create_run_object
-          raise RuntimeError.new "Could not create instance of run object '#{self.config[:run_object]}'" unless run_object
-
-          run_object.workflow = self
-          run_object.options = opts
-          run_object.save
-
-          run_object.run opts
-
-          run_object
-        end
-
         # @param [Hash] opts
         def prepare_input(opts)
           options = opts.dup
           self.input.each do |key, parameter|
-            key
-            # provided in opts
-            options[key] = parameter[:default] unless options.has_key? key
+            options[key] = parameter[:default] unless options.has_key?(key)
             options[key] = parameter.parse(options[key])
             propagate_to = []
             propagate_to = parameter[:propagate_to] if parameter[:propagate_to].is_a? Array
-            propagate_to = parameter[:propagate_to].split(/\s*,\s*/) if parameter[:propagate_to].is_a? String
+            propagate_to = parameter[:propagate_to].split(/[\s,;]+/) if parameter[:propagate_to].is_a? String
             propagate_to.each do |target|
               task_name, param_name = target.split('#')
               param_name ||= key

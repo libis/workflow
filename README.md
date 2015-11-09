@@ -42,12 +42,12 @@ provided. It contains all the basic logic required for proper configuration and 
 implementation is provided in the class ::Libis::Workflow::Workflow for your convenience to be used as-is or to derive
 your own from.
 
-The workflow object will be able to execute the tasks in proper order on all the WorkItems supplied/collected. Each 
-task can be implemented with code to run or simply contain a list of child tasks. When a workflow is executed a special
-run object is created that captures the configuration, logs and workitems generated while executing the tasks. Essential
-logic is provided in the module ::Libis::Workflow::Base::Run with a simple in-memory implementation in 
-::Libis::Workflow::Run. The run object's class name has to be provided to the workflow configuration so that the 
-workflow can instantiate the correct object.
+The Job class is responsible for instantiating a run-time workflow execution object - a Run - that captures the 
+configuration, logs and workitems generated while executing the tasks. Essential logic is provided in the module 
+::Libis::Workflow::Base::Run with a simple in-memory implementation in ::Libis::Workflow::Run. The run object's class 
+name has to be provided to the job configuration so that the job can instantiate the correct object. The run object 
+will be able to execute the tasks in proper order on all the WorkItems supplied/collected. Each task can be implemented 
+with code to run or simply contain a list of child tasks. 
 
 One tasks is predefined:
 ::Libis::Workflow::Tasks::Analyzer - analyzes the workflow run and summarizes the results. It is always included as the
@@ -67,22 +67,29 @@ You should start by including the following line in your source code:
 This will load all of the Libis Workflow framework into your environment, but including only the required parts is OK as
 well. This is shown in the examples below.
 
-### Workflows
+### Workflows and Jobs
 
 An implementation of ::Libis::Workflow::Base::Workflow contains the definition of a workflow. Once instantiated, it can 
-be run by calling the 'run' method. This will create an intance of an implementation of ::Libis::Workflow::Base::Run, 
-configure it and call the 'run' method on it. The Workflow constructor takes no arguments, but is should be configured 
-by calling the 'configure' method with the workflow configuration as an argument. The 'run' method takes an option Hash 
-as argument.
+be run by calling the 'execute' method on a job object created for that workflow. This will create an intance of an 
+implementation of ::Libis::Workflow::Base::Run, configure it and call the 'run' method on it. The Workflow constructor 
+takes no arguments, but is should be configured by calling the 'configure' method with the workflow configuration as an 
+argument. The job's 'execute' method takes an option Hash as argument with extra/overriding configuration values.
 
+### Job configuration
+A job configuration is a Hash with:
+* name: String to identify the workflow
+* description: String with detailed textual information
+* workflow: Object reference to a Workflow that contains the task configuration
+* run_object: String with class name of the ::Libis::Workflow::Base::Run implementation to be created. An istance of 
+  this class will be created for each run and serves as the root work item for that particular run.
+* input: Hash with input parameter values for the workflow
+  
 #### Workflow configuration
 
 A workflow configuration is a Hash with:
 * name: String to identify the workflow
 * description: String with detailed textual information
 * tasks: Array of task descriptions
-* run_object: String with class name of the ::Libis::Workflow::Base::Run implementation to be created. An istance of 
-  this class will be created for each run and serves as the root work item for that particular run. 
 * input: Hash with input variable definitions
 
 ##### Task description
@@ -108,8 +115,8 @@ the chapter on 'Tasks' below for more information on tasks.
 
 ##### Input variable definition
 
-The input variables define parameters for the workflow. When a workflow is run, it can give values for any of these
-input variable and the workflow run will use the new values instead of the defaults.
+The input variables define parameters for the workflow. When a job is executed, it can provide values for any of these
+input variables and the workflow run will use the new values instead of the defaults.
 
 The key of the input Hash is the unique name of the variable. The value is another Hash with the parameter definition.
 See ::Libis::Tools::Parameter for the content of this Hash.
@@ -122,8 +129,8 @@ if absent.
 
 #### Run-time configuration
 
-The 'run' method takes an optional Hash as argument which will complement and override the options Hash described in the
-previous chapter.
+The job's 'execute' method takes an optional Hash as argument which will complement and override the options Hash 
+described in the previous chapter.
  
 Once the workflow is configured and the root work item instantiated, the method will run each top-level task on the root
 work item in sequence until all tasks have completed successfully or a task has failed.

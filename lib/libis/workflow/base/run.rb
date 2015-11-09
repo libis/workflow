@@ -14,7 +14,7 @@ module Libis
       # common functionality regardless of the storage implementation. These attributes require some implementation:
       #
       # - start_date: [Time] the timestamp of the execution of the run
-      # - workflow: [Object] a reference to the Workflow this Run belongs to
+      # - job: [Object] a reference to the Job this Run belongs to
       #
       # Note that ::Libis::Workflow::Base::WorkItem is a parent module and therefore requires implementation of the
       # attributes of that module too.
@@ -33,7 +33,7 @@ module Libis
         end
 
         def name
-          self.workflow.run_name(self.start_date)
+          self.job.run_name(self.start_date)
         end
 
         def names
@@ -44,16 +44,18 @@ module Libis
           self.name
         end
 
+        def workflow
+          self.job.workflow
+        end
+
         # Execute the workflow.
-        # @param [Hash] opts a list with parameter name and value tuples that specify the values for the workflow input
-        #     parameters.
-        def run(opts = {})
+        def run
 
           self.start_date = Time.now
 
-          self.options = workflow.prepare_input(self.options.merge(opts))
+          self.options = workflow.prepare_input(self.options)
 
-          self.tasks = self.workflow.tasks(self)
+          self.tasks = workflow.tasks(self)
           configure_tasks self.options
 
           self.status = :STARTED
