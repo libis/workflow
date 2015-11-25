@@ -61,9 +61,10 @@ module Libis
 
           self.workitem = item
 
+          return unless pre_process(item)
+
           log_started item
 
-          pre_process item
           i = process_item item
           item = i if i.is_a? Libis::Workflow::Base::WorkItem
           post_process item
@@ -140,6 +141,7 @@ module Libis
       end
 
       def pre_process(_)
+        true
         # optional implementation
       end
 
