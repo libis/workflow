@@ -61,13 +61,12 @@ module Libis
 
           self.workitem = item
 
-          return unless pre_process(item)
-
-          log_started item
-
-          i = process_item item
-          item = i if i.is_a? Libis::Workflow::Base::WorkItem
-          post_process item
+          if pre_process(item)
+            log_started item
+            i = process_item item
+            item = i if i.is_a? Libis::Workflow::Base::WorkItem
+            post_process item
+          end
 
         rescue WorkflowError => e
           error e.message
