@@ -28,6 +28,8 @@ module Libis
       end
 
       def initialize(parent, cfg = {})
+        @subitems_stopper = false
+        @subtasks_stopper = false
         self.parent = parent
         self.tasks = []
         configure cfg
@@ -61,12 +63,7 @@ module Libis
 
           self.workitem = item
 
-          if pre_process(item)
-            log_started item
-            i = process_item item
-            item = i if i.is_a? Libis::Workflow::Base::WorkItem
-            post_process item
-          end
+          process_item item
 
         rescue WorkflowError => e
           error e.message
@@ -81,8 +78,6 @@ module Libis
           debug e.backtrace.join("\n")
           log_failed item
         end
-
-        log_done item unless item.failed?
 
       end
 
@@ -101,9 +96,9 @@ module Libis
         if o and o.is_a? Hash
           default_values.each do |name, _|
             next unless o.key?(name)
-            next unless o[name]
-            parameter = get_parameter_definition name
-            next unless (value = parameter.parse(o[name]))
+            next if o[name].nil?
+            paramdef = get_parameter_definition name
+            value = paramdef.parse(o[name])
             self.parameter(name, value)
           end
         end
@@ -114,6 +109,34 @@ module Libis
       end
 
       protected
+
+      def stop_processing_subitems
+        @subitems_stopper = true if parameter(:recursive)
+      end
+
+      def check_processing_subitems
+        if @subitems_stopper
+          @subitems_stopper = false
+          return false
+        end
+        true
+      end
+
+      def stop_processing_subtasks
+        @subtasks_stopper= true
+      end
+
+      def check_processing_subtasks
+        if @subtasks_stopper
+          @subtasks_stopper = false
+          return false
+        end
+        true
+      end
+
+      def skip_processing_item
+        @item_skipper = true
+      end
 
       def log_started(item)
         item.status = to_status :started
@@ -129,9 +152,18 @@ module Libis
       end
 
       def process_item(item)
-        process item
-        run_subitems(workitem) if parameter(:recursive)
-        run_subtasks workitem
+        @item_skipper = false
+        pre_process(item)
+        unless @item_skipper
+          log_started item
+          process item
+        end
+        run_subitems(item) if parameter(:recursive)
+        unless @item_skipper
+          run_subtasks item
+          log_done item unless item.failed?
+        end
+        post_process item
       end
 
       def process(item)
@@ -169,6 +201,7 @@ module Libis
       end
 
       def run_subitems(parent_item)
+        return unless check_processing_subitems
         items = subitems parent_item
         failed = passed = 0
         items.each_with_index do |item, i|
@@ -196,6 +229,7 @@ module Libis
       end
 
       def run_subtasks(item)
+        return unless check_processing_subtasks
         tasks = subtasks item
         tasks.each_with_index do |task, i|
           debug 'Running subtask (%d/%d): %s', item, i+1, tasks.count, task.name
@@ -212,11 +246,11 @@ module Libis
 
       def configure(cfg)
         self.name = cfg[:name] || (cfg[:class] || self.class).to_s.split('::').last
-        default_values.merge(
-            cfg[:options] || {}
-        ).merge(
-            cfg.reject { |k, _| [:options].include? k.to_sym }
-        ).symbolize_keys!.each { |k,v| self[k] = v }
+        (cfg[:options] || {}).merge(
+            cfg.reject { |k, _| [:options, :name, :class].include? k.to_sym }
+        ).symbolize_keys.each do |k,v|
+          self.parameter(k,v)
+        end
       end
 
       def to_status(text)
