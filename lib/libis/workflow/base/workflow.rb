@@ -98,31 +98,37 @@ module Libis
             name = input_def.first.to_sym
             default = input_def.last[:default]
             parameter = ::Libis::Tools::Parameter.new name, default
-            input_def.last.each { |k, v| parameter[k.to_sym] = v}
-            hash[input_def.first.to_sym] = parameter
+            input_def.last.each { |k, v| parameter[k.to_sym] = v }
+            hash[name] = parameter
             hash
           end
         rescue
           {}
         end
 
-        # @param [Hash] opts
-        def prepare_input(opts)
-          options = opts.dup
+        # @param [Hash] options
+        def prepare_input(options)
+          result = {}
           self.input.each do |key, parameter|
-            options[key] = parameter[:default] unless options.has_key?(key)
-            options[key] = parameter.parse(options[key])
+            if options.has_key?(key)
+              value = parameter.parse(options[key])
+            elsif !parameter[:default].nil?
+              value = parameter[:default]
+            else
+              next
+            end
             propagate_to = []
             propagate_to = parameter[:propagate_to] if parameter[:propagate_to].is_a? Array
             propagate_to = parameter[:propagate_to].split(/[\s,;]+/) if parameter[:propagate_to].is_a? String
+            result[key] = value if propagate_to.empty?
             propagate_to.each do |target|
               task_name, param_name = target.split('#')
               param_name ||= key
-              options[task_name] ||= {}
-              options[task_name][param_name.to_sym] = options[key]
+              result[task_name] ||= {}
+              result[task_name][param_name.to_sym] = value
             end
           end
-          options
+          result
         end
 
         def tasks(parent = nil)
