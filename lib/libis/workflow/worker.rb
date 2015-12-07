@@ -11,12 +11,12 @@ module Libis
       include Sidekiq::Worker
 
       def perform(job_config, options = {})
-        job = self.class.configure(job_config, options)
+        job = configure(job_config, options)
         options[:interactive] = false
         job.execute options
       end
 
-      def self.configure(job_config, options = {})
+      def configure(job_config, options = {})
         log_path = options.delete :log_path
         if log_path
           Config.logger = ::Logger.new(
