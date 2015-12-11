@@ -161,7 +161,7 @@ module Libis
         return unless parent_item.count > 0
 
         status = Hash.new(0)
-        self.subitems(parent_item).each_with_index do |item, i|
+        subitems(parent_item).each_with_index do |item, i|
           debug 'Processing subitem (%d/%d): %s', parent_item, i+1, parent_item.count, item.to_s
           run_item item
           status[item.status(self.namepath)] += 1
