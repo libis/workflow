@@ -268,7 +268,7 @@ module Libis
       end
 
       def subitems(item = nil)
-        (item || workitem).items
+        (item || workitem).get_items
       end
 
       def default_values

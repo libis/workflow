@@ -128,6 +128,10 @@ module Libis
 
         alias_method :<<, :add_item
 
+        def get_items
+          self.items.dup
+        end
+
         # Return item's parent
         # @return [Libis::Workflow::Base::WorkItem]
         def get_parent
