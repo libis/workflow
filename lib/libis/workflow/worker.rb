@@ -25,7 +25,7 @@ module Libis
               (options.delete(:log_shift_size) || 1024 ** 2)
           )
           Config.logger.formatter = ::Logger::Formatter.new
-          Config.logger.level = ::Logger::DEBUG
+          Config.logger.level = (options.delete(:log_level) || ::Logger::DEBUG)
         end
         get_job(job_config)
       end

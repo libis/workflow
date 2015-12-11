@@ -22,9 +22,11 @@ module Libis
       parameter always_run: false, description: 'Run this task, even if the item failed a previous task.'
       parameter subitems: false, description: 'Do not process the given item, but only the subitems.'
       parameter recursive: false, description: 'Run the task on all subitems recursively.'
+      parameter retry_count: 0, description: 'Number of times to retry the task.'
+      parameter retry_interval: 10, description: 'Number of seconds to wait between retries.'
 
       def self.task_classes
-        ObjectSpace.each_object(::Class).select {|klass| klass < self}
+        ObjectSpace.each_object(::Class).select { |klass| klass < self }
       end
 
       def initialize(parent, cfg = {})
@@ -40,20 +42,51 @@ module Libis
       end
 
       def run(item)
-
         check_item_type ::Libis::Workflow::Base::WorkItem, item
+        return unless item.check_status(:DONE, self.namepath) || parameter(:always_run)
+        run_once(item)
+      end
 
-        return if item.failed? unless parameter(:always_run)
+      def retry(item)
+        check_item_type ::Libis::Workflow::Base::WorkItem, item
+        return if item.check_status(:DONE, self.namepath)
+        run_once(item)
+      end
 
-        if parameter(:subitems)
-            log_started item
-            run_subitems item
-            log_done(item) unless item.failed?
-        else
-          run_item(item)
+      def run_once(item)
+
+        (parameter(:retry_count)+1).times do
+
+          if parameter(:subitems)
+            begin
+              set_status item, :STARTED
+              run_subitems item
+              update_status item, :DONE
+
+            rescue WorkflowError => e
+              error e.message, item
+              update_status item, :FAILED
+
+            rescue WorkflowAbort => e
+              update_status item, :FAILED
+              raise e if parent
+
+            rescue ::Exception => e
+              update_status item, :FAILED
+              fatal "Exception occured: #{e.message}", item
+              debug e.backtrace.join("\n")
+            end
+          else
+            run_item(item)
+          end
+
+          item.save
+
+          return if item.check_status(:DONE, self.namepath)
+
+          sleep(parameter(:retry_interval))
+
         end
-
-        item.save
 
       end
 
@@ -66,17 +99,17 @@ module Libis
           process_item item
 
         rescue WorkflowError => e
-          error e.message
-          log_failed item
+          error e.message, item
+          update_status item, :FAILED
 
         rescue WorkflowAbort => e
-          item.status = to_status :failed
+          update_status item, :FAILED
           raise e if parent
 
         rescue ::Exception => e
-          fatal 'Exception occured: %s', e.message
+          update_status item, :FAILED
+          fatal "Exception occured: #{e.message}", item
           debug e.backtrace.join("\n")
-          log_failed item
         end
 
       end
@@ -85,7 +118,9 @@ module Libis
         (self.parent.names rescue Array.new).push(name).compact
       end
 
-      def namepath; self.names.join('/'); end
+      def namepath;
+        self.names.join('/');
+      end
 
       def apply_options(opts)
         o = {}
@@ -109,6 +144,122 @@ module Libis
       end
 
       protected
+
+      def configure(cfg)
+        self.name = cfg[:name] || (cfg[:class] || self.class).to_s.split('::').last
+        (cfg[:options] || {}).merge(
+            cfg.reject { |k, _| [:options, :name, :class].include? k.to_sym }
+        ).symbolize_keys.each do |k, v|
+          self.parameter(k, v)
+        end
+      end
+
+      def process_item(item)
+        @item_skipper = false
+        pre_process(item)
+        unless @item_skipper
+          set_status item, :STARTED
+          process item
+        end
+        run_subitems(item) if parameter(:recursive)
+        unless @item_skipper
+          run_subtasks item
+          update_status item, :DONE
+        end
+        post_process item
+      end
+
+      def process(item)
+        # needs implementation unless there are subtasks
+        raise RuntimeError, 'Should be overwritten' if self.tasks.empty?
+      end
+
+      def pre_process(_)
+        true
+        # optional implementation
+      end
+
+      def post_process(_)
+        # optional implementation
+      end
+
+      def run_subitems(parent_item)
+        return unless check_processing_subitems
+        items = subitems parent_item
+        status = Hash.new(0)
+        items.each_with_index do |item, i|
+          debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.count, item.to_s
+          run_item item
+          status[item.status] += 1
+          if item.check_status(:FAILED) && parameter(:abort_on_error)
+            error 'Aborting ...', parent_item
+            raise WorkflowAbort.new "Aborting: task #{name} failed on #{item}"
+          end
+        end
+
+        return unless items.count > 0
+
+        substatus_check(status, parent_item, 'item')
+      end
+
+      def run_subtasks(item)
+
+        return unless check_processing_subtasks
+
+        tasks = subtasks item
+        status = Hash.new(0)
+
+        tasks.each_with_index do |task, i|
+          debug 'Running subtask (%d/%d): %s', item, i+1, tasks.count, task.name
+          task.run item
+          status[item.status(task.namepath)] += 1
+          if item.check_status(:FAILED, task.namepath) && task.parameter(:abort_on_error)
+            error 'Aborting ...', item
+            raise WorkflowAbort.new "Aborting: task #{task.name} failed on #{item}"
+          end
+        end
+
+        substatus_check(status, item, 'task')
+      end
+
+      def substatus_check(status, item, task_or_item)
+        if (failed = status[:FAILED] > 0)
+          warn "%d sub#{task_or_item}(s) failed", item, failed
+          update_status(item, :FAILED)
+        end
+
+        if (halted = status[:ASYNC_HALT] > 0)
+          warn "%d sub#{task_or_item}(s) halted in async process", item, halted
+          update_status(item, :ASYNC_HALT)
+        end
+
+        if (waiting = status[:ASYNC_WAIT] > 0)
+          warn "waiting for %d sub#{task_or_item}(s) in async process", item, waiting
+          update_status(item, :ASYNC_WAIT)
+        end
+
+        update_status(item, :DONE)
+      end
+
+      def capture_cmd(cmd, *opts)
+        out = StringIO.new
+        err = StringIO.new
+        $stdout = out
+        $stderr = err
+        status = system cmd, *opts
+        return [status, out.string, err.string]
+      ensure
+        $stdout = STDOUT
+        $stderr = STDERR
+      end
+
+      def get_root_item(item = nil)
+        (item || self.workitem).root
+      end
+
+      def get_work_dir(item = nil)
+        get_root_item(item).work_dir
+      end
 
       def stop_processing_subitems
         @subitems_stopper = true if parameter(:recursive)
@@ -138,123 +289,18 @@ module Libis
         @item_skipper = true
       end
 
-      def log_started(item)
-        item.status = to_status :started
+      def set_status(item, state)
+        item.status = to_status(state)
+        state
       end
 
-      def log_failed(item, message = nil)
-        warn (message), item if message
-        item.status = to_status :failed
+      def update_status(item, state)
+        return nil if item.compare_status(state, self.namepath) > 0
+        set_status(item, state)
       end
 
-      def log_done(item)
-        item.status = to_status :done
-      end
-
-      def process_item(item)
-        @item_skipper = false
-        pre_process(item)
-        unless @item_skipper
-          log_started item
-          process item
-        end
-        run_subitems(item) if parameter(:recursive)
-        unless @item_skipper
-          run_subtasks item
-          log_done item unless item.failed?
-        end
-        post_process item
-      end
-
-      def process(item)
-        # needs implementation unless there are subtasks
-        raise RuntimeError, 'Should be overwritten' if self.tasks.empty?
-      end
-
-      def pre_process(_)
-        true
-        # optional implementation
-      end
-
-      def post_process(_)
-        # optional implementation
-      end
-
-      def get_root_item
-        self.workitem.root
-      end
-
-      def get_work_dir
-        get_root_item.work_dir
-      end
-
-      def capture_cmd(cmd, *opts)
-        out = StringIO.new
-        err = StringIO.new
-        $stdout = out
-        $stderr = err
-        status = system cmd, *opts
-        return [status, out.string, err.string]
-      ensure
-        $stdout = STDOUT
-        $stderr = STDERR
-      end
-
-      def run_subitems(parent_item)
-        return unless check_processing_subitems
-        items = subitems parent_item
-        failed = passed = 0
-        items.each_with_index do |item, i|
-          debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.count, item.to_s
-          run_item item
-          if item.failed?
-            failed += 1
-            if parameter(:abort_on_error)
-              error 'Aborting ...', parent_item
-              raise WorkflowAbort.new "Aborting: task #{name} failed on #{item}"
-            end
-          else
-            passed += 1
-          end
-        end
-        if failed > 0
-          warn '%d subitem(s) failed', parent_item, failed
-          if failed == items.count
-            error 'All subitems have failed', parent_item
-            log_failed parent_item
-            return
-          end
-        end
-        debug '%d of %d subitems passed', parent_item, passed, items.count if items.count > 0
-      end
-
-      def run_subtasks(item)
-        return unless check_processing_subtasks
-        tasks = subtasks item
-        tasks.each_with_index do |task, i|
-          debug 'Running subtask (%d/%d): %s', item, i+1, tasks.count, task.name
-          task.run item
-          if item.failed?
-            if task.parameter(:abort_on_error)
-              error 'Aborting ...'
-              raise WorkflowAbort.new "Aborting: task #{task.name} failed on #{item}"
-            end
-            return
-          end
-        end
-      end
-
-      def configure(cfg)
-        self.name = cfg[:name] || (cfg[:class] || self.class).to_s.split('::').last
-        (cfg[:options] || {}).merge(
-            cfg.reject { |k, _| [:options, :name, :class].include? k.to_sym }
-        ).symbolize_keys.each do |k,v|
-          self.parameter(k,v)
-        end
-      end
-
-      def to_status(text)
-        [text.to_s.capitalize, self.names]
+      def to_status(state)
+        [state, self.namepath]
       end
 
       def check_item_type(klass, item = nil)
@@ -271,16 +317,12 @@ module Libis
 
       private
 
-      def subtasks(item = nil)
-        self.tasks.map do |task|
-          ((item || self.workitem).failed? and not task.parameter(:always_run)) ? nil : task
-        end.compact
+      def subtasks(_ = nil)
+        self.tasks
       end
 
       def subitems(item = nil)
-        items = (item || workitem).items
-        return items if self.parameter(:always_run)
-        items.reject { |i| i.failed? }
+        (item || workitem).items
       end
 
       def default_values
@@ -288,7 +330,7 @@ module Libis
       end
 
       def self.default_values
-        parameter_defs.inject({}) do |hash,parameter|
+        parameter_defs.inject({}) do |hash, parameter|
           hash[parameter.first] = parameter.last[:default]
           hash
         end

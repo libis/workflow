@@ -12,10 +12,13 @@ module Libis
       autoload :FileItem, 'libis/workflow/base/file_item'
       autoload :DirItem, 'libis/workflow/base/dir_item'
       autoload :Logger, 'libis/workflow/base/logger'
+      autoload :Logging, 'libis/workflow/base/logging'
       autoload :Job, 'libis/workflow/base/job'
       autoload :Run, 'libis/workflow/base/run'
       autoload :Workflow, 'libis/workflow/base/workflow'
     end
+
+    autoload :Status, 'libis/workflow/status'
 
     autoload :WorkItem, 'libis/workflow/work_item'
     autoload :FileItem, 'libis/workflow/file_item'

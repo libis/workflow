@@ -37,12 +37,8 @@ module Libis
         self.status_log << {
             timestamp: ::Time.now,
             tasklist: tasklist,
-            text: message
+            status: message
         }.cleanup
-      end
-
-      def status_label(status_entry)
-        "#{status_entry[:tasklist].last rescue nil}#{status_entry[:text] rescue nil}"
       end
 
     end

@@ -70,6 +70,11 @@ module Libis
 
         end
 
+        def resurrect
+          # collect status for each task in the chain
+
+        end
+
         protected
 
         def configure_tasks(opts)
