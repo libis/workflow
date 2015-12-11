@@ -16,7 +16,7 @@ module Libis
       # @param [Array] x Array with status and task
       def status=(x)
         s, task = x
-        add_status_log(s, task)
+        self.add_status_log(s, task)
         self.save
       end
 
