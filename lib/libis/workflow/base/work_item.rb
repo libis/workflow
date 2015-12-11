@@ -132,6 +132,10 @@ module Libis
           self.items.dup
         end
 
+        def item_count
+          self.items.size
+        end
+
         # Return item's parent
         # @return [Libis::Workflow::Base::WorkItem]
         def get_parent
