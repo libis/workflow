@@ -15,12 +15,9 @@ module Libis
       include ::Libis::Workflow::Base::Logger
       include ::Libis::Tools::ParameterContainer
 
-      attr_accessor :parent, :name, :workitem, :tasks
+      attr_accessor :parent, :name, :workitem
 
       parameter quiet: false, description: 'Prevemt generating log output.'
-      parameter abort_on_error: false, description: 'Stop all tasks when an error occurs.'
-      parameter always_run: false, description: 'Run this task, even if the item failed a previous task.'
-      parameter subitems: false, description: 'Do not process the given item, but only the subitems.'
       parameter recursive: false, description: 'Run the task on all subitems recursively.'
       parameter retry_count: 0, description: 'Number of times to retry the task.'
       parameter retry_interval: 10, description: 'Number of seconds to wait between retries.'
@@ -33,84 +30,67 @@ module Libis
         @subitems_stopper = false
         @subtasks_stopper = false
         self.parent = parent
-        self.tasks = []
         configure cfg
       end
 
       def <<(task)
-        self.tasks << task
+        raise Libis::WorkflowError, "Processing task '#{self.namepath}' is not allowed to have subtasks."
       end
 
+      # @param [Libis::Workflow::Base::WorkItem] item
       def run(item)
         check_item_type ::Libis::Workflow::Base::WorkItem, item
-        return unless item.check_status(:DONE, self.namepath) || parameter(:always_run)
-        run_once(item)
-      end
+        self.workitem = item
 
-      def retry(item)
-        check_item_type ::Libis::Workflow::Base::WorkItem, item
-        return if item.check_status(:DONE, self.namepath)
-        run_once(item)
-      end
-
-      def run_once(item)
+        case self.action
+          when :retry
+            return if item.check_status(:DONE, self.namepath)
+          when :failed
+            return
+          else
+        end
 
         (parameter(:retry_count)+1).times do
 
-          if parameter(:subitems)
-            begin
-              set_status item, :STARTED
-              run_subitems item
-              update_status item, :DONE
+          run_item(item)
 
-            rescue WorkflowError => e
-              error e.message, item
-              update_status item, :FAILED
-
-            rescue WorkflowAbort => e
-              update_status item, :FAILED
-              raise e if parent
-
-            rescue ::Exception => e
-              update_status item, :FAILED
-              fatal "Exception occured: #{e.message}", item
-              debug e.backtrace.join("\n")
-            end
-          else
-            run_item(item)
+          case item.status(self.namepath)
+            when :DONE
+              self.action = :run
+              return
+            when :ASYNC_WAIT
+              self.action = :retry
+            when :ASYNC_HALT
+              break
+            when :FAILED
+              break
+            else
+              return
           end
 
-          item.save
-
-          return if item.check_status(:DONE, self.namepath)
+          self.action = :retry
 
           sleep(parameter(:retry_interval))
 
         end
 
-      end
+        item.get_run.action = :failed
 
-      def run_item(item)
+      rescue WorkflowError => e
+        error e.message, item
+        update_status item, :FAILED
 
-        begin
+      rescue WorkflowAbort => e
+        update_status item, :FAILED
+        raise e if parent
 
-          self.workitem = item
+      rescue ::Exception => e
+        update_status item, :FAILED
+        fatal "Exception occured: #{e.message}", item
+        debug e.backtrace.join("\n")
 
-          process_item item
-
-        rescue WorkflowError => e
-          error e.message, item
-          update_status item, :FAILED
-
-        rescue WorkflowAbort => e
-          update_status item, :FAILED
-          raise e if parent
-
-        rescue ::Exception => e
-          update_status item, :FAILED
-          fatal "Exception occured: #{e.message}", item
-          debug e.backtrace.join("\n")
-        end
+      ensure
+        item.save
 
       end
 
@@ -138,9 +118,6 @@ module Libis
           end
         end
 
-        self.tasks.each do |task|
-          task.apply_options opts
-        end
       end
 
       protected
@@ -154,24 +131,20 @@ module Libis
         end
       end
 
-      def process_item(item)
+      def run_item(item)
         @item_skipper = false
-        pre_process(item)
-        unless @item_skipper
-          set_status item, :STARTED
-          process item
-        end
-        run_subitems(item) if parameter(:recursive)
-        unless @item_skipper
-          run_subtasks item
-          update_status item, :DONE
-        end
-        post_process item
-      end
 
-      def process(item)
-        # needs implementation unless there are subtasks
-        raise RuntimeError, 'Should be overwritten' if self.tasks.empty?
+        pre_process(item)
+
+        set_status item, :STARTED
+
+        self.process item unless @item_skipper
+
+        run_subitems(item) if parameter(:recursive)
+
+        update_status item, :DONE
+
+        post_process item
       end
 
       def pre_process(_)
@@ -186,40 +159,17 @@ module Libis
       def run_subitems(parent_item)
         return unless check_processing_subitems
         items = subitems parent_item
+        return unless items.count > 0
+
         status = Hash.new(0)
         items.each_with_index do |item, i|
           debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.count, item.to_s
           run_item item
-          status[item.status] += 1
-          if item.check_status(:FAILED) && parameter(:abort_on_error)
-            error 'Aborting ...', parent_item
-            raise WorkflowAbort.new "Aborting: task #{name} failed on #{item}"
-          end
+          status[item.status(self.namepath)] += 1
         end
 
-        return unless items.count > 0
-
+        debug '%d of %d subitems passed', parent_item, status[:DONE], items.count
         substatus_check(status, parent_item, 'item')
-      end
-
-      def run_subtasks(item)
-
-        return unless check_processing_subtasks
-
-        tasks = subtasks item
-        status = Hash.new(0)
-
-        tasks.each_with_index do |task, i|
-          debug 'Running subtask (%d/%d): %s', item, i+1, tasks.count, task.name
-          task.run item
-          status[item.status(task.namepath)] += 1
-          if item.check_status(:FAILED, task.namepath) && task.parameter(:abort_on_error)
-            error 'Aborting ...', item
-            raise WorkflowAbort.new "Aborting: task #{task.name} failed on #{item}"
-          end
-        end
-
-        substatus_check(status, item, 'task')
       end
 
       def substatus_check(status, item, task_or_item)
@@ -253,8 +203,16 @@ module Libis
         $stderr = STDERR
       end
 
+      def action=(action)
+        self.workitem.get_run.action = action
+      end
+
+      def action
+        self.workitem.get_run.action
+      end
+
       def get_root_item(item = nil)
-        (item || self.workitem).root
+        (item || self.workitem).get_root
       end
 
       def get_work_dir(item = nil)
@@ -273,30 +231,18 @@ module Libis
         true
       end
 
-      def stop_processing_subtasks
-        @subtasks_stopper= true
-      end
-
-      def check_processing_subtasks
-        if @subtasks_stopper
-          @subtasks_stopper = false
-          return false
-        end
-        true
-      end
-
       def skip_processing_item
         @item_skipper = true
+      end
+
+      def update_status(item, state)
+        return nil unless item.compare_status(state, self.namepath) < 0
+        set_status(item, state)
       end
 
       def set_status(item, state)
         item.status = to_status(state)
         state
-      end
-
-      def update_status(item, state)
-        return nil if item.compare_status(state, self.namepath) > 0
-        set_status(item, state)
       end
 
       def to_status(state)
@@ -317,7 +263,7 @@ module Libis
 
       private
 
-      def subtasks(_ = nil)
+      def subtasks
         self.tasks
       end
 

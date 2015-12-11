@@ -23,7 +23,7 @@ module Libis
       module Run
         include ::Libis::Workflow::Base::WorkItem
 
-        attr_accessor :tasks
+        attr_accessor :tasks, :action
 
         def work_dir
           # noinspection RubyResolve
@@ -49,7 +49,16 @@ module Libis
         end
 
         # Execute the workflow.
-        def run
+        #
+        # The action parameter defines how the execution of the tasks will behave:
+        #  - With the default :run action each task will be executed regardsless how the task performed on the item
+        #    previously.
+        #  - When using the :retry action a task will not perform on an item if it was successful the last time. This
+        #    allows you to retry a run when an temporary error (e.g. asynchronous wait or halt) occured.
+        #
+        # @param [Symbol] action the type of action to take during this run. :run or :retry
+        def run(action = :run)
+          self.action = action
 
           self.start_date = Time.now
 
@@ -58,20 +67,10 @@ module Libis
           self.tasks = workflow.tasks(self)
           configure_tasks self.options
 
-          self.status = :STARTED
 
           self.tasks.each do |task|
-            # note: do not return as we want to give any remaining task in the queue the oportunity to run
-            next if self.failed? and not task.parameter(:always_run)
             task.run self
           end
-
-          self.status = :DONE unless self.failed?
-
-        end
-
-        def resurrect
-          # collect status for each task in the chain
 
         end
 

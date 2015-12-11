@@ -49,7 +49,7 @@ name has to be provided to the job configuration so that the job can instantiate
 will be able to execute the tasks in proper order on all the WorkItems supplied/collected. Each task can be implemented 
 with code to run or simply contain a list of child tasks. 
 
-One tasks is predefined:
+One task is predefined:
 ::Libis::Workflow::Tasks::Analyzer - analyzes the workflow run and summarizes the results. It is always included as the
 last task by the workflow unless you supply a closing task called 'Analyzer' yourself.
 
@@ -103,15 +103,17 @@ is a Hash with:
   
 The ::Libis::Workflow::Task base class allready defines the following parameters:
 * quiet: Prevent generating log output. Default: false
-* abort_on_error: Stop all tasks when an error occurs. Default: false
-* always_run: Run this task, even if the item failed a previous task. Default: false
-* subitems: Do not process the given item, but only the subitems. Default: false
 * recursive: Run the task on all subitems recursively. Default: false
+* retry_count: Number of times to retry the task. Default: 0
+* retry_interval: Number of seconds to wait between retries. Default: 10
 
-If 'class' is not present, the default '::Libis::Workflow::Task' with the given name will be instantiated, which simply
-iterates over the child items of the given work item and performs each sub-task on each of the child items. If a 'class'
-value is given, an instance of that class will be created and the task will be handed the work item to process on. See 
-the chapter on 'Tasks' below for more information on tasks.
+If 'class' is not present, the default '::Libis::Workflow::TaskGroup' with the given name will be instantiated, which 
+performs each sub-task on the item. If the task is configured to be recursive, it will iterate over the child items and
+perform each sub-task on each of the child items. If a 'class' value is given, an instance of that class will be created 
+and the task will be handed the work item to process on. See the chapter on 'Tasks' below for more information on tasks.
+
+Note that a task with custom processing will not execute sub-tasks. If you configured a processing task with subtasks
+an exception will be thrown when trying to execute the job.
 
 ##### Input variable definition
 
@@ -276,17 +278,17 @@ perform on each work item:
 As seen above, the task should define a method called process_item that takes one argument. The argument will be a 
 reference to the work item that it needs to perform an action on. The task has several option to progress after 
 performing its actions:
-* return. This is considered a normal and successful operation result. If the item was replaced by a new item or if the 
- item tree has changed, it is recommended to return the new item. After a successful return the item's status will be 
- set to 'done' for the given task.
+* return. This is considered a normal and successful operation result. After a successful return the item's status will 
+  be set to 'done' for the given task.
 * raise a ::Libis::WorkflowError. Indicates that something went wrong during the processing of the item. The item's 
- status will be set to failed for the given task and the exception message will be printed in the error log. Processing 
- will continue with the next item. This action is recommended for temporary or recoverable errors.
+  status will be set to failed for the given task and the exception message will be printed in the error log. Processing 
+  will continue with the next item. This action is recommended for temporary or recoverable errors. The parent item will
+  be flagged as 'failed' if any of the child items failed.
 * raise a ::Libis::WorkflowAbort. A severe and fatal error has occured. Processing will abort immediately and the 
- failure status will be escalated to all items up the item hierarchy. Due to the escalating behaviour, no message is 
- printed in the error log automatically, so it is up to the task to an appropriate log the error itself.
+  failure status will be escalated to all items up the item hierarchy. Due to the escalating behaviour, no message is 
+  printed in the error log automatically, so it is up to the task to an appropriate log the error itself.
 * raise any other Exception. Should be avoided, but if it happens nevertheless, it will cause the item to fail for the 
- given task and the exception message to be logged in the error log. It will attempt to process the other items.
+  given task and the exception message to be logged in the error log. It will not attempt to process the other items.
 
 ### Controlling behavior with parameters
 
@@ -294,49 +296,45 @@ You have some options to control how the task will behave in special cases. Thes
 the task, which can be set (and fixed with the 'frozen' option) on the task, but can be configured at run-time with the 
 help of workflow input parameters and run options.
 
-#### Performing an action on the work item and all child items recursively
-
-With the 'recursive' parameter set to true, your task's process_item method will be called for the work item and then 
-once for each child and each child's children recursively.
-  
-#### Performing an action only on the child items, skipping the work item itself
-
-The parameter 'subitems' decides if the item handed over to the task will be processed or if it will process only it's 
-child items. This will only work once, not recursively, but by organizing tasks hierarchically with 'subitems' set to 
-true, it is possible to make sure that only items on a certain hierarchy level are performed. Recommended for workflows 
-where a well-known and fixed hierarchical structure has to be processed selectively.
-
-Alternatively the 'recursive' option can be set and the 'process_item' method could check for certain item types, 
-properties or hierarchy levels to decide to perform the operation. This approach is more flexible but harder to 
-understand unless well documented.
-
 #### Preventing any logging output from the task
 
 Logging output can be blocked on a task-by-task basis by setting the 'quiet' parameter to true. Probably not usefull 
 except for the Analyzer task where the parameter is fixed to true. Logging output would otherwise intervene with the 
 log summary processing performed by the task.
 
-#### Aborting the task whenever any item fails
- 
-When a task is so critical in the workflow process that any failure renders further processing useless, the parameter 
-'abort_on_error' can be turned on. Raising a ::Libis::WorkflowAbort exception would perform the same thing, but the 
-parameter makes the configuration more flexible.
+#### Performing an action on the work item and all child items recursively
 
-#### Always running a task, even on items that failed in an earlier stage in the workflow
+With the 'recursive' parameter set to true, your task's process_item method will be called for the work item and then 
+once for each child and each child's children recursively.
 
-The opposite of aborting on error, the parameter 'always_run' can be set to true to force a task to process the items 
-even if the item has a failed status from a previous task. Note that this will cause the item's status to no longer be 
-failing until a task fails on the item again. The old failed status will be tracable in the status history.
+Note: you should not make both parent and child tasks recursive as this will cause the subitems to be processed 
+multiple times. If you make the parent task recursive, all tasks and sub-tasks will be performed on each item in the
+tree. Making the child tasks recursive makes the parent task only perform on the top item and then performs each 
+sub-task one-by-one for the whole item tree. The last option is the most efficient.
+  
+Attention should be paid for the 
+  
+#### Retrying if task failed
 
-The parameter only configures the task on which it is set. If the task is a subtask it will only be forced to run if 
-any of it's previous sibling tasks failed. In order to force the run, even if the item failed in another branch of the 
-task hiearchy, the parent tasks should have their 'always_run' parameter also set to true.
+The parameters 'retry_count' and 'retry_interval' control the task's behaviour if a task has to wait for a result for an
+asynchonous job. A task could be waiting for a result from the other job which will be indicated by a 'ASYNC_WAIT'
+status. Alternatively the task may know that the job is halted and waiting for user interaction, indicated with the
+'ASYNC_HALT' status. Only when the status is 'ASYNC_WAIT', the task will retry its process. By default the 'retry_count'
+is 0, which causes the task not to retry. Before retrying the task will pause for the number of seconds given in the
+parameter 'retry_interval', which is 30 by default.
 
 ### Pre- and postprocessing
 
 The default implementation of 'process' is to call 'pre_process' and then call 'process_item' on each child item, 
 followed by calling 'post_process'. The methods 'pre_process' and 'post_process' are no-operation methods by default, 
 but can be overwritten if needed.
+
+The 'pre_process' is intended to re-initialize the task before processing a new item. It can also be used to force the
+task to skip processing the items altogether by calling the 'skip_processing_item' method or to prevent a recursive
+task from traveling further down the item tree by calling the 'stop_processing_subitems' method. The temporary locks
+behave as reset-on-read switches and are only active for the processing of the current item.
+
+The 'post_process' method can be used to update any object after the item processing.
 
 ### Convenience functions
 

@@ -16,7 +16,7 @@ module Libis
       # @param [Array] x Array with status and task
       def status=(x)
         s, task = x
-        self.add_status_log(s, task)
+        self.add_status_log(task: task, status: s)
         self.save
       end
 
@@ -47,21 +47,12 @@ module Libis
         self.status(task) == state
       end
 
-      # Compare two status symbols.
-      #
-      # @param [Synbol] state1 first status
-      # @param [Symbol] state2 second status
-      # @return [Integer] 1, 0 or -1 depending on the priority. 1 means hight preority.
-      def self.compare_status(state1, state2)
-        STATUS[state1] <=> STATUS[state2]
-      end
-
       # Compare status with current status of the object.
       #
       # @param [Symbol] state
       # @return [Integer] 1, 0 or -1 depnding on which
       def compare_status(state, task = nil)
-        self.class.compare_status(self.status(task), state)
+        STATUS[self.status(task)] <=> STATUS[state]
       end
 
       protected

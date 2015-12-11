@@ -32,13 +32,9 @@ module Libis
         self.log_history << msg.merge(c_at: ::Time.now)
       end
 
-      def add_status_log(message, task = nil)
+      def add_status_log(info)
         # noinspection RubyResolve
-        self.status_log << {
-            timestamp: ::Time.now,
-            task: task,
-            status: message
-        }.cleanup
+        self.status_log << info.merge(timestamp: ::Time.now).cleanup
       end
 
     end

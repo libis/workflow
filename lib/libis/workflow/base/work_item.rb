@@ -118,7 +118,7 @@ module Libis
         #
         # @param [WorkItem] item to be added to the child list :items
         def add_item(item)
-          return self unless item and item.is_a? WorkItem
+          return self unless item and item.is_a? Libis::Workflow::Base::WorkItem
           self.items << item
           item.parent = self
           self.save!
@@ -126,7 +126,28 @@ module Libis
           self
         end
 
-        alias :<< :add_item
+        alias_method :<<, :add_item
+
+        # Return item's parent
+        # @return [Libis::Workflow::Base::WorkItem]
+        def get_parent
+          self.parent
+        end
+
+        # go up the hierarchy and return the topmost work item
+        #
+        # @return [Libis::Workflow::Base::WorkItem]
+        def get_root
+          self.get_parent && self.get_parent.is_a?(Libis::Workflow::Base::WorkItem) && self.get_parent.get_root || self
+        end
+
+        # Get the top
+        #
+        # @return [Libis::Workflow::Base::Run]
+        def get_run
+          return self if self.is_a?(Libis::Workflow::Base::Run)
+          self.get_parent && self.get_parent.get_run || nil
+        end
 
         # Dummy method. It is a placeholder for DB backed implementations. Wherever appropriate WorkItem#save will be
         # called to save the current item's state. If state needs to persisted, you should override this method or make
@@ -138,17 +159,6 @@ module Libis
         # called to save the current item's state. If state needs to persisted, you should override this method or make
         # sure your persistence layer implements it in your class.
         def save!
-        end
-
-        protected
-
-        # go up the hierarchy and return the topmost work item
-        #
-        # @return [WorkItem] the root work item
-        def root
-          root = self
-          root = root.parent while root.parent and root.parent.is_a? WorkItem
-          root
         end
 
       end

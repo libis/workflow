@@ -9,14 +9,12 @@ module Libis
       class Analyzer < Task
 
         parameter quiet: true, frozen: true
-        parameter abort_on_error: false, frozen: true
-        parameter always_run: true, frozen: true
-        parameter subitems: false, frozen: true
         parameter recursive: false, frozen: true
 
+        # @param [Libis::Workflow::Base::WorkItem] item
         def run(item)
 
-          item.properties[:ingest_failed] = item.failed?
+          item.properties[:ingest_failed] = item.check_status(:FAILED)
 
           item.summary = {}
           item.log_history.each do |log|

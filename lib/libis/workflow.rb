@@ -28,6 +28,7 @@ module Libis
     autoload :Job, 'libis/workflow/job'
     autoload :Run, 'libis/workflow/run'
     autoload :Task, 'libis/workflow/task'
+    autoload :TaskGroup, 'libis/workflow/task_group'
 
     autoload :Worker, 'libis/workflow/worker'
 

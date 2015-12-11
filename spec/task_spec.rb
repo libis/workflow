@@ -10,7 +10,6 @@ describe 'Task' do
 
     expect(task.parent).to eq nil
     expect(task.name).to eq 'Task'
-    expect(task.parameter(:abort_on_error)).to eq false
 
   end
 

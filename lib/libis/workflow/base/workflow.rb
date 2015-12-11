@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'libis/tools/parameter'
+require 'libis/workflow/task_group'
 
 module Libis
   module Workflow
@@ -31,17 +32,14 @@ module Libis
       #       A task definition is a Hash with the following values:
       #       - class: [String] the class name of the task including the module names
       #       - name: [String] optional if class is present. A friendly name for the task that will be used in the logs.
-      #       - subitems: [Boolean] execute the task on the items in the current level or on the
-      #           child items of the current level. This parameter can be used in combination with the subtasks to
-      #           control what objects in the hierarchy the tasks are executed against.
-      #       - recursive: [Boolean] execute the task for the current level items only or automatically recurse through
-      #           the item's hierarchy and execute on all items below.
       #       - tasks: [Array] a list of subtask defintions for this task.
+      #
       #       Additionally the task definition Hash may specify values for any other parameter that the task knows of.
-      #       All tasks have parameters 'quiet', 'always_run', 'abort_on_error'. For more information about these see
-      #       the documentation of the task class.
+      #       All tasks have parameters 'quiet', 'recursive', 'retry_count' and 'retry_interval'. For more
+      #       information about these see the documentation of the task class.
+      #
       #       A task definition does not require to have a 'class' entry. If not present the default
-      #       ::Libis::Workflow::Task class will be instatiated. It will do nothing itself, but will execute the
+      #       ::Libis::Workflow::TaskGroup class will be instatiated. It will do nothing itself, but will execute the
       #       subtasks on the item(s). In such case a 'name' is mandatory.
       #
       # These values should be set by calling the #configure method which takes a Hash as argument with :name,
@@ -75,6 +73,7 @@ module Libis
         end
 
         def self.included(base)
+
           base.extend ClassMethods
         end
 
@@ -138,13 +137,13 @@ module Libis
         end
 
         def instantize_task(parent, cfg)
-          task_class = Task
+          task_class = Libis::Workflow::TaskGroup
           task_class = cfg[:class].constantize if cfg[:class]
           # noinspection RubyArgCount
           task_instance = task_class.new(parent, cfg)
-          cfg[:tasks].map do |task_cfg|
+          cfg[:tasks] && cfg[:tasks].map do |task_cfg|
             task_instance << instantize_task(task_instance, task_cfg)
-          end rescue nil
+          end
           task_instance
         end
 
