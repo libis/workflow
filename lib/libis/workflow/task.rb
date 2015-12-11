@@ -163,12 +163,12 @@ module Libis
 
         status = Hash.new(0)
         items.each_with_index do |item, i|
-          debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.size, item.to_s
+          debug 'Processing subitem (%d/%d): %s', parent_item, i+1, parent_item.item_count, item.to_s
           run_item item
           status[item.status(self.namepath)] += 1
         end
 
-        debug '%d of %d subitems passed', parent_item, status[:DONE], items.size
+        debug '%d of %d subitems passed', parent_item, status[:DONE], parent_item.item_count
         substatus_check(status, parent_item, 'item')
       end
 
