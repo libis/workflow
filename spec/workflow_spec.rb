@@ -63,9 +63,11 @@ describe 'TestWorkflow' do
   it 'should camelize the workitem name' do
     run = job.execute
     expect(run.options['CollectFiles'][:location]).to eq dirname
-    expect(run.items.count).to eq 1
+    expect(run.size).to eq 1
+    expect(run.items.size).to eq 1
     expect(run.items.first.class).to eq TestDirItem
-    expect(run.items.first.count).to eq 3
+    expect(run.items.first.size).to eq 3
+    expect(run.items.first.items.size).to eq 3
     expect(run.items.first.first.class).to eq TestFileItem
 
     expect(run.items.first.name).to eq 'Items'
@@ -104,16 +106,16 @@ STR
     run = job.execute
     output = logoutput.string.lines.to_a
 
-    expect(output.count).to eq sample_out.count
+    expect(output.size).to eq sample_out.size
     output.each_with_index do |o, i|
       expect(o[/(?<=\] ).*/]).to eq sample_out[i].strip
     end
 
     expect(run.summary['DEBUG']).to eq 20
-    expect(run.log_history.count).to eq 8
-    expect(run.status_log.count).to eq 8
-    expect(run.items.first.log_history.count).to eq 12
-    expect(run.items.first.status_log.count).to eq 6
+    expect(run.log_history.size).to eq 8
+    expect(run.status_log.size).to eq 8
+    expect(run.items.first.log_history.size).to eq 12
+    expect(run.items.first.status_log.size).to eq 6
 
     [
         {task: 'CollectFiles', status: :STARTED},

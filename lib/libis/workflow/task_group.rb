@@ -32,11 +32,11 @@ module Libis
         return unless check_processing_subtasks
 
         tasks = subtasks
-        return unless tasks.count > 0
+        return unless tasks.size > 0
 
         status = Hash.new(0)
         tasks.each_with_index do |task, i|
-          debug 'Running subtask (%d/%d): %s', item, i+1, tasks.count, task.name
+          debug 'Running subtask (%d/%d): %s', item, i+1, tasks.size, task.name
           task.run item
           status[item.status(task.namepath)] += 1
         end

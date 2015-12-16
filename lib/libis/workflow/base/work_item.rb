@@ -110,15 +110,21 @@ module Libis
         end
 
         # Iterates over the work item clients and invokes code on each of them.
-        def each
-          self.items.each { |item| yield item }
+        def each(&block)
+          self.items.each(&block)
         end
+
+        def size
+          self.items.size
+        end
+
+        alias_method :count, :size
 
         # Add a child work item
         #
         # @param [WorkItem] item to be added to the child list :items
         def add_item(item)
-          return self unless item and item.is_a? Libis::Workflow::Base::WorkItem
+          return self unless item and item.is_a?(Libis::Workflow::Base::WorkItem)
           self.items << item
           item.parent = self
           self.save!
@@ -127,14 +133,6 @@ module Libis
         end
 
         alias_method :<<, :add_item
-
-        def get_items
-          self.items.dup
-        end
-
-        def item_count
-          self.items.size
-        end
 
         # Return item's parent
         # @return [Libis::Workflow::Base::WorkItem]

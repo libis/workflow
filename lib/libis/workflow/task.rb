@@ -158,16 +158,18 @@ module Libis
 
       def run_subitems(parent_item)
         return unless check_processing_subitems
-        return unless parent_item.count > 0
+
+        items = subitems(parent_item)
+        return unless items.size > 0
 
         status = Hash.new(0)
-        subitems(parent_item).each_with_index do |item, i|
-          debug 'Processing subitem (%d/%d): %s', parent_item, i+1, parent_item.count, item.to_s
+        items.each_with_index do |item, i|
+          debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.size, item.to_s
           run_item item
           status[item.status(self.namepath)] += 1
         end
 
-        debug '%d of %d subitems passed', parent_item, status[:DONE], parent_item.count
+        debug '%d of %d subitems passed', parent_item, status[:DONE], items.size
         substatus_check(status, parent_item, 'item')
       end
 
@@ -267,7 +269,7 @@ module Libis
       end
 
       def subitems(item = nil)
-        (item || self.workitem).get_items
+        (item || self.workitem).items
       end
 
       def default_values
