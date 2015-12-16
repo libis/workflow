@@ -134,6 +134,13 @@ module Libis
 
         alias_method :<<, :add_item
 
+        # Get list of items.
+        #
+        # This method should return a list of items that is safe to iterate over while it is being altered.
+        def get_items
+          self.items.dup
+        end
+
         # Return item's parent
         # @return [Libis::Workflow::Base::WorkItem]
         def get_parent

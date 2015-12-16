@@ -269,7 +269,7 @@ module Libis
       end
 
       def subitems(item = nil)
-        (item || self.workitem).items
+        (item || self.workitem).get_items
       end
 
       def default_values
