@@ -1,6 +1,8 @@
 # encoding: utf-8
 require 'libis/exceptions'
 
+require_relative 'workflow/version'
+
 module Libis
   module Workflow
 
