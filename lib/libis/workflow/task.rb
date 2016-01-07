@@ -106,15 +106,14 @@ module Libis
         o = {}
         o.merge!(opts[self.class.to_s] || {})
         o.merge!(opts[self.name] || opts[self.names.join('/')] || {})
-        o.key_strings_to_symbols! recursive: true
 
         if o and o.is_a? Hash
           default_values.each do |name, _|
-            next unless o.key?(name)
-            next if o[name].nil?
-            paramdef = get_parameter_definition name
-            value = paramdef.parse(o[name])
-            self.parameter(name, value)
+            next unless o.key?(name.to_s)
+            next if o[name.to_s].nil?
+            paramdef = get_parameter_definition name.to_sym
+            value = paramdef.parse(o[name.to_s])
+            self.parameter(name.to_sym, value)
           end
         end
 

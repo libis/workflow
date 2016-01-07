@@ -62,7 +62,7 @@ describe 'TestWorkflow' do
   # noinspection RubyResolve
   it 'should camelize the workitem name' do
     run = job.execute
-    expect(run.options['CollectFiles'][:location]).to eq dirname
+    expect(run.options['CollectFiles']['location']).to eq dirname
     expect(run.size).to eq 1
     expect(run.items.size).to eq 1
     expect(run.items.first.class).to eq TestDirItem

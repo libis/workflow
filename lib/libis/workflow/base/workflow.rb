@@ -124,7 +124,7 @@ module Libis
               task_name, param_name = target.split('#')
               param_name ||= key
               result[task_name] ||= {}
-              result[task_name][param_name.to_sym] = value
+              result[task_name][param_name.to_s] = value
             end
           end
           result
