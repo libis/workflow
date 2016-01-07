@@ -14,13 +14,13 @@ module Libis
         # @param [Libis::Workflow::Base::WorkItem] item
         def run(item)
 
-          item.properties[:ingest_failed] = item.check_status(:FAILED)
+          item.properties['ingest_failed'] = item.check_status(:FAILED)
 
           item.summary = {}
           item.log_history.each do |log|
             level = log[:severity]
-            item.summary[level] ||= 0
-            item.summary[level] += 1
+            item.summary[level.to_s] ||= 0
+            item.summary[level.to_s] += 1
           end
 
           item.each do |i|

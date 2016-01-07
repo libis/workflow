@@ -83,7 +83,7 @@ module Libis
         # @return [String] string identification for this work item.
         def name
           # noinspection RubyResolve
-          self.properties[:name] || self.inspect
+          self.properties['name'] || self.inspect
         end
 
         def to_s;

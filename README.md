@@ -213,11 +213,11 @@ Work items that are file-based can derive from the ::Libis::Workflow::FileItem c
       end
 
       def filesize
-        properties[:size]
+        properties['size']
       end
 
       def fixity_check(checksum)
-        properties[:checksum] == checksum
+        properties['checksum'] == checksum
       end
 
     end
@@ -238,11 +238,11 @@ or include the ::Libis::Workflow::Base::FileItem module:
       end
 
       def filesize
-        properties[:size]
+        properties['size']
       end
 
       def fixity_check(checksum)
-        properties[:checksum] == checksum
+        properties['checksum'] == checksum
       end
 
     end
