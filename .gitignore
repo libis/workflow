@@ -34,3 +34,4 @@ Gemfile.lock
 .rvmrc
 
 .idea/
+/spec/coverage

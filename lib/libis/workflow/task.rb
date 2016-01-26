@@ -19,7 +19,7 @@ module Libis
 
       parameter quiet: false, description: 'Prevemt generating log output.'
       parameter recursive: false, description: 'Run the task on all subitems recursively.'
-      parameter retry_count: 0, description: 'Number of times to retry the task.'
+      parameter retry_count: 0, description: 'Number of times to retry the task if waiting for another process.'
       parameter retry_interval: 10, description: 'Number of seconds to wait between retries.'
 
       def self.task_classes
