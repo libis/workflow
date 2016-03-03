@@ -15,6 +15,7 @@ module Libis
       #
       # - start_date: [Time] the timestamp of the execution of the run
       # - job: [Object] a reference to the Job this Run belongs to
+      # - id: [String] (Optional) a unique run number
       #
       # Note that ::Libis::Workflow::Base::WorkItem is a parent module and therefore requires implementation of the
       # attributes of that module too.

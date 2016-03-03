@@ -174,7 +174,7 @@ module Libis
 
       def substatus_check(status, item, task_or_item)
         if (failed = status[:FAILED]) > 0
-          warn "%d sub#{task_or_item}(s) failed", item, failed
+          error "%d sub#{task_or_item}(s) failed", item, failed
           update_status(item, :FAILED)
         end
 
@@ -184,7 +184,7 @@ module Libis
         end
 
         if (waiting = status[:ASYNC_WAIT]) > 0
-          warn "waiting for %d sub#{task_or_item}(s) in async process", item, waiting
+          info "waiting for %d sub#{task_or_item}(s) in async process", item, waiting
           update_status(item, :ASYNC_WAIT)
         end
 

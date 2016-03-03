@@ -3,7 +3,7 @@ module Libis
     module Base
       module Logging
 
-        # Helper function for the Tasks to add a log entry to the log_history.
+        # Helper function for the WorkItems to add a log entry to the log_history.
         #
         # The supplied message structure is expected to contain the following fields:
         # - :severity : ::Logger::Severity value
@@ -39,10 +39,14 @@ module Libis
                                      else
                                        [0, '']
                                      end
-          task = msg[:task] || '*UNKNOWN*'
+          task = msg[:task] || ''
           message_text = (message_text % args rescue "#{message_text} - #{args}")
 
-          self.add_log severity: severity, id: message_id.to_i, text: message_text, task: task
+          run_id = self.get_run.id rescue nil
+
+          self.add_log severity: severity, id: message_id.to_i, text: message_text, task: task, run_id: run_id
+
+          task = "[#{run_id}] #{task}" if run_id
           name = ''
           begin
             name = self.to_s
@@ -51,7 +55,9 @@ module Libis
           rescue
             # do nothing
           end
-          Config.logger.add(severity, message_text, ('%s - %s ' % [task, name]))
+
+          logger = self.get_run.logger rescue Config.logger
+          logger.add(severity, message_text, ('%s - %s ' % [task, name]))
         end
 
         protected

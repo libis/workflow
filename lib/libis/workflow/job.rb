@@ -20,6 +20,10 @@ module Libis
         @run_object = ::Libis::Workflow::Run.new
       end
 
+      def logger
+        Config.logger
+      end
+
     end
 
   end
