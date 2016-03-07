@@ -132,7 +132,7 @@ module Libis
 
         def tasks(parent = nil)
           self.config[:tasks].map do |cfg|
-            instantize_task(parent || self, cfg)
+            instantize_task(parent || nil, cfg)
           end
         end
 

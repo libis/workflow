@@ -49,6 +49,10 @@ module Libis
           self.job.workflow
         end
 
+        def logger
+          self.properties['logger'] || self.job.logger rescue ::Libis::Workflow::Config.logger
+        end
+
         # Execute the workflow.
         #
         # The action parameter defines how the execution of the tasks will behave:
@@ -65,9 +69,8 @@ module Libis
 
           self.options = workflow.prepare_input(self.options)
 
-          self.tasks = workflow.tasks(self)
+          self.tasks = workflow.tasks
           configure_tasks self.options
-
 
           self.tasks.each do |task|
             task.run self

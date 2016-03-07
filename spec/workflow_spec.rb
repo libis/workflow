@@ -4,21 +4,24 @@ require 'stringio'
 
 describe 'TestWorkflow' do
 
-  let(:basedir) { File.absolute_path File.join(File.dirname(__FILE__)) }
-  let(:dirname) { File.join(basedir, 'items') }
+  basedir = File.absolute_path File.join(File.dirname(__FILE__))
+  dirname = File.join(basedir, 'items')
 
-  let(:logoutput) { StringIO.new }
+  before :each do
 
-  let(:workflow) {
     # noinspection RubyResolve
     ::Libis::Workflow.configure do |cfg|
       cfg.itemdir = dirname
       cfg.taskdir = File.join(basedir, 'tasks')
       cfg.workdir = File.join(basedir, 'work')
-      cfg.logger = Logger.new logoutput
-      cfg.logger.level = Logger::DEBUG
+      cfg.logger.appenders =
+          ::Logging::Appenders.string_io('StringIO', layout: ::Libis::Tools::Config.get_log_formatter)
     end
+  end
 
+  let(:logoutput) { ::Libis::Workflow::Config.logger.appenders.first.sio }
+
+  let(:workflow) {
     workflow = ::Libis::Workflow::Workflow.new
     workflow.configure(
         name: 'TestWorkflow',
@@ -105,6 +108,8 @@ STR
 
     run = job.execute
     output = logoutput.string.lines.to_a
+
+    # puts output
 
     expect(output.size).to eq sample_out.size
     output.each_with_index do |o, i|

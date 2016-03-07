@@ -4,6 +4,7 @@ require 'backports/rails/string'
 
 require 'libis/tools/parameter'
 require 'libis/tools/extend/hash'
+require 'libis/tools/logger'
 
 require 'libis/workflow'
 
@@ -12,7 +13,7 @@ module Libis
 
     # noinspection RubyTooManyMethodsInspection
     class Task
-      include ::Libis::Workflow::Base::Logger
+      include ::Libis::Tools::Logger
       include ::Libis::Tools::ParameterContainer
 
       attr_accessor :parent, :name, :workitem
@@ -116,9 +117,33 @@ module Libis
             self.parameter(name.to_sym, value)
           end
         end
-
       end
 
+      def message(severity, msg, *args)
+        taskname = self.namepath rescue nil
+        self.set_application(taskname)
+        item = self.workitem
+        item = args.shift if args.size > 0 and args[0].is_a?(::Libis::Workflow::Base::WorkItem)
+        if item
+          subject = nil
+          begin
+            subject = item.to_s
+            subject = item.name
+            subject = item.namepath
+          rescue
+            # do nothing
+          end
+          self.set_subject(subject)
+          item.log_message(
+              severity, msg.is_a?(Integer) ? {id: msg} : {text: (msg.to_s rescue '')}.merge(task: taskname), *args
+          )
+        end
+        super severity, msg, *args
+      end
+
+      def logger
+        (self.parent || self.get_run).logger
+      end
       protected
 
       def configure(cfg)
@@ -204,11 +229,15 @@ module Libis
       end
 
       def action=(action)
-        self.workitem.get_run.action = action
+        self.get_run.action = action
       end
 
       def action
-        self.workitem.get_run.action
+        self.get_run.action
+      end
+
+      def get_run(item = nil)
+        get_root_item(item).get_run
       end
 
       def get_root_item(item = nil)
