@@ -1,6 +1,7 @@
-
+[![Gem Version](https://badge.fury.io/rb/libis-workflow.svg)](http://badge.fury.io/rb/libis-workflow)
 [![Build Status](https://travis-ci.org/Kris-LIBIS/workflow.svg?branch=master)](https://travis-ci.org/Kris-LIBIS/workflow)
 [![Coverage Status](https://img.shields.io/coveralls/Kris-LIBIS/workflow.svg)](https://coveralls.io/r/Kris-LIBIS/workflow)
+[![Dependency Status](https://gemnasium.com/Kris-LIBIS/workflow.svg)](https://gemnasium.com/Kris-LIBIS/workflow)
 
 # LIBIS Workflow
 
