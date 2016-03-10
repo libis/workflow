@@ -107,6 +107,7 @@ module Libis
         o = {}
         o.merge!(opts[self.class.to_s] || {})
         o.merge!(opts[self.name] || opts[self.names.join('/')] || {})
+        o.key_symbols_to_strings!
 
         if o and o.is_a? Hash
           default_values.each do |name, _|

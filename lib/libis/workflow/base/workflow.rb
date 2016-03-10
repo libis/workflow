@@ -2,6 +2,7 @@
 
 require 'libis/tools/parameter'
 require 'libis/workflow/task_group'
+require 'libis/tools/extend/hash'
 
 module Libis
   module Workflow
@@ -73,7 +74,6 @@ module Libis
         end
 
         def self.included(base)
-
           base.extend ClassMethods
         end
 
@@ -85,7 +85,9 @@ module Libis
 
           self.class.require_all
 
-          unless self.config[:tasks].last[:class] && self.config[:tasks].last[:class].split('::').last == 'Analyzer'
+          unless !self.config[:tasks].empty? &&
+              self.config[:tasks].last[:class] &&
+              self.config[:tasks].last[:class].split('::').last == 'Analyzer'
             self.config[:tasks] << {class: '::Libis::Workflow::Tasks::Analyzer'}
           end
 
@@ -124,7 +126,7 @@ module Libis
               task_name, param_name = target.split('#')
               param_name ||= key
               result[task_name] ||= {}
-              result[task_name][param_name.to_s] = value
+              result[task_name][param_name] = value
             end
           end
           result

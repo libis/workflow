@@ -50,7 +50,7 @@ module Libis
         end
 
         def logger
-          self.properties['logger'] || self.job.logger rescue ::Libis::Workflow::Config.logger
+          self.properties[:logger] || self.job.logger rescue ::Libis::Workflow::Config.logger
         end
 
         # Execute the workflow.
@@ -65,7 +65,7 @@ module Libis
         def run(action = :run)
           self.action = action
 
-          self.start_date = Time.now
+          self.start_date = Time.now unless action == :retry
 
           self.options = workflow.prepare_input(self.options)
 

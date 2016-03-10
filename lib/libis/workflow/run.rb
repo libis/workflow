@@ -26,7 +26,7 @@ module Libis
       end
 
       def logger
-        self.properties['logger'] || (job.logger rescue nil)
+        self.properties[:logger] || (job.logger rescue nil)
       end
 
     end
