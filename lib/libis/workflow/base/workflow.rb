@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 require 'libis/tools/parameter'
 require 'libis/workflow/task_group'
 require 'libis/tools/extend/hash'
@@ -65,11 +63,11 @@ module Libis
 
         module ClassMethods
           def require_all
-            Config.require_all(File.join(File.dirname(__FILE__), '..', 'tasks'))
+            Libis::Workflow::Config.require_all(File.join(File.dirname(__FILE__), '..', 'tasks'))
             # noinspection RubyResolve
-            Config.require_all(Config.taskdir)
+            Libis::Workflow::Config.require_all(Libis::Workflow::Config.taskdir)
             # noinspection RubyResolve
-            Config.require_all(Config.itemdir)
+            Libis::Workflow::Config.require_all(Libis::Workflow::Config.itemdir)
           end
         end
 

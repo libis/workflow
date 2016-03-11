@@ -1,4 +1,3 @@
-# encoding: utf-8
 require 'libis/tools/extend/hash'
 require 'libis/workflow/base/work_item'
 

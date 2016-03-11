@@ -1,4 +1,3 @@
-# encoding: utf-8
 require 'backports/rails/hash'
 require 'backports/rails/string'
 

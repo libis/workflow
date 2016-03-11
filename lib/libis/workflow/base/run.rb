@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 require 'fileutils'
 
 require 'libis/workflow/base/work_item'
@@ -28,7 +26,7 @@ module Libis
 
         def work_dir
           # noinspection RubyResolve
-          dir = File.join(Config.workdir, self.name)
+          dir = File.join(Libis::Workflow::Config.workdir, self.name)
           FileUtils.mkpath dir unless Dir.exist?(dir)
           dir
         end

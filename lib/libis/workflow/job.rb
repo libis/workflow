@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 require 'libis/workflow/base/job'
 require 'libis/workflow/workflow'
 require 'libis/workflow/run'
@@ -21,7 +19,7 @@ module Libis
       end
 
       def logger
-        Config.logger
+        ::Libis::Workflow::Config.logger
       end
 
     end

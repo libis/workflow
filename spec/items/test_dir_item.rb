@@ -1,4 +1,3 @@
-# encoding: utf-8
 require 'libis/workflow/dir_item'
 
 class TestDirItem < ::Libis::Workflow::DirItem

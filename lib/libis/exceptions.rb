@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 module Libis
   class WorkflowError < ::RuntimeError
   end

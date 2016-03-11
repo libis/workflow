@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 require 'libis/workflow/file_item'
 
 module Libis

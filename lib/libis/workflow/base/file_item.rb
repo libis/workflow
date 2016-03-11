@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 require 'digest'
 
 require 'libis/workflow/base/work_item'

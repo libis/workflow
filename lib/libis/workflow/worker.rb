@@ -1,4 +1,3 @@
-# encoding: utf-8
 require 'sidekiq'
 
 require 'libis/workflow/config'
@@ -19,13 +18,13 @@ module Libis
       def configure(job_config, options = {})
         log_path = options.delete :log_path
         if log_path
-          Config.logger = ::Logger.new(
+          Libis::Workflow::Config.logger = ::Logger.new(
               File.join(log_path, "#{job_config[:name]}.log"),
               (options.delete(:log_shift_age) || 'daily'),
               (options.delete(:log_shift_size) || 1024 ** 2)
           )
-          Config.logger.formatter = ::Logger::Formatter.new
-          Config.logger.level = (options.delete(:log_level) || ::Logger::DEBUG)
+          Libis::Workflow::Config.logger.formatter = ::Logger::Formatter.new
+          Libis::Workflow::Config.logger.level = (options.delete(:log_level) || ::Logger::DEBUG)
         end
         get_job(job_config)
       end
