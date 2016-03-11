@@ -125,6 +125,7 @@ module Libis
         self.set_application(taskname)
         item = self.workitem
         item = args.shift if args.size > 0 and args[0].is_a?(::Libis::Workflow::Base::WorkItem)
+        return unless super(severity, msg, *args)
         if item
           subject = nil
           begin
@@ -139,7 +140,6 @@ module Libis
               severity, msg.is_a?(Integer) ? {id: msg} : {text: (msg.to_s rescue '')}.merge(task: taskname), *args
           )
         end
-        super severity, msg, *args
       end
 
       def logger
