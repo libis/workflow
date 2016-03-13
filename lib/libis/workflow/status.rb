@@ -17,7 +17,7 @@ module Libis
       def status=(x)
         s, task = x
         self.add_status_log(task: task, status: s)
-        self.save
+        self.save!
       end
 
       # Get last known status symbol for a given task

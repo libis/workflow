@@ -76,28 +76,29 @@ module Libis
         end
 
         def configure(cfg)
-          self.name = cfg.delete(:name) || self.class.name
-          self.description = cfg.delete(:description) || ''
-          self.config.merge! input: {}, tasks: []
+          self.name = cfg.delete('name') || self.class.name
+          self.description = cfg.delete('description') || ''
+          self.config['input'] = {}
+          self.config['tasks'] = []
           self.config.merge! cfg
 
           self.class.require_all
 
-          unless !self.config[:tasks].empty? &&
-              self.config[:tasks].last[:class] &&
-              self.config[:tasks].last[:class].split('::').last == 'Analyzer'
-            self.config[:tasks] << {class: '::Libis::Workflow::Tasks::Analyzer'}
+          unless !self.config['tasks'].empty? &&
+              self.config['tasks'].last['class'] &&
+              self.config['tasks'].last['class'].split('::').last == 'Analyzer'
+            self.config['tasks'] << {'class' => '::Libis::Workflow::Tasks::Analyzer'}
           end
 
           self.config
         end
 
         def input
-          self.config[:input].inject({}) do |hash, input_def|
-            name = input_def.first.to_sym
+          self.config.key_strings_to_symbols(recursive: true)[:input].inject({}) do |hash, input_def|
+            name = input_def.first
             default = input_def.last[:default]
             parameter = ::Libis::Tools::Parameter.new name, default
-            input_def.last.each { |k, v| parameter[k.to_sym] = v }
+            input_def.last.each { |k, v| parameter[k] = v }
             hash[name] = parameter
             hash
           end
@@ -107,6 +108,7 @@ module Libis
 
         # @param [Hash] options
         def prepare_input(options)
+          options = options.key_strings_to_symbols
           result = {}
           self.input.each do |key, parameter|
             if options.has_key?(key)
@@ -122,7 +124,7 @@ module Libis
             result[key] = value if propagate_to.empty?
             propagate_to.each do |target|
               task_name, param_name = target.split('#')
-              param_name ||= key
+              param_name ||= key.to_s
               result[task_name] ||= {}
               result[task_name][param_name] = value
             end
@@ -131,17 +133,17 @@ module Libis
         end
 
         def tasks(parent = nil)
-          self.config[:tasks].map do |cfg|
+          self.config['tasks'].map do |cfg|
             instantize_task(parent || nil, cfg)
           end
         end
 
         def instantize_task(parent, cfg)
           task_class = Libis::Workflow::TaskGroup
-          task_class = cfg[:class].constantize if cfg[:class]
+          task_class = cfg['class'].constantize if cfg['class']
           # noinspection RubyArgCount
           task_instance = task_class.new(parent, cfg)
-          cfg[:tasks] && cfg[:tasks].map do |task_cfg|
+          cfg['tasks'] && cfg['tasks'].map do |task_cfg|
             task_instance << instantize_task(task_instance, task_cfg)
           end
           task_instance

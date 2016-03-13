@@ -1,5 +1,6 @@
 require 'sidekiq'
 
+require 'libis/tools/extend/hash'
 require 'libis/workflow/config'
 require 'libis/workflow/workflow'
 
@@ -31,7 +32,7 @@ module Libis
 
       def get_job(job_config)
         job = ::Libis::Workflow::Job.new
-        job.configure job_config
+        job.configure job_config.key_symbols_to_strings(recursive: true)
         job
       end
 

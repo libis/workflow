@@ -40,7 +40,7 @@ module Libis
         def add_log(message = {})
           msg = message_struct(message)
           add_log_entry(msg)
-          self.save
+          self.save!
         end
 
         def <=(message = {})

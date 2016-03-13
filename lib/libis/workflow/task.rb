@@ -17,7 +17,7 @@ module Libis
 
       attr_accessor :parent, :name, :workitem
 
-      parameter quiet: false, description: 'Prevemt generating log output.'
+      parameter quiet: false, description: 'Prevent generating log output.'
       parameter recursive: false, description: 'Run the task on all subitems recursively.'
       parameter retry_count: 0, description: 'Number of times to retry the task if waiting for another process.'
       parameter retry_interval: 10, description: 'Number of seconds to wait between retries.'
@@ -44,7 +44,10 @@ module Libis
 
         case self.action
           when :retry
-            return if item.check_status(:DONE, self.namepath)
+            if item.check_status(:DONE, self.namepath)
+              debug 'Retry: skipping task %s because it has finished successfully.', item, self.namepath
+              return
+            end
           when :failed
             return
           else
@@ -90,7 +93,7 @@ module Libis
         debug e.backtrace.join("\n")
 
       ensure
-        item.save
+        item.save!
 
       end
 
@@ -106,7 +109,6 @@ module Libis
         o = {}
         o.merge!(opts[self.class.to_s] || {})
         o.merge!(opts[self.name] || opts[self.names.join('/')] || {})
-        o.key_symbols_to_strings!
 
         if o and o.is_a? Hash
           default_values.each do |name, _|
@@ -144,12 +146,13 @@ module Libis
       def logger
         (self.parent || self.get_run).logger
       end
+
       protected
 
       def configure(cfg)
-        self.name = cfg[:name] || (cfg[:class] || self.class).to_s.split('::').last
-        (cfg[:options] || {}).merge(
-            cfg.reject { |k, _| [:options, :name, :class].include? k.to_sym }
+        self.name = cfg['name'] || (cfg['class'] || self.class).to_s.split('::').last
+        (cfg['options'] || {}).merge(
+            cfg.reject { |k, _| %w(options name class).include? k }
         ).symbolize_keys.each do |k, v|
           self.parameter(k, v)
         end

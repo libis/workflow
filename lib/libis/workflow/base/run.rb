@@ -48,7 +48,7 @@ module Libis
         end
 
         def logger
-          self.properties[:logger] || self.job.logger rescue ::Libis::Workflow::Config.logger
+          self.properties['logger'] || self.job.logger rescue ::Libis::Workflow::Config.logger
         end
 
         # Execute the workflow.

@@ -47,11 +47,11 @@ module Libis
           self.name ||= ''
           self.description ||= ''
           self.input ||= {}
-          self.name = cfg[:name] if cfg.has_key?(:name)
-          self.description = cfg[:description] if cfg.has_key?(:description)
-          self.workflow = cfg[:workflow] if cfg.has_key?(:workflow)
-          self.run_object = cfg[:run_object] if cfg.has_key?(:run_object)
-          self.input.merge!(cfg[:input] || {})
+          self.name = cfg['name'] if cfg.has_key?('name')
+          self.description = cfg['description'] if cfg.has_key?('description')
+          self.workflow = cfg['workflow'] if cfg.has_key?('workflow')
+          self.run_object = cfg['run_object'] if cfg.has_key?('run_object')
+          self.input.merge!(cfg['input'] || {})
         end
 
         # noinspection RubyResolve
@@ -61,10 +61,9 @@ module Libis
           raise RuntimeError.new "Could not create instance of run object '#{self.run_object}'" unless run
 
           run.job = self
-          opts.key_strings_to_symbols!(recursive: true)
-          (opts.delete(:run_config) || {}).each { |key,value| run.send(key, value) }
-          run.options.merge!(self.input.merge(opts))
-          run.save
+          (opts.delete('run_config') || {}).each { |key,value| run.send(key, value) }
+          run.options = self.input.merge(opts)
+          run.save!
 
           run.run
 

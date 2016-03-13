@@ -24,21 +24,21 @@ describe 'TestWorkflow' do
   let(:workflow) {
     workflow = ::Libis::Workflow::Workflow.new
     workflow.configure(
-        name: 'TestWorkflow',
-        description: 'Workflow for testing',
-        tasks: [
-            {class: 'CollectFiles', recursive: true},
+        'name' => 'TestWorkflow',
+        'description' => 'Workflow for testing',
+        'tasks' => [
+            {'class' => 'CollectFiles', 'recursive' => true},
             {
-                name: 'ProcessFiles', recursive: false,
-                tasks: [
-                    {class: 'ChecksumTester', recursive: true},
-                    {class: 'CamelizeName', recursive: true}
+                'name' => 'ProcessFiles', 'recursive' => false,
+                'tasks' => [
+                    {'class' => 'ChecksumTester', 'recursive' => true},
+                    {'class' => 'CamelizeName', 'recursive' => true}
                 ]
             }
         ],
-        input: {
-            dirname: {default: '.', propagate_to: 'CollectFiles#location'},
-            checksum_type: {default: 'SHA1', propagate_to: 'ChecksumTester'}
+        'input' => {
+            'dirname' => {'default' => '.', 'propagate_to' => 'CollectFiles#location'},
+            'checksum_type' => {'default' => 'SHA1', 'propagate_to' => 'ChecksumTester'}
         }
     )
     workflow
@@ -47,19 +47,19 @@ describe 'TestWorkflow' do
   let(:job) {
     job = ::Libis::Workflow::Job.new
     job.configure(
-        name: 'TestJob',
-        description: 'Job for testing',
-        workflow: workflow,
-        run_object: 'TestRun',
-        input: {dirname: dirname, checksum_type: 'SHA256'},
+        'name' => 'TestJob',
+        'description' => 'Job for testing',
+        'workflow' => workflow,
+        'run_object' => 'TestRun',
+        'input' => {'dirname' => dirname, 'checksum_type' => 'SHA256'},
     )
     job
   }
 
   it 'should contain three tasks' do
-    expect(workflow.config[:tasks].size).to eq 3
-    expect(workflow.config[:tasks].first[:class]).to eq 'CollectFiles'
-    expect(workflow.config[:tasks].last[:class]).to eq '::Libis::Workflow::Tasks::Analyzer'
+    expect(workflow.config['tasks'].size).to eq 3
+    expect(workflow.config['tasks'].first['class']).to eq 'CollectFiles'
+    expect(workflow.config['tasks'].last['class']).to eq '::Libis::Workflow::Tasks::Analyzer'
   end
 
   # noinspection RubyResolve

@@ -12,7 +12,7 @@ module Libis
         # @param [Libis::Workflow::Base::WorkItem] item
         def run(item)
 
-          item.properties[:ingest_failed] = item.check_status(:FAILED)
+          item.properties['ingest_failed'] = item.check_status(:FAILED)
 
           item.summary = {}
           item.log_history.each do |log|
@@ -36,7 +36,7 @@ module Libis
 
         ensure
 
-          item.save
+          item.save!
 
         end
 
