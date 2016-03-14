@@ -70,6 +70,8 @@ module Libis
           self.tasks = workflow.tasks
           configure_tasks self.options
 
+          self.save!
+
           self.tasks.each do |task|
             task.run self
           end
