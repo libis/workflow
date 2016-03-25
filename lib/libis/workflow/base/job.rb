@@ -61,7 +61,7 @@ module Libis
           raise RuntimeError.new "Could not create instance of run object '#{self.run_object}'" unless run
 
           run.job = self
-          (opts.delete('run_config') || {}).each { |key,value| run.send(key, value) }
+          (opts.delete('run_config') || {}).each { |key,value| run.send("#{key}=", value) }
           run.options = self.input.merge(opts)
           run.save!
 
