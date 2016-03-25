@@ -6,6 +6,9 @@ module Libis
     # noinspection RubyTooManyMethodsInspection
     class TaskGroup < Libis::Workflow::Task
 
+      parameter abort_on_failure: true,
+                description: 'Stop processing tasks if one task fails.'
+
       attr_accessor :tasks
 
       def initialize(parent, cfg = {})
@@ -38,6 +41,7 @@ module Libis
           debug 'Running subtask (%d/%d): %s', item, i+1, tasks.size, task.name
           task.run item
           status[item.status(task.namepath)] += 1
+          break if parameter(:abort_on_failure) && item.status(task.namepath) != :DONE
         end
 
         substatus_check(status, item, 'task')
