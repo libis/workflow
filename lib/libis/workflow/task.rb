@@ -161,6 +161,8 @@ module Libis
       def run_item(item)
         @item_skipper = false
 
+        return if item.status(self.namepath) == :DONE
+
         pre_process(item)
 
         set_status item, :STARTED
