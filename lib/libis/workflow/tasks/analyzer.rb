@@ -12,6 +12,16 @@ module Libis
         # @param [Libis::Workflow::Base::WorkItem] item
         def run(item)
 
+          recursive_run(item)
+          self.workitem = item
+          info 'Ingest finished', item
+
+        end
+
+        private
+
+        def recursive_run(item)
+
           item.properties['ingest_failed'] = item.check_status(:FAILED)
 
           item.summary = {}
@@ -22,7 +32,7 @@ module Libis
           end
 
           item.each do |i|
-            run i
+            recursive_run i
             i.summary.each do |level, count|
               item.summary[level] ||= 0
               item.summary[level] += (count || 0)
@@ -31,8 +41,9 @@ module Libis
 
         rescue RuntimeError => ex
 
-          puts 'Failed to analyze item: %s - %s' % [item.class, item.name]
-          puts 'Exception: %s' % ex.message
+          self.workitem = item
+          error 'Failed to analyze item: %s - %s', item, item.class, item.name
+          error 'Exception: %s', item, ex.message
 
         ensure
 

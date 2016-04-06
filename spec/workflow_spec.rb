@@ -89,20 +89,21 @@ DEBUG -- CollectFiles - items : Processing subitem (2/3): test_file_item.rb
 DEBUG -- CollectFiles - items : Processing subitem (3/3): test_run.rb
 DEBUG -- CollectFiles - items : 3 of 3 subitems passed
 DEBUG -- CollectFiles - TestRun : 1 of 1 subitems passed
-DEBUG -- ProcessFiles - TestRun : Running subtask (1/2): ChecksumTester
+ INFO -- ProcessFiles - TestRun : Running subtask (1/2): ChecksumTester
 DEBUG -- ProcessFiles/ChecksumTester - TestRun : Processing subitem (1/1): items
 DEBUG -- ProcessFiles/ChecksumTester - items : Processing subitem (1/3): test_dir_item.rb
 DEBUG -- ProcessFiles/ChecksumTester - items : Processing subitem (2/3): test_file_item.rb
 DEBUG -- ProcessFiles/ChecksumTester - items : Processing subitem (3/3): test_run.rb
 DEBUG -- ProcessFiles/ChecksumTester - items : 3 of 3 subitems passed
 DEBUG -- ProcessFiles/ChecksumTester - TestRun : 1 of 1 subitems passed
-DEBUG -- ProcessFiles - TestRun : Running subtask (2/2): CamelizeName
+ INFO -- ProcessFiles - TestRun : Running subtask (2/2): CamelizeName
 DEBUG -- ProcessFiles/CamelizeName - TestRun : Processing subitem (1/1): items
 DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (1/3): test_dir_item.rb
 DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (2/3): test_file_item.rb
 DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (3/3): test_run.rb
 DEBUG -- ProcessFiles/CamelizeName - Items : 3 of 3 subitems passed
 DEBUG -- ProcessFiles/CamelizeName - TestRun : 1 of 1 subitems passed
+ INFO -- Analyzer - TestRun : Ingest finished
 STR
     sample_out = sample_out.lines.to_a
 
@@ -113,11 +114,11 @@ STR
 
     expect(output.size).to eq sample_out.size
     output.each_with_index do |o, i|
-      expect(o[/(?<=\] ).*/]).to eq sample_out[i].strip
+      expect(o[/(?<=\] ).*/].strip).to eq sample_out[i].strip
     end
 
-    expect(run.summary['DEBUG']).to eq 20
-    expect(run.log_history.size).to eq 8
+    expect(run.summary['DEBUG']).to eq 18
+    expect(run.log_history.size).to eq 9
     expect(run.status_log.size).to eq 8
     expect(run.items.first.log_history.size).to eq 12
     expect(run.items.first.status_log.size).to eq 6
@@ -160,10 +161,10 @@ STR
     [
         {severity: 'DEBUG', task: 'CollectFiles', message: 'Processing subitem (1/1): items'},
         {severity: 'DEBUG', task: 'CollectFiles', message: '1 of 1 subitems passed'},
-        {severity: 'DEBUG', task: 'ProcessFiles', message: 'Running subtask (1/2): ChecksumTester'},
+        {severity: 'INFO', task: 'ProcessFiles', message: 'Running subtask (1/2): ChecksumTester'},
         {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', message: 'Processing subitem (1/1): items'},
         {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', message: '1 of 1 subitems passed'},
-        {severity: 'DEBUG', task: 'ProcessFiles', message: 'Running subtask (2/2): CamelizeName'},
+        {severity: 'INFO', task: 'ProcessFiles', message: 'Running subtask (2/2): CamelizeName'},
         {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', message: 'Processing subitem (1/1): items'},
         {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', message: '1 of 1 subitems passed'},
     ].each_with_index do |h, i|

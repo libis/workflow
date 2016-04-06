@@ -38,7 +38,7 @@ module Libis
 
         status = Hash.new(0)
         tasks.each_with_index do |task, i|
-          debug 'Running subtask (%d/%d): %s', item, i+1, tasks.size, task.name
+          info 'Running subtask (%d/%d): %s', item, i+1, tasks.size, task.name
           task.run item
           status[item.status(task.namepath)] += 1
           break if parameter(:abort_on_failure) && item.status(task.namepath) != :DONE
