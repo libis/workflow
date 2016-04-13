@@ -11,6 +11,15 @@ module Libis
           FAILED: 5
       }
 
+      STATUS_TEXT = [
+          'not started',
+          'started',
+          'done',
+          'waiting for running async process',
+          'waiting for halted async process',
+          'failed'
+      ]
+
       # Changes the status of the object. The status changed is logged in the status_log with the current timestamp.
       #
       # @param [Array] x Array with status and task
@@ -27,6 +36,15 @@ module Libis
       def status(task = nil)
         entry = status_entry(task)
         status_symbol(entry[:status]) rescue :NOT_STARTED
+      end
+
+      # Get last known status text for a given task
+      #
+      # @param [String] task task name to check item status for
+      # @return [Symbol] the status code
+      def status_text(task = nil)
+        entry = status_entry(task)
+        status_string(entry[:status]) rescue STATUS_TEXT.first
       end
 
       # Gets the last known status label of the object.
@@ -76,6 +94,13 @@ module Libis
         return x if STATUS.has_key?(x)
         x = x.to_s.upcase.to_sym
         STATUS.has_key?(x) ? x : nil
+      end
+
+      def status_string(x)
+        return STATUS_TEXT[x] if x.is_a?(Integer)
+        return STATUS_TEXT[STATUS[x]] if STATUS.has_key?(x)
+        x = x.to_s.upcase.to_sym
+        STATUS.has_key?(x) ? STATUS_TEXT[STATUS[x]] : 'unknown status'
       end
 
     end

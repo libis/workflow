@@ -50,10 +50,6 @@ name has to be provided to the job configuration so that the job can instantiate
 will be able to execute the tasks in proper order on all the WorkItems supplied/collected. Each task can be implemented 
 with code to run or simply contain a list of child tasks. 
 
-One task is predefined:
-::Libis::Workflow::Tasks::Analyzer - analyzes the workflow run and summarizes the results. It is always included as the
-last task by the workflow unless you supply a closing task called 'Analyzer' yourself.
-
 The whole ingester workflow is configured by a Singleton object ::Libis::Workflow::Config which contains settings for
 logging and paths where tasks and workitems can be found.
 
@@ -296,12 +292,6 @@ performing its actions:
 You have some options to control how the task will behave in special cases. These are controlled using parameters on 
 the task, which can be set (and fixed with the 'frozen' option) on the task, but can be configured at run-time with the 
 help of workflow input parameters and run options.
-
-#### Preventing any logging output from the task
-
-Logging output can be blocked on a task-by-task basis by setting the 'quiet' parameter to true. Probably not usefull 
-except for the Analyzer task where the parameter is fixed to true. Logging output would otherwise intervene with the 
-log summary processing performed by the task.
 
 #### Performing an action on the work item and all child items recursively
 

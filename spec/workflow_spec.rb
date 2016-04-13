@@ -57,9 +57,9 @@ describe 'TestWorkflow' do
   }
 
   it 'should contain three tasks' do
-    expect(workflow.config['tasks'].size).to eq 3
+    expect(workflow.config['tasks'].size).to eq 2
     expect(workflow.config['tasks'].first['class']).to eq 'CollectFiles'
-    expect(workflow.config['tasks'].last['class']).to eq '::Libis::Workflow::Tasks::Analyzer'
+    expect(workflow.config['tasks'].last['name']).to eq 'ProcessFiles'
   end
 
   # noinspection RubyResolve
@@ -83,12 +83,15 @@ describe 'TestWorkflow' do
   it 'should return expected debug output' do
 
     sample_out = <<STR
+ INFO -- Run - TestRun : Ingest run started.
+ INFO -- Run - TestRun : Running subtask (1/2): CollectFiles
 DEBUG -- CollectFiles - TestRun : Processing subitem (1/1): items
 DEBUG -- CollectFiles - items : Processing subitem (1/3): test_dir_item.rb
 DEBUG -- CollectFiles - items : Processing subitem (2/3): test_file_item.rb
 DEBUG -- CollectFiles - items : Processing subitem (3/3): test_run.rb
 DEBUG -- CollectFiles - items : 3 of 3 subitems passed
 DEBUG -- CollectFiles - TestRun : 1 of 1 subitems passed
+ INFO -- Run - TestRun : Running subtask (2/2): ProcessFiles
  INFO -- ProcessFiles - TestRun : Running subtask (1/2): ChecksumTester
 DEBUG -- ProcessFiles/ChecksumTester - TestRun : Processing subitem (1/1): items
 DEBUG -- ProcessFiles/ChecksumTester - items : Processing subitem (1/3): test_dir_item.rb
@@ -103,7 +106,8 @@ DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (2/3): test_file
 DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (3/3): test_run.rb
 DEBUG -- ProcessFiles/CamelizeName - Items : 3 of 3 subitems passed
 DEBUG -- ProcessFiles/CamelizeName - TestRun : 1 of 1 subitems passed
- INFO -- Analyzer - TestRun : Ingest finished
+ INFO -- ProcessFiles - TestRun : Done
+ INFO -- Run - TestRun : Done
 STR
     sample_out = sample_out.lines.to_a
 
@@ -118,12 +122,13 @@ STR
     end
 
     expect(run.summary['DEBUG']).to eq 18
-    expect(run.log_history.size).to eq 9
-    expect(run.status_log.size).to eq 8
+    expect(run.log_history.size).to eq 13
+    expect(run.status_log.size).to eq 10
     expect(run.items.first.log_history.size).to eq 12
     expect(run.items.first.status_log.size).to eq 6
 
     [
+        {task: 'Run', status: :STARTED},
         {task: 'CollectFiles', status: :STARTED},
         {task: 'CollectFiles', status: :DONE},
         {task: 'ProcessFiles', status: :STARTED},
@@ -132,6 +137,7 @@ STR
         {task: 'ProcessFiles/CamelizeName', status: :STARTED},
         {task: 'ProcessFiles/CamelizeName', status: :DONE},
         {task: 'ProcessFiles', status: :DONE},
+        {task: 'Run', status: :DONE},
     ].each_with_index do |h, i|
       h.keys.each { |key| expect(run.status_log[i][key]).to eq h[key] }
     end
@@ -159,14 +165,19 @@ STR
     end
 
     [
+        {severity: 'INFO', task: 'Run', message: 'Ingest run started.'},
+        {severity: 'INFO', task: 'Run', message: 'Running subtask (1/2): CollectFiles'},
         {severity: 'DEBUG', task: 'CollectFiles', message: 'Processing subitem (1/1): items'},
         {severity: 'DEBUG', task: 'CollectFiles', message: '1 of 1 subitems passed'},
+        {severity: 'INFO', task: 'Run', message: 'Running subtask (2/2): ProcessFiles'},
         {severity: 'INFO', task: 'ProcessFiles', message: 'Running subtask (1/2): ChecksumTester'},
         {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', message: 'Processing subitem (1/1): items'},
         {severity: 'DEBUG', task: 'ProcessFiles/ChecksumTester', message: '1 of 1 subitems passed'},
         {severity: 'INFO', task: 'ProcessFiles', message: 'Running subtask (2/2): CamelizeName'},
         {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', message: 'Processing subitem (1/1): items'},
         {severity: 'DEBUG', task: 'ProcessFiles/CamelizeName', message: '1 of 1 subitems passed'},
+        {severity: 'INFO', task: 'ProcessFiles', message: 'Done'},
+        {severity: 'INFO', task: 'Run', message: 'Done'},
     ].each_with_index do |h, i|
       h.keys.each { |key| expect(run.log_history[i][key]).to eq h[key] }
     end

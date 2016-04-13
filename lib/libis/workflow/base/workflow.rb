@@ -84,12 +84,6 @@ module Libis
 
           self.class.require_all
 
-          unless !self.config['tasks'].empty? &&
-              self.config['tasks'].last['class'] &&
-              self.config['tasks'].last['class'].split('::').last == 'Analyzer'
-            self.config['tasks'] << {'class' => '::Libis::Workflow::Tasks::Analyzer'}
-          end
-
           self.config
         end
 

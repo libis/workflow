@@ -1,6 +1,7 @@
 require 'fileutils'
 
 require 'libis/workflow/base/work_item'
+require 'libis/workflow/task_runner'
 
 module Libis
   module Workflow
@@ -72,9 +73,13 @@ module Libis
 
           self.save!
 
+          runner = Libis::Workflow::TaskRunner.new nil
+
           self.tasks.each do |task|
-            task.run self
+            runner << task
           end
+
+          runner.run self
 
         end
 

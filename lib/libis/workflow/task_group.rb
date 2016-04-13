@@ -18,6 +18,7 @@ module Libis
 
       def <<(task)
         self.tasks << task
+        task.parent = self
       end
 
       def apply_options(opts)
@@ -45,6 +46,8 @@ module Libis
         end
 
         substatus_check(status, item, 'task')
+
+        info item.status_text(self.namepath).capitalize, item
       end
 
       def stop_processing_subtasks
