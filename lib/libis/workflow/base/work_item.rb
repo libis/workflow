@@ -14,11 +14,6 @@ module Libis
       # This module lacks the implementation for the data attributes. It functions as an interface that describes the
       # common functionality regardless of the storage implementation. These attributes require some implementation:
       #
-      # - status: [Symbol] the status field. Each task sets the status of the items it works on. Before starting processing
-      #     the status is set to "#{task_name}Started". After successfull processing it is set to "#{task_name}Done" and if
-      #     the task failed, it is set to "#{task_name}Failed". The status field can be used to perform real-time
-      #     monitoring, reporting and error-recovery or restart of the ingest.
-      #     The initial value for this attribute is :START.
       # - parent: [Object|nil] a link to a parent work item. Work items can be organized in any hierarchy you think is
       #     relevant for your workflow (e.g. directory[/directory...]/file/line or library/section/book/page). Of course
       #     hierarchies are not mandatory.
@@ -28,9 +23,6 @@ module Libis
       # - properties: [Hash] a set of properties, typically collected during the workflow processing and used to store
       #     final or intermediate resulst of tasks. The ::Lias::Ingester::FileItem module uses this attribute to store the
       #     properties (e.g. size, checksum, ...) of the file it represents.
-      # - log_history: [Array] a list of all logging messages collected for this work item. Whenever a task logs a message
-      #     it will automatically be registered for the work item that it is processing or for the work item that was
-      #     supplied as the first argument.
       # - status_log: [Array] a list of all status changes the work item went through.
       # - summary: [Hash] collected statistics about the ingest for the work item and its children. This structure will
       #     be filled in by the included task ::Lias::Ingester::Tasks::Analyzer wich is appended to the workflow by default.
@@ -41,7 +33,7 @@ module Libis
       # attr_accessor :parent
       # attr_accessor :items
       # attr_accessor :options, :properties
-      # attr_accessor :log_history, :status_log
+      # attr_accessor :status_log
       # attr_accessor :summary
       #
       # def initialize
@@ -49,21 +41,16 @@ module Libis
       #   self.items = []
       #   self.options = {}
       #   self.properties = {}
-      #   self.log_history = []
       #   self.status_log = []
       #   self.summary = {}
       # end
       #
       # protected
       #
-      # ## Methods below should be adapted to match the implementation of the log arrays
+      # ## Method below should be adapted to match the implementation of the status array
       #
-      # def add_log_entry(msg)
-      #   self.log_history << msg.merge(c_at: ::Time.now)
-      # end
-      #
-      # def add_status_log(message, tasklist = nil)
-      #   self.status_log << { c_at: ::Time.now, tasklist: tasklist, text: message }.cleanup
+      # def add_status_log(info)
+      #   self.status_log << info
       # end
       #
       #

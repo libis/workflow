@@ -34,8 +34,8 @@ module Libis
       #       - tasks: [Array] a list of subtask defintions for this task.
       #
       #       Additionally the task definition Hash may specify values for any other parameter that the task knows of.
-      #       All tasks have parameters 'quiet', 'recursive', 'retry_count' and 'retry_interval'. For more
-      #       information about these see the documentation of the task class.
+      #       All tasks have some fixed parameters. For more information about these see the documentation of
+      #       the task class.
       #
       #       A task definition does not require to have a 'class' entry. If not present the default
       #       ::Libis::Workflow::TaskGroup class will be instatiated. It will do nothing itself, but will execute the

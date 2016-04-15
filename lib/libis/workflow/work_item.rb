@@ -11,7 +11,7 @@ module Libis
       attr_accessor :parent
       attr_accessor :items
       attr_accessor :options, :properties
-      attr_accessor :log_history, :status_log
+      attr_accessor :status_log
       attr_accessor :summary
 
       def initialize
@@ -19,21 +19,15 @@ module Libis
         self.items = []
         self.options = {}
         self.properties = {}
-        self.log_history = []
         self.status_log = []
         self.summary = {}
       end
 
       protected
 
-      def add_log_entry(msg)
-        # noinspection RubyResolve
-        self.log_history << msg.merge(c_at: ::Time.now)
-      end
-
       def add_status_log(info)
         # noinspection RubyResolve
-        self.status_log << info.merge(timestamp: ::Time.now).cleanup
+        self.status_log << info
       end
 
     end

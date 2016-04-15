@@ -22,10 +22,16 @@ module Libis
 
       # Changes the status of the object. The status changed is logged in the status_log with the current timestamp.
       #
-      # @param [Array] x Array with status and task
-      def status=(x)
-        s, task = x
-        self.add_status_log(task: task, status: s)
+      # @param [String] task namepath of the task
+      # @param [Symbol] status status to set
+      def set_status(task, status)
+        case status
+          when :STARTED
+            self.add_status_log(task: task, status: status)
+          else
+            log_entry = status_entry(task) || self.add_status_log(task: task, status: status)
+            log_entry[:status] = status
+        end
         self.save!
       end
 
@@ -71,6 +77,18 @@ module Libis
       # @return [Integer] 1, 0 or -1 depnding on which
       def compare_status(state, task = nil)
         STATUS[self.status(task)] <=> STATUS[state]
+      end
+
+      # Update the progress of the working task
+      # @param [String] task namepath of the task
+      # @param [Integer] progress progress indicator (as <progress> of <max> or as % if <max> not set). Default: 0
+      # @param [Integer] max max count.
+      def status_progress(task, progress = 0, max = nil)
+        log_entry = self.status_entry(task)
+        log_entry ||= self.status_log.build(task: task)
+        log_entry[:progress] = progress
+        log_entry[:max] = max if max
+        self.save!
       end
 
       protected

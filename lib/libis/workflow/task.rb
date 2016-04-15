@@ -17,8 +17,8 @@ module Libis
 
       attr_accessor :parent, :name, :workitem
 
-      parameter quiet: false, description: 'Prevent generating log output.'
       parameter recursive: false, description: 'Run the task on all subitems recursively.'
+      parameter abort_recursion_on_failure: false, description: 'Stop processing items recursively if one item fails.'
       parameter retry_count: 0, description: 'Number of times to retry the task if waiting for another process.'
       parameter retry_interval: 10, description: 'Number of seconds to wait between retries.'
 
@@ -124,23 +124,13 @@ module Libis
       def message(severity, msg, *args)
         taskname = self.namepath rescue nil
         self.set_application(taskname)
-        item = self.workitem
+        item = self.workitem rescue nil
         item = args.shift if args.size > 0 and args[0].is_a?(::Libis::Workflow::Base::WorkItem)
-        if item
-          subject = nil
-          begin
-            subject = item.to_s
-            subject = item.name
-            subject = item.namepath
-          rescue
-            # do nothing
-          end
-          self.set_subject(subject)
-          return unless super(severity, msg, *args)
-          item.log_message(
-              severity, msg.is_a?(Integer) ? {id: msg} : {text: (msg.to_s rescue '')}.merge(task: taskname), *args
-          )
-        end
+        subject = item.namepath rescue nil
+        subject ||= item.name rescue nil
+        subject ||= item.to_s rescue nil
+        self.set_subject(subject)
+        super(severity, msg, *args)
       end
 
       def logger
@@ -192,10 +182,14 @@ module Libis
         return unless items.size > 0
 
         status = Hash.new(0)
+        parent_item.status_progress(self.namepath, 0, items.count)
         items.each_with_index do |item, i|
           debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.size, item.to_s
           run_item item
-          status[item.status(self.namepath)] += 1
+          parent_item.status_progress(self.namepath, i+1)
+          item_status = item.status(self.namepath)
+          status[item_status] += 1
+          break if parameter(:abort_recursion_on_failure) && item_status != :DONE
         end
 
         debug '%d of %d subitems passed', parent_item, status[:DONE], items.size
@@ -275,12 +269,8 @@ module Libis
       end
 
       def set_status(item, state)
-        item.status = to_status(state)
+        item.set_status self.namepath, state
         state
-      end
-
-      def to_status(state)
-        [state, self.namepath]
       end
 
       def check_item_type(klass, item = nil)

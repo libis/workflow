@@ -44,7 +44,7 @@ implementation is provided in the class ::Libis::Workflow::Workflow for your con
 your own from.
 
 The Job class is responsible for instantiating a run-time workflow execution object - a Run - that captures the 
-configuration, logs and workitems generated while executing the tasks. Essential logic is provided in the module 
+configuration and workitems generated while executing the tasks. Essential logic is provided in the module 
 ::Libis::Workflow::Base::Run with a simple in-memory implementation in ::Libis::Workflow::Run. The run object's class 
 name has to be provided to the job configuration so that the job can instantiate the correct object. The run object 
 will be able to execute the tasks in proper order on all the WorkItems supplied/collected. Each task can be implemented 
@@ -99,15 +99,17 @@ is a Hash with:
   ::Libis::Tools::Parameter class for this.
   
 The ::Libis::Workflow::Task base class allready defines the following parameters:
-* quiet: Prevent generating log output. Default: false
 * recursive: Run the task on all subitems recursively. Default: false
+* abort_recursion_on_failure: Stop processing items recursively if one item fails. Default: false
 * retry_count: Number of times to retry the task. Default: 0
 * retry_interval: Number of seconds to wait between retries. Default: 10
 
 If 'class' is not present, the default '::Libis::Workflow::TaskGroup' with the given name will be instantiated, which 
-performs each sub-task on the item. If the task is configured to be recursive, it will iterate over the child items and
-perform each sub-task on each of the child items. If a 'class' value is given, an instance of that class will be created 
-and the task will be handed the work item to process on. See the chapter on 'Tasks' below for more information on tasks.
+performs each sub-task on the item.
+
+If the task is configured to be recursive, it will iterate over the child items and perform each sub-task on each of 
+the child items. If a 'class' value is given, an instance of that class will be created and the task will be handed 
+the work item to process on. See the chapter on 'Tasks' below for more information on tasks.
 
 Note that a task with custom processing will not execute sub-tasks. If you configured a processing task with subtasks
 an exception will be thrown when trying to execute the job.
@@ -165,7 +167,6 @@ or if a custom storage implementation is desired, a number of data items and met
       stored_attribute :items
       stored_attribute :options
       stored_attribute :properties
-      stored_attribute :log_history
       stored_attribute :status_log
       stored_attribute :summary
 
@@ -174,23 +175,14 @@ or if a custom storage implementation is desired, a number of data items and met
         self.items = []
         self.options = {}
         self.properties = {}
-        self.log_history = []
         self.status_log = []
         self.summary = {}
       end
 
       protected
 
-      def add_log_entry(msg)
-        self.log_history << msg.merge(c_at: ::Time.now)
-      end
-
-      def add_status_log(message, tasklist = nil)
-        self.status_log << { timestamp: ::Time.now, tasklist: tasklist, text: message }.cleanup
-      end
-
-      def status_label(status_entry)
-        "#{status_entry[:tasklist].last rescue nil}#{status_entry[:text] rescue nil}"
+      def add_status_log(info)
+        self.status_log << info
       end
 
     end
