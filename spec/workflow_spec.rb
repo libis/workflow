@@ -114,7 +114,7 @@ STR
     run = job.execute
     output = logoutput.string.lines.to_a
 
-    puts output
+    # puts output
 
     expect(output.size).to eq sample_out.size
     output.each_with_index do |o, i|
