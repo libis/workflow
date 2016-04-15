@@ -85,7 +85,7 @@ module Libis
       # @param [Integer] max max count.
       def status_progress(task, progress = 0, max = nil)
         log_entry = self.status_entry(task)
-        log_entry ||= self.status_log.build(task: task)
+        return nil unless log_entry
         log_entry[:progress] = progress
         log_entry[:max] = max if max
         self.save!
