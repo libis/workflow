@@ -155,13 +155,14 @@ module Libis
 
         pre_process(item)
 
-        set_status item, :STARTED
-
-        self.process item unless @item_skipper
-
-        run_subitems(item) if parameter(:recursive)
-
-        update_status item, :DONE
+        unless @item_skipper
+          set_status item, :STARTED
+          self.process item
+          run_subitems(item) if parameter(:recursive)
+          update_status item, :DONE
+        else
+          run_subitems(item) if parameter(:recursive)
+        end
 
         post_process item
       end
