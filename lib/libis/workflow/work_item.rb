@@ -28,6 +28,7 @@ module Libis
       def add_status_log(info)
         # noinspection RubyResolve
         self.status_log << info
+        self.status_log.last
       end
 
     end

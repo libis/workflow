@@ -25,13 +25,17 @@ module Libis
       # @param [String] task namepath of the task
       # @param [Symbol] status status to set
       def set_status(task, status)
+        log_entry = status_entry(task)
         case status
           when :STARTED
-            self.add_status_log(task: task, status: status)
+            unless status(task) == :ASYNC_WAIT
+              log_entry = self.add_status_log(task: task, status: status, created: DateTime.now)
+            end
           else
-            log_entry = status_entry(task) || self.add_status_log(task: task, status: status)
-            log_entry[:status] = status
+            log_entry ||= self.add_status_log(task: task, status: status, created: DateTime.now)
         end
+        log_entry[:status] = status
+        log_entry[:updated] = DateTime.now
         self.save!
       end
 
