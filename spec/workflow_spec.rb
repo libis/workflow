@@ -131,7 +131,7 @@ STR
         {task: 'ProcessFiles/ChecksumTester', status: :DONE, progress: 1, max: 1},
         {task: 'ProcessFiles/CamelizeName', status: :DONE, progress: 1, max: 1},
     ].each_with_index do |h, i|
-      h.keys.each { |key| expect(run.status_log[i][key]).to eq h[key] }
+      h.keys.each { |key| expect(run.status_log[i][key.to_s]).to eq h[key] }
     end
 
     [
@@ -139,7 +139,7 @@ STR
         {task: 'ProcessFiles/ChecksumTester', status: :DONE, progress: 3, max: 3},
         {task: 'ProcessFiles/CamelizeName', status: :DONE, progress: 3, max: 3},
     ].each_with_index do |h, i|
-      h.keys.each { |key| expect(run.items.first.status_log[i][key]).to eq h[key] }
+      h.keys.each { |key| expect(run.items.first.status_log[i][key.to_s]).to eq h[key] }
     end
 
     [
@@ -147,7 +147,7 @@ STR
         {task: 'ProcessFiles/ChecksumTester', status: :DONE, progress: nil, max: nil},
         {task: 'ProcessFiles/CamelizeName', status: :DONE, progress: nil, max: nil},
     ].each_with_index do |h, i|
-      h.keys.each { |key| expect(run.items.first.first.status_log[i][key]).to eq h[key] }
+      h.keys.each { |key| expect(run.items.first.first.status_log[i][key.to_s]).to eq h[key] }
     end
 
   end

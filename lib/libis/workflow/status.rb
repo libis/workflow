@@ -25,17 +25,18 @@ module Libis
       # @param [String] task namepath of the task
       # @param [Symbol] status status to set
       def set_status(task, status)
-        log_entry = status_entry(task)
+        task = task.namepath if task.is_a?(Libis::Workflow::Task)
+        log_entry = self.status_entry(task)
         case status
           when :STARTED
             unless status(task) == :ASYNC_WAIT
-              log_entry = self.add_status_log(task: task, status: status, created: DateTime.now)
+              log_entry = self.add_status_log('task' => task, 'status' => status, 'created' => DateTime.now)
             end
           else
-            log_entry ||= self.add_status_log(task: task, status: status, created: DateTime.now)
+            log_entry ||= self.add_status_log('task' => task, 'status' => status, 'created' => DateTime.now)
         end
-        log_entry[:status] = status
-        log_entry[:updated] = DateTime.now
+        log_entry['status'] = status
+        log_entry['updated'] = DateTime.now
         self.save!
       end
 
@@ -44,8 +45,8 @@ module Libis
       # @param [String] task task name to check item status for
       # @return [Symbol] the status code
       def status(task = nil)
-        entry = status_entry(task)
-        status_symbol(entry[:status]) rescue :NOT_STARTED
+        entry = self.status_entry(task)
+        status_symbol(entry['status']) rescue :NOT_STARTED
       end
 
       # Get last known status text for a given task
@@ -53,8 +54,8 @@ module Libis
       # @param [String] task task name to check item status for
       # @return [Symbol] the status code
       def status_text(task = nil)
-        entry = status_entry(task)
-        status_string(entry[:status]) rescue STATUS_TEXT.first
+        entry = self.status_entry(task)
+        status_string(entry['status']) rescue STATUS_TEXT.first
       end
 
       # Gets the last known status label of the object.
@@ -63,7 +64,7 @@ module Libis
       # @return [String] status label ( = task name + status )
       def status_label(task = nil)
         entry = self.status_entry(task)
-        "#{entry[:task] rescue nil}#{entry[:status].capitalize rescue nil}"
+        "#{entry['task'] rescue nil}#{entry['status'].capitalize rescue nil}"
       end
 
       # Check status of the object.
@@ -90,8 +91,9 @@ module Libis
       def status_progress(task, progress = 0, max = nil)
         log_entry = self.status_entry(task)
         return nil unless log_entry
-        log_entry[:progress] = progress
-        log_entry[:max] = max if max
+        log_entry['progress'] = progress
+        log_entry['max'] = max if max
+        log_entry['updated'] = DateTime.now
         self.save!
       end
 
@@ -102,8 +104,9 @@ module Libis
       # @param [String] task task name to check item status for
       # @return [Hash] the status entry
       def status_entry(task = nil)
+        task = task.namepath if task.is_a?(Libis::Workflow::Task)
         return self.status_log.last if task.blank?
-        self.status_log.select { |entry| entry[:task] == task }.last
+        self.status_log.select { |entry| entry['task'] == task }.last
       end
 
       # Convert String, Symbol or Integer to correct symbol for the status.
