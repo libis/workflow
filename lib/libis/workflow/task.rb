@@ -81,14 +81,14 @@ module Libis
 
       rescue WorkflowError => e
         error e.message, item
-        update_status item, :FAILED
+        set_status item, :FAILED
 
       rescue WorkflowAbort => e
-        update_status item, :FAILED
+        set_status item, :FAILED
         raise e if parent
 
       rescue ::Exception => e
-        update_status item, :FAILED
+        set_status item, :FAILED
         fatal "Exception occured: #{e.message}", item
         debug e.backtrace.join("\n")
 
@@ -159,7 +159,7 @@ module Libis
           set_status item, :STARTED
           self.process item
           run_subitems(item) if parameter(:recursive)
-          update_status item, :DONE
+          set_status item, :DONE if item.check_status(:STARTED, self.namepath)
         else
           run_subitems(item) if parameter(:recursive)
         end
@@ -198,22 +198,24 @@ module Libis
       end
 
       def substatus_check(status, item, task_or_item)
-        if (failed = status[:FAILED]) > 0
-          error "%d sub#{task_or_item}(s) failed", item, failed
-          update_status(item, :FAILED)
+        item_status = :DONE
+
+        if (waiting = status[:ASYNC_WAIT]) > 0
+          info "waiting for %d sub#{task_or_item}(s) in async process", item, waiting
+          item_status = :ASYNC_WAIT
         end
 
         if (halted = status[:ASYNC_HALT]) > 0
           warn "%d sub#{task_or_item}(s) halted in async process", item, halted
-          update_status(item, :ASYNC_HALT)
+          item_status = :ASYNC_HALT
         end
 
-        if (waiting = status[:ASYNC_WAIT]) > 0
-          info "waiting for %d sub#{task_or_item}(s) in async process", item, waiting
-          update_status(item, :ASYNC_WAIT)
+        if (failed = status[:FAILED]) > 0
+          error "%d sub#{task_or_item}(s) failed", item, failed
+          item_status = :FAILED
         end
 
-        update_status(item, :DONE)
+        set_status(item, item_status)
       end
 
       def capture_cmd(cmd, *opts)
@@ -262,11 +264,6 @@ module Libis
 
       def skip_processing_item
         @item_skipper = true
-      end
-
-      def update_status(item, state)
-        return nil unless item.compare_status(state, self.namepath) < 0
-        set_status(item, state)
       end
 
       def set_status(item, state)
