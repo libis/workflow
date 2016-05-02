@@ -90,7 +90,7 @@ module Libis
       # @param [Integer] max max count.
       def status_progress(task, progress = 0, max = nil)
         log_entry = self.status_entry(task)
-        log_entry ||= self.add_status_log('task' => task, 'created' => DateTime.now)
+        log_entry ||= self.add_status_log('task' => task, 'status' => :STARTED, 'created' => DateTime.now)
         log_entry['progress'] = progress
         log_entry['max'] = max if max
         log_entry['updated'] = DateTime.now
