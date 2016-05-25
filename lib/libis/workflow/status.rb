@@ -88,10 +88,10 @@ module Libis
       # @param [String] task namepath of the task
       # @param [Integer] progress progress indicator (as <progress> of <max> or as % if <max> not set). Default: 0
       # @param [Integer] max max count.
-      def status_progress(task, progress = 0, max = nil)
+      def status_progress(task, progress, max = nil)
         log_entry = self.status_entry(task)
         log_entry ||= self.add_status_log('task' => task, 'status' => :STARTED, 'created' => DateTime.now)
-        log_entry['progress'] = progress
+        log_entry['progress'] = progress ? progress : (log_entry['progress'] || 0) + 1
         log_entry['max'] = max if max
         log_entry['updated'] = DateTime.now
         self.save!
