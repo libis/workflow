@@ -15,7 +15,7 @@ module Libis
       include ::Libis::Tools::Logger
       include ::Libis::Tools::ParameterContainer
 
-      attr_accessor :parent, :name, :workitem
+      attr_accessor :parent, :name, :workitem, :processing_item
 
       parameter recursive: false, description: 'Run the task on all subitems recursively.'
       parameter abort_recursion_on_failure: false, description: 'Stop processing items recursively if one item fails.'
@@ -157,7 +157,9 @@ module Libis
 
         unless @item_skipper
           set_status item, :STARTED
+          self.processing_item = item
           self.process item
+          item = self.processing_item
           run_subitems(item) if parameter(:recursive)
           set_status item, :DONE if item.check_status(:STARTED, self.namepath)
         else
