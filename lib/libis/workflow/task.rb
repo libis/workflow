@@ -55,7 +55,7 @@ module Libis
 
         (parameter(:retry_count)+1).times do
 
-          run_item(item)
+          item = run_item(item)
 
           case item.status(self.namepath)
             when :DONE
@@ -167,6 +167,8 @@ module Libis
         end
 
         post_process item
+
+        item
       end
 
       def pre_process(_)
@@ -188,7 +190,7 @@ module Libis
         parent_item.status_progress(self.namepath, 0, items.count)
         items.each_with_index do |item, i|
           debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.size, item.to_s
-          run_item item
+          item = run_item item
           parent_item.status_progress(self.namepath, i+1)
           item_status = item.status(self.namepath)
           status[item_status] += 1
