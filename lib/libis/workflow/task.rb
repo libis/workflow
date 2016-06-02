@@ -46,10 +46,10 @@ module Libis
           when :retry
             if item.check_status(:DONE, self.namepath)
               debug 'Retry: skipping task %s because it has finished successfully.', item, self.namepath
-              return
+              return item
             end
           when :failed
-            return
+            return item
           else
         end
 
@@ -60,7 +60,7 @@ module Libis
           case item.status(self.namepath)
             when :DONE
               self.action = :run
-              return
+              return item
             when :ASYNC_WAIT
               self.action = :retry
             when :ASYNC_HALT
@@ -68,7 +68,7 @@ module Libis
             when :FAILED
               break
             else
-              return
+              return item
           end
 
           self.action = :retry
@@ -94,6 +94,8 @@ module Libis
 
       ensure
         item.save!
+
+        item
 
       end
 
