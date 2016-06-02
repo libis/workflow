@@ -153,7 +153,7 @@ module Libis
       def run_item(item)
         @item_skipper = false
 
-        return if item.status(self.namepath) == :DONE
+        return item if item.status(self.namepath) == :DONE
 
         pre_process(item)
 
@@ -296,7 +296,7 @@ module Libis
       end
 
       def subitems(item = nil)
-        (item || self.workitem).get_items
+        (item || self.workitem).get_item_list
       end
 
       def default_values
