@@ -121,8 +121,15 @@ module Libis
 
         # Get list of items.
         #
-        # This method should return a list of items that is safe to iterate over while it is being altered.
+        # This method should return a list of items that can be accessed during long processing times.
         def get_items
+          self.items
+        end
+
+        # Get list of items.
+        #
+        # This method should return a list of items that is safe to iterate over while it is being altered.
+        def get_item_list
           self.items.dup
         end
 
