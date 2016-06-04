@@ -78,6 +78,8 @@ module Libis
         end
 
         item.get_run.action = :failed
+        
+        return item
 
       rescue WorkflowError => e
         error e.message, item
@@ -94,8 +96,6 @@ module Libis
 
       ensure
         item.save!
-
-        item
 
       end
 
