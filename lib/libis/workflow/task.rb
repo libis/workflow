@@ -55,7 +55,8 @@ module Libis
 
         (parameter(:retry_count)+1).times do
 
-          item = run_item(item)
+          i = run_item(item)
+          item = i if i.is_a?(Libis::Workflow::WorkItem)
 
           case item.status(self.namepath)
             when :DONE
@@ -157,15 +158,15 @@ module Libis
 
         pre_process(item)
 
-        unless @item_skipper
+        if @item_skipper
+          run_subitems(item) if parameter(:recursive)
+        else
           set_status item, :STARTED
           self.processing_item = item
           self.process item
           item = self.processing_item
           run_subitems(item) if parameter(:recursive)
           set_status item, :DONE if item.check_status(:STARTED, self.namepath)
-        else
-          run_subitems(item) if parameter(:recursive)
         end
 
         post_process item
@@ -192,7 +193,8 @@ module Libis
         parent_item.status_progress(self.namepath, 0, items.count)
         items.each_with_index do |item, i|
           debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.size, item.to_s
-          item = run_item item
+          i = run_item(item)
+          item = i if i.is_a?(Libis::Workflow::WorkItem)
           parent_item.status_progress(self.namepath, i+1)
           item_status = item.status(self.namepath)
           status[item_status] += 1
