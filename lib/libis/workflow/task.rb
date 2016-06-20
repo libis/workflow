@@ -193,8 +193,8 @@ module Libis
         parent_item.status_progress(self.namepath, 0, items.count)
         items.each_with_index do |item, i|
           debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.size, item.to_s
-          i = run_item(item)
-          item = i if i.is_a?(Libis::Workflow::WorkItem)
+          new_item = run_item(item)
+          item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
           parent_item.status_progress(self.namepath, i+1)
           item_status = item.status(self.namepath)
           status[item_status] += 1
