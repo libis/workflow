@@ -64,9 +64,11 @@ module Libis
         def run(action = :run)
           self.action = action
 
-          self.start_date = Time.now unless action == :retry
+          unless action == :retry
+            self.start_date = Time.now
+            self.options = workflow.prepare_input(self.options)
+          end
 
-          self.options = workflow.prepare_input(self.options)
 
           self.tasks = workflow.tasks
           configure_tasks self.options
