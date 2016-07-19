@@ -27,13 +27,8 @@ module Libis
       def set_status(task, status)
         task = task.namepath if task.is_a?(Libis::Workflow::Task)
         log_entry = self.status_entry(task)
-        case status
-          when :STARTED
-            unless status(task) == :ASYNC_WAIT
-              log_entry = self.add_status_log('task' => task, 'status' => status, 'created' => DateTime.now)
-            end
-          else
-            log_entry ||= self.add_status_log('task' => task, 'status' => status, 'created' => DateTime.now)
+        if log_entry.nil? || status == :STARTED
+          log_entry = self.add_status_log('task' => task, 'status' => status, 'created' => DateTime.now)
         end
         log_entry['status'] = status
         log_entry['updated'] = DateTime.now
