@@ -2,11 +2,13 @@ module Libis
   module Workflow
     module Status
 
+      protected
+
       STATUS = {
           NOT_STARTED: 0,
           STARTED: 1,
-          DONE: 2,
-          ASYNC_WAIT: 3,
+          ASYNC_WAIT: 2,
+          DONE: 3,
           ASYNC_HALT: 4,
           FAILED: 5
       }
@@ -14,11 +16,13 @@ module Libis
       STATUS_TEXT = [
           'not started',
           'started',
-          'done',
           'waiting for running async process',
+          'done',
           'waiting for halted async process',
           'failed'
       ]
+
+      public
 
       # Changes the status of the object. The status changed is logged in the status_log with the current timestamp.
       #
@@ -27,7 +31,7 @@ module Libis
       def set_status(task, status)
         task = task.namepath if task.is_a?(Libis::Workflow::Task)
         log_entry = self.status_entry(task)
-        if log_entry.nil? || status == :STARTED
+        if log_entry.nil? || STATUS[status_symbol(log_entry['status'])] > STATUS[status_symbol(status)]
           log_entry = self.add_status_log('task' => task, 'status' => status, 'created' => DateTime.now)
         end
         log_entry['status'] = status
@@ -74,7 +78,7 @@ module Libis
       # Compare status with current status of the object.
       #
       # @param [Symbol] state
-      # @return [Integer] 1, 0 or -1 depnding on which
+      # @return [Integer] 1, 0 or -1 depending on which status is higher in rank
       def compare_status(state, task = nil)
         STATUS[self.status(task)] <=> STATUS[state]
       end
@@ -83,7 +87,7 @@ module Libis
       # @param [String] task namepath of the task
       # @param [Integer] progress progress indicator (as <progress> of <max> or as % if <max> not set). Default: 0
       # @param [Integer] max max count.
-      def status_progress(task, progress, max = nil)
+      def status_progress(task, progress = nil, max = nil)
         log_entry = self.status_entry(task)
         log_entry ||= self.add_status_log('task' => task, 'status' => :STARTED, 'created' => DateTime.now)
         log_entry['progress'] = progress ? progress : (log_entry['progress'] || 0) + 1

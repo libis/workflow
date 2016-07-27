@@ -189,7 +189,7 @@ module Libis
         items = subitems(parent_item)
         return unless items.size > 0
 
-        status = Hash.new(0)
+        status_count = Hash.new(0)
         parent_item.status_progress(self.namepath, 0, items.count)
         items.each_with_index do |item, i|
           debug 'Processing subitem (%d/%d): %s', parent_item, i+1, items.size, item.to_s
@@ -197,28 +197,28 @@ module Libis
           item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
           parent_item.status_progress(self.namepath, i+1)
           item_status = item.status(self.namepath)
-          status[item_status] += 1
+          status_count[item_status] += 1
           break if parameter(:abort_recursion_on_failure) && item_status != :DONE
         end
 
-        debug '%d of %d subitems passed', parent_item, status[:DONE], items.size
-        substatus_check(status, parent_item, 'item')
+        debug '%d of %d subitems passed', parent_item, status_count[:DONE], items.size
+        substatus_check(status_count, parent_item, 'item')
       end
 
-      def substatus_check(status, item, task_or_item)
+      def substatus_check(status_count, item, task_or_item)
         item_status = :DONE
 
-        if (waiting = status[:ASYNC_WAIT]) > 0
+        if (waiting = status_count[:ASYNC_WAIT]) > 0
           info "waiting for %d sub#{task_or_item}(s) in async process", item, waiting
           item_status = :ASYNC_WAIT
         end
 
-        if (halted = status[:ASYNC_HALT]) > 0
+        if (halted = status_count[:ASYNC_HALT]) > 0
           warn "%d sub#{task_or_item}(s) halted in async process", item, halted
           item_status = :ASYNC_HALT
         end
 
-        if (failed = status[:FAILED]) > 0
+        if (failed = status_count[:FAILED]) > 0
           error "%d sub#{task_or_item}(s) failed", item, failed
           item_status = :FAILED
         end

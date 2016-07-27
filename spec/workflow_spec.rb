@@ -121,6 +121,7 @@ STR
       expect(o[/(?<=\] ).*/].strip).to eq sample_out[i].strip
     end
 
+    # run.status_log.each { |e| puts e }
     expect(run.status_log.size).to eq 5
     expect(run.items.first.status_log.size).to eq 3
 

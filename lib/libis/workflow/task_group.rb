@@ -37,7 +37,7 @@ module Libis
         tasks = subtasks
         return unless tasks.size > 0
 
-        status = Hash.new(0)
+        status_count = Hash.new(0)
         item.status_progress(self.namepath, 0, tasks.count)
         tasks.each_with_index do |task, i|
           info 'Running subtask (%d/%d): %s', item, i+1, tasks.size, task.name
@@ -45,11 +45,11 @@ module Libis
           item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
           item.status_progress(self.namepath, i+1)
           item_status = item.status(task.namepath)
-          status[item_status] += 1
+          status_count[item_status] += 1
           break if parameter(:abort_on_failure) && item_status != :DONE
         end
 
-        substatus_check(status, item, 'task')
+        substatus_check(status_count, item, 'task')
 
         info item.status_text(self.namepath).capitalize, item
       end
