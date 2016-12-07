@@ -71,6 +71,10 @@ module Libis
           self.properties['name'] || self.inspect
         end
 
+        def name=(n)
+          self.properties['name'] = n
+        end
+
         def to_s;
           self.name;
         end
@@ -81,6 +85,23 @@ module Libis
 
         def namepath;
           self.names.join('/');
+        end
+
+        # Label is a more descriptive name
+        def label
+          self.properties['label'] || self.name
+        end
+
+        def label=(value)
+          self.properties['label'] = value
+        end
+
+        def labels
+          (self.parent.labels rescue Array.new).push(label).compact
+        end
+
+        def labelpath;
+          self.labels.join('/');
         end
 
         # File name safe version of the to_s output.
