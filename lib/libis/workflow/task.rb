@@ -92,7 +92,7 @@ module Libis
 
       rescue ::Exception => e
         set_status item, :FAILED
-        fatal "Exception occured: #{e.message}", item
+        fatal_error "Exception occured: #{e.message}", item
         debug e.backtrace.join("\n")
 
       ensure

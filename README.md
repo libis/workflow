@@ -345,7 +345,7 @@ stderr string.
 An array of strings with the hierarchical path of tasks leading to the current task. Can be usefull for log messages.
 The method 'namepath' returns a '/' separated path of tasks.
 
-#### (debug/info/warn/error/fatal)(message, *args)
+#### (debug/info/warn/error/fatal_error)(message, *args)
 
 Convenience function for creating log entries. The logger set in ::Libis::Workflow::Config is used to dump log messages.
 
