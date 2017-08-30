@@ -96,7 +96,7 @@ module Libis
             hash[name] = parameter
             hash
           end
-        rescue
+        rescue => _e
           {}
         end
 

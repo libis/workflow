@@ -41,7 +41,7 @@ module Libis
             self.properties['uid'] = stats.uid
             self.properties['gid'] = stats.gid
             set_checksum(:MD5, ::Digest::MD5.hexdigest(File.read(name))) if File.file?(name)
-          rescue
+          rescue => _e
             # ignored
           end
           self.properties['filename'] = name
