@@ -39,6 +39,7 @@ module Libis
         # @param [Hash] message
         def add_log(message = {})
           msg = message_struct(message)
+          # noinspection RubyResolve
           add_log_entry(msg)
           self.save!
         end

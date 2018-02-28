@@ -23,7 +23,9 @@ module Libis
       parameter retry_interval: 10, description: 'Number of seconds to wait between retries.'
 
       def self.task_classes
-        ObjectSpace.each_object(::Class).select {|klass| klass < self}
+        # noinspection RubyArgCount
+        ObjectSpace.each_object(::Class)
+            .select {|klass| klass < self && klass != Libis::Workflow::TaskRunner}
       end
 
       def initialize(parent, cfg = {})
@@ -43,15 +45,15 @@ module Libis
         self.workitem = item
 
         case action
-          when :retry
-            if item.check_status(:DONE, namepath)
-              debug 'Retry: skipping task %s because it has finished successfully.', item, namepath
-              return item
-            end
-          when :failed
+        when :retry
+          if item.check_status(:DONE, namepath)
+            debug 'Retry: skipping task %s because it has finished successfully.', item, namepath
             return item
-          else
-            # type code here
+          end
+        when :failed
+          return item
+        else
+          # type code here
         end
 
         (parameter(:retry_count) + 1).times do
@@ -59,18 +61,19 @@ module Libis
           i = run_item(item)
           item = i if i.is_a?(Libis::Workflow::WorkItem)
 
+          # noinspection RubyScope
           case item.status(namepath)
-            when :DONE
-              self.action = :run
-              return item
-            when :ASYNC_WAIT
-              self.action = :retry
-            when :ASYNC_HALT
-              break
-            when :FAILED
-              break
-            else
-              return item
+          when :DONE
+            self.action = :run
+            return item
+          when :ASYNC_WAIT
+            self.action = :retry
+          when :ASYNC_HALT
+            break
+          when :FAILED
+            break
+          else
+            return item
           end
 
           self.action = :retry
@@ -201,9 +204,11 @@ module Libis
 
           rescue Libis::WorkflowError => e
             item.set_status(namepath, :FAILED)
+            error 'Error processing subitem (%d/%d): %s', item, i + 1, items.size, e.message
             break if parameter(:abort_recursion_on_failure)
 
           rescue Libis::WorkflowAbort => e
+            fatal_error 'Fatal error processing subitem (%d/%d): %s', item, i + 1, items.size, e.message
             item.set_status(namepath, :FAILED)
             break
 
@@ -216,7 +221,9 @@ module Libis
             parent_item.status_progress(namepath, i + 1)
 
           ensure
+            # noinspection RubyScope
             item_status = item.status(namepath)
+            # noinspection RubyScope
             status_count[item_status] += 1
             break if parameter(:abort_recursion_on_failure) && item_status != :DONE
 
@@ -224,6 +231,7 @@ module Libis
 
         end
 
+        # noinspection RubyScope
         debug '%d of %d subitems passed', parent_item, status_count[:DONE], items.size
         substatus_check(status_count, parent_item, 'item')
       end

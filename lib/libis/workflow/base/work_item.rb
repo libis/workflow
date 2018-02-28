@@ -53,6 +53,8 @@ module Libis
       #   self.status_log << info
       # end
       #
+      # The implementation should also take care that the public methods #save and #save! are implemented.
+      # ActiveRecord and Mongoid are known to implement these, but others may not.
       #
       module WorkItem
         include Enumerable
@@ -133,7 +135,9 @@ module Libis
           return self unless item and item.is_a?(Libis::Workflow::Base::WorkItem)
           self.items << item
           item.parent = self
+          # noinspection RubyResolve
           self.save!
+          # noinspection RubyResolve
           item.save!
           self
         end
@@ -172,19 +176,7 @@ module Libis
         # @return [Libis::Workflow::Base::Run]
         def get_run
           return self if self.is_a?(Libis::Workflow::Base::Run)
-          self.get_parent && self.get_parent.get_run || nil
-        end
-
-        # Dummy method. It is a placeholder for DB backed implementations. Wherever appropriate WorkItem#save will be
-        # called to save the current item's state. If state needs to persisted, you should override this method or make
-        # sure your persistence layer implements it in your class.
-        def save
-        end
-
-        # Dummy method. It is a placeholder for DB backed implementations. Wherever appropriate WorkItem#save will be
-        # called to save the current item's state. If state needs to persisted, you should override this method or make
-        # sure your persistence layer implements it in your class.
-        def save!
+          self.get_parent&.get_run
         end
 
       end

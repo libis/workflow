@@ -23,6 +23,12 @@ module Libis
         self.summary = {}
       end
 
+      def save
+      end
+
+      def save!
+      end
+
       protected
 
       def add_status_log(info)

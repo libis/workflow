@@ -105,6 +105,7 @@ module Libis
           options = options.key_strings_to_symbols
           result = {}
           self.input.each do |key, parameter|
+            value = nil
             if options.has_key?(key)
               value = parameter.parse(options[key])
             elsif !parameter[:default].nil?
