@@ -36,8 +36,7 @@ module Libis
         end
         log_entry['status'] = status
         log_entry['updated'] = DateTime.now
-        log_entry.save rescue nil # required if log_entry is an external record
-        self.save!
+        self.save_log_entry(log_entry)
       end
 
       # Get last known status symbol for a given task
@@ -94,8 +93,7 @@ module Libis
         log_entry['progress'] = progress ? progress : (log_entry['progress'] || 0) + 1
         log_entry['max'] = max if max
         log_entry['updated'] = DateTime.now
-        log_entry.save rescue nil # required if log_entry is an external record
-        self.save!
+        self.save_log_entry(log_entry)
       end
 
       protected

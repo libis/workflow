@@ -185,6 +185,10 @@ or if a custom storage implementation is desired, a number of data items and met
         self.status_log << info
       end
 
+      def save_log_entry(entry)
+        entry.save
+      end
+
     end
 ```
 

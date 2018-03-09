@@ -37,6 +37,10 @@ module Libis
         self.status_log.last
       end
 
+      def save_log_entry(_log_entry)
+        self.save!
+      end
+
     end
 
   end
