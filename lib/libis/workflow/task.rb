@@ -67,7 +67,7 @@ module Libis
           # noinspection RubyScope
           case item.status(namepath)
           when :DONE
-            self.action = :run
+            # self.action = :run
             return item
           when :ASYNC_WAIT
             self.action = :retry
@@ -161,7 +161,7 @@ module Libis
       def run_item(item)
         @item_skipper = false
 
-        return item if item.status(namepath) == :DONE
+        return item if item.status(namepath) == :DONE && !parameter(:run_always)
 
         pre_process(item)
 

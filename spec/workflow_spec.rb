@@ -548,6 +548,55 @@ STR
 
       end
 
+      it 'should run final task during retry' do
+        run
+
+        logoutput.truncate(0)
+        run.run :retry
+
+        check_output logoutput, <<STR
+ INFO -- Run - TestRun : Ingest run started.
+ INFO -- Run - TestRun : Running subtask (2/3): ProcessingTask
+ERROR -- ProcessingTask - TestRun : Task failed with failed status
+ERROR -- ProcessingTask - TestRun : Task failed with failed status
+ERROR -- ProcessingTask - TestRun : Task failed with failed status
+ERROR -- ProcessingTask - items : 3 subitem(s) failed
+ERROR -- ProcessingTask - TestRun : 1 subitem(s) failed
+ INFO -- Run - TestRun : Running subtask (3/3): FinalTask
+ INFO -- FinalTask - TestRun : Final processing of test_dir_item.rb
+ INFO -- FinalTask - TestRun : Final processing of test_file_item.rb
+ INFO -- FinalTask - TestRun : Final processing of test_run.rb
+ERROR -- Run - TestRun : 1 subtask(s) failed
+ INFO -- Run - TestRun : Failed
+STR
+        check_status_log run.status_log, [
+            {task: 'Run', status: :FAILED, progress: 3, max: 3},
+            {task: 'CollectFiles', status: :DONE, progress: 1, max: 1},
+            {task: 'ProcessingTask', status: :FAILED, progress: 1, max: 1},
+            {task: 'FinalTask', status: :DONE, progress: 1, max: 1},
+            {task: 'Run', status: :FAILED, progress: 3, max: 3},
+            {task: 'ProcessingTask', status: :FAILED, progress: 1, max: 1},
+            {task: 'FinalTask', status: :DONE, progress: 1, max: 1},
+        ]
+
+        check_status_log run.items.first.status_log, [
+            {task: 'CollectFiles', status: :DONE, progress: 3, max: 3},
+            {task: 'ProcessingTask', status: :FAILED, progress: 3, max: 3},
+            {task: 'FinalTask', status: :DONE, progress: 3, max: 3},
+            {task: 'ProcessingTask', status: :FAILED, progress: 3, max: 3},
+            {task: 'FinalTask', status: :DONE, progress: 3, max: 3},
+        ]
+
+        check_status_log run.items.first.items.first.status_log, [
+            {task: 'CollectFiles', status: :DONE},
+            {task: 'ProcessingTask', status: :FAILED},
+            {task: 'FinalTask', status: :DONE},
+            {task: 'ProcessingTask', status: :FAILED},
+            {task: 'FinalTask', status: :DONE},
+        ]
+
+      end
+
     end
 
     context 'when stopped with error' do
