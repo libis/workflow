@@ -21,6 +21,7 @@ module Libis
       parameter abort_recursion_on_failure: false, description: 'Stop processing items recursively if one item fails.'
       parameter retry_count: 0, description: 'Number of times to retry the task if waiting for another process.'
       parameter retry_interval: 10, description: 'Number of seconds to wait between retries.'
+      parameter run_always: false, description: 'Always run this task, even if previous tasks have failed.'
 
       def self.task_classes
         # noinspection RubyArgCount
@@ -44,17 +45,19 @@ module Libis
         check_item_type ::Libis::Workflow::Base::WorkItem, item
         self.workitem = item
 
-        case action
-        when :retry
-          if item.check_status(:DONE, namepath)
-            debug 'Retry: skipping task %s because it has finished successfully.', item, namepath
-            return item
-          end
-        when :failed
-          return item
-        else
-          # type code here
-        end
+        # case action
+        # when :retry
+        #   if !parameter(:run_always) && item.check_status(:DONE, namepath)
+        #     debug 'Retry: skipping task %s because it has finished successfully.', item, namepath
+        #     return item
+        #   end
+        # when :failed
+        #   return item unless parameter(:run_always)
+        # else
+        #   # type code here
+        # end
+
+        return item if action == :failed && !parameter(:run_always)
 
         (parameter(:retry_count) + 1).times do
 

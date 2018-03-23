@@ -1,4 +1,5 @@
 require 'libis/tools/parameter'
+require 'libis/tools/extend/hash'
 
 module Libis
   module Workflow
@@ -44,6 +45,7 @@ module Libis
         end
 
         def configure(cfg = {})
+          cfg.key_symbols_to_strings!(recursive: true)
           self.name ||= ''
           self.description ||= ''
           self.input ||= {}

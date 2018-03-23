@@ -39,14 +39,22 @@ module Libis
 
         status_count = Hash.new(0)
         item.status_progress(self.namepath, 0, tasks.count)
+        continue = true
         tasks.each_with_index do |task, i|
+          unless task.parameter(:run_always)
+            next unless continue
+            if  item.status(task.namepath) == :DONE && item.get_run.action == :retry
+              debug 'Retry: skipping task %s because it has finished successfully.', item, task.namepath
+              next
+            end
+          end
           info 'Running subtask (%d/%d): %s', item, i+1, tasks.size, task.name
           new_item = task.run item
           item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
           item.status_progress(self.namepath, i+1)
           item_status = item.status(task.namepath)
           status_count[item_status] += 1
-          break if parameter(:abort_on_failure) && item_status != :DONE
+          continue = false if parameter(:abort_on_failure) && item_status != :DONE
         end
 
         substatus_check(status_count, item, 'task')

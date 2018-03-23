@@ -103,6 +103,8 @@ The ::Libis::Workflow::Task base class allready defines the following parameters
 * abort_recursion_on_failure: Stop processing items recursively if one item fails. Default: false
 * retry_count: Number of times to retry the task. Default: 0
 * retry_interval: Number of seconds to wait between retries. Default: 10
+* run_always: If set and true will cause the task to be always executed, even if previous tasks have failed or during
+  a retry if the task completed successfully before.
 
 If 'class' is not present, the default '::Libis::Workflow::TaskGroup' with the given name will be instantiated, which 
 performs each sub-task on the item.
@@ -113,6 +115,10 @@ the work item to process on. See the chapter on 'Tasks' below for more informati
 
 Note that a task with custom processing will not execute sub-tasks. If you configured a processing task with subtasks
 an exception will be thrown when trying to execute the job.
+
+The run_always option will only be evaluated within the current TaskGroup. This means that if the parent task was not
+configure with run_always set to true and the parent task completed successfully previously, the whole subtree of tasks
+will not be executed during a retry.
 
 ##### Input variable definition
 

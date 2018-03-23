@@ -76,6 +76,7 @@ module Libis
         end
 
         def configure(cfg)
+          cfg.key_symbols_to_strings!(recursive: true)
           self.name = cfg.delete('name') || self.class.name
           self.description = cfg.delete('description') || ''
           self.config['input'] = {}

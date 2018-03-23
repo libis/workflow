@@ -32,6 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec', '~> 3.1'
   spec.add_development_dependency 'simplecov', '~> 0.9'
   spec.add_development_dependency 'coveralls', '~> 0.7'
+  spec.add_development_dependency 'awesome_print'
 
   spec.add_runtime_dependency 'libis-tools', '~> 0.9'
   spec.add_runtime_dependency 'sidekiq', '~> 4.0'
