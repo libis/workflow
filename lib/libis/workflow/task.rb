@@ -97,7 +97,7 @@ module Libis
         set_status item, :FAILED
         raise e if parent
 
-      rescue => e
+      rescue Exception => e
         set_status item, :FAILED
         fatal_error "Exception occured: #{e.message}", item
         debug e.backtrace.join("\n")
@@ -215,9 +215,9 @@ module Libis
             item.set_status(namepath, :FAILED)
             break
 
-          rescue => e
+          rescue Exception => e
             item.set_status(namepath, :FAILED)
-            raise Libis::WorkflowAbort, e.message
+            raise Libis::WorkflowAbort, "#{e.message} @ #{e.backtrace.first}"
 
           else
             item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
