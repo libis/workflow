@@ -54,7 +54,7 @@ module Libis::Workflow::Run
   #    allows you to retry a run when an temporary error (e.g. asynchronous wait or halt) occured.
   #
   # @param [Symbol] action the type of action to take during this run. :run or :retry
-  def run(action = :run)
+  def execute(action = :run)
     self.action = action
 
     unless action == :retry
