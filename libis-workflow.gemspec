@@ -27,13 +27,13 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = ['lib']
 
-  spec.add_development_dependency 'rake', '~> 10.3'
-  spec.add_development_dependency 'rspec', '~> 3.1'
-  spec.add_development_dependency 'simplecov', '~> 0.9'
+  spec.add_development_dependency 'rake', '~> 13.0'
+  spec.add_development_dependency 'rspec', '~> 3.9'
+  spec.add_development_dependency 'simplecov', '~> 0.17'
   spec.add_development_dependency 'coveralls', '~> 0.7'
-  spec.add_development_dependency 'awesome_print'
+  spec.add_development_dependency 'awesome_print', '~> 1.8'
 
   spec.add_runtime_dependency 'libis-tools', '~> 1.0'
-  spec.add_runtime_dependency 'sidekiq', '~> 5.0'
-  spec.add_runtime_dependency 'eldritch', '~> 1.1'
+  spec.add_runtime_dependency 'ruby-enum', '~> 0.7'
+
 end

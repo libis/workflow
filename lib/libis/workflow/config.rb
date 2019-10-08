@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'libis/tools/config'
 
 module Libis
@@ -13,10 +14,9 @@ module Libis
       end
     end
 
-    Config.require_all(File.join(File.dirname(__FILE__), 'tasks'))
-    Config[:workdir] = './work'
-    Config[:taskdir] = './tasks'
-    Config[:itemdir] = './items'
+    # Config[:workdir] = './work'
+    # Config[:taskdir] = './tasks'
+    # Config[:itemdir] = './items'
 
   end
 end

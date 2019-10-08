@@ -1,23 +1,15 @@
+# frozen_string_literal: true
+require 'ruby-enum'
+
 module Libis
   module Workflow
-    module Action
+    class Action
 
-      RUN = 0
-      CONTINUE = 1
-      RETRY = 2
-      ALWAYS_RUN = 3
-      FAILED = 4
-
-      def next_success_action(action)
-        case action
-          when :run, :continue, :retry, :always_run
-            :always_run
-          when :failed
-            :failed
-          else
-            :failed
-        end
-      end
+      define :run, 'run'
+      define :continue, 'continue'
+      define :retry, 'retry'
+      define :undo, 'undo'
+      define :abort, 'abort'
 
     end
   end

@@ -1,26 +1,38 @@
+# frozen_string_literal: true
 module Libis
   module Workflow
     module Status
 
       protected
 
-      STATUS = {
-          NOT_STARTED: 0,
-          STARTED: 1,
-          ASYNC_WAIT: 2,
-          DONE: 3,
-          ASYNC_HALT: 4,
-          FAILED: 5
-      }
+      class Enum
+        include Ruby::Enum
 
-      STATUS_TEXT = [
-          'not started',
-          'started',
-          'waiting for running async process',
-          'done',
-          'waiting for halted async process',
-          'failed'
-      ]
+        define :not_started, [0, 'not started']
+        define :started, [1, 'started']
+        define :async_wait_, [2, 'async process running']
+        define :done, [3, 'done']
+        define :async_halt, [4, 'async process failed']
+        define :failed, [5, 'failed']
+
+        def self.to_sym(x)
+          return x if x.is_a?(Symbol)
+          each { |k, v| return k if (x.is_a?(Integer) ? v.first : v.last) == x }
+          nil
+        end
+
+        def self.to_str(x)
+          return x if x.is_a?(String)
+          each { |k, v| return v.last if (x.is_a?(Integer) ? v.first : k) == x }
+          nil
+        end
+
+        def self.to_int(x)
+          return x if x.is_a?(Integer)
+          each { |k, v| return v.first if (x.is_a?(Symbol) ? k : v.last) == x }
+          nil
+        end
+      end
 
       public
 
@@ -31,8 +43,9 @@ module Libis
       def set_status(task, status)
         task = task.namepath if task.is_a?(Libis::Workflow::Task)
         log_entry = self.status_entry(task)
-        if log_entry.nil? || STATUS[status_symbol(log_entry['status'])] > STATUS[status_symbol(status)]
-          log_entry = self.add_status_log('task' => task, 'status' => status, 'created' => DateTime.now)
+        if log_entry.nil? || Status.to_int(log_entry.status) > Status.to_int(status)
+          # noinspection RubyResolve
+          log_entry = self.add_status('task' => task, 'status' => status, 'created' => DateTime.now)
         end
         log_entry['status'] = status
         log_entry['updated'] = DateTime.now
