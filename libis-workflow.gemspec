@@ -1,4 +1,6 @@
-lib = File.expand_path('../lib', __FILE__)
+# frozen_string_literal: true
+
+lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 require 'libis/workflow/version'
@@ -10,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.date = Date.today.to_s
 
   spec.summary = 'LIBIS Workflow framework.'
-  spec.description = 'A simple framework to build custom task/workflow solutions.'
+  spec.description = 'A simple framework to build custom workflow solutions.'
 
   spec.author = 'Kris Dekeyser'
   spec.email = 'kris.dekeyser@libis.be'
@@ -27,13 +29,13 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = ['lib']
 
+  spec.add_development_dependency 'awesome_print', '~> 1.8'
+  spec.add_development_dependency 'coveralls', '~> 0.7'
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.9'
   spec.add_development_dependency 'simplecov', '~> 0.17'
-  spec.add_development_dependency 'coveralls', '~> 0.7'
-  spec.add_development_dependency 'awesome_print', '~> 1.8'
 
   spec.add_runtime_dependency 'libis-tools', '~> 1.0'
   spec.add_runtime_dependency 'ruby-enum', '~> 0.7'
-
+  spec.add_runtime_dependency 'zeitwerk', '~> 2.1'
 end

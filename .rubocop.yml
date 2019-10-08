@@ -1,0 +1,11 @@
+Style/Documentation:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Naming/FileName:
+  Enabled: false
+
+Metrics/LineLength:
+  Max: 120
