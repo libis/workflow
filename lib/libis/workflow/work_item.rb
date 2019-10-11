@@ -3,10 +3,6 @@
 require 'backports/rails/hash'
 require 'libis/tools/extend/hash'
 
-require_relative 'config'
-require_relative 'status'
-require_relative 'logging'
-
 # Base module for all work items.
 #
 # This module lacks the implementation for the data attributes. It functions as an interface that describes the
@@ -52,105 +48,71 @@ require_relative 'logging'
 # The implementation should also take care that the public methods #save and #save! are implemented.
 # ActiveRecord and Mongoid are known to implement these, but others may not.
 #
-module Libis::Workflow::WorkItem
-  include Libis::Workflow::Status
-  include Libis::Workflow::Logging
+module Libis::Workflow
+  module WorkItem
+    include Base::Status
+    include Base::Logging
 
-  ### Methods that need implementation
+    ### Methods that need implementation:
+    #
+    # save!
+    # parent
+    # properties
+    # options
+    # status_log
+    # name
+    # name=(name)
+    # label
+    # label=(label)
+    # items
+    # add_item
+    # <<
+    # item_list
+    # job
 
-  def parent
-    super
-  end
+    ### Derived methods. Should work as is when required methods are implemented properly
 
-  def properties
-    super
-  end
+    def to_s
+      send(:name)
+    end
 
-  def options
-    super
-  end
+    def names
+      (send(:parent)&.names || []).push(send(:name)).compact
+    end
 
-  # @return [String] name of the object
-  def name
-    super
-  rescue NoMethodError
-    properties[:name] || inspect
-  end
+    def namepath
+      names.join('/')
+    end
 
-  def name=(name)
-    super
-  rescue NoMethodError
-    properties[:name] = name
-  end
+    def labels
+      (send(:parent)&.labels || []).push(send(:label)).compact
+    end
 
-  def label
-    super
-  rescue NoMethodError
-    properties[:label] || name
-  end
+    def labelpath
+      labels.join('/')
+    end
 
-  def label=(value)
-    super
-  rescue NoMethodError
-    properties[:label] = value
-  end
+    # File name safe version of the to_s output.
+    #
+    # @return [String] file name safe string
+    def safe_name
+      to_s.gsub(/[^\w.-]/) { |s| format('%<prefix>s%<ord>02x', prefix: '%', ord: s.ord) }
+    end
 
-  def items
-    super
-  end
+    # Iterates over the work item clients and invokes code on each of them.
+    def each(&block)
+      send(:items).each(&block)
+    end
 
-  def add_item(item)
-    super
-  end
+    def size
+      send(:items).size
+    end
 
-  alias << add_item
+    alias count size
 
-  # This method should return a list of items that is safe to iterate over while it is being altered.
-  def item_list
-    super
-  end
-
-  ### Derived methods. Should work as is when required methods are implemented properly
-
-  def to_s
-    name
-  end
-
-  def names
-    (parent&.names || []).push(name).compact
-  end
-
-  def namepath
-    names.join('/')
-  end
-
-  def labels
-    (parent&.labels || []).push(label).compact
-  end
-
-  def labelpath
-    labels.join('/')
-  end
-
-  # File name safe version of the to_s output.
-  #
-  # @return [String] file name safe string
-  def safe_name
-    to_s.gsub(/[^\w.-]/) { |s| format('%%%02x', s.ord) }
-  end
-
-  # Iterates over the work item clients and invokes code on each of them.
-  def each(&block)
-    items.each(&block)
-  end
-
-  def size
-    items.size
-  end
-
-  alias count size
-
-  def root_item
-    parent&.root_item || self
+    # @return [WorkItem] the root WorkItem object
+    def root_item
+      send(:parent)&.root_item || self
+    end
   end
 end

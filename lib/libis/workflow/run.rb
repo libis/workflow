@@ -11,74 +11,49 @@ require 'fileutils'
 # - start_date: [Time] the timestamp of the execution of the run
 # - job: [Object] a reference to the Job this Run belongs to
 #
-module Libis::Workflow::Run
-  attr_accessor :tasks, :action
+module Libis::Workflow
+  module Run
+    include Base::Status
 
-  ### Methods that need implementation
+    attr_accessor :runner
 
-  def name
-    super
-  end
+    ### Methods that need implementation in the including class
+    #
+    # save!
+    # name
+    # name=(name)
+    # job
+    # last_run
+    # status(task)
 
-  def name=(name)
-    super
-  end
+    ### Derived methods
 
-  def job
-    super
-  end
-
-  def work_dir
-    # noinspection RubyResolve
-    dir = File.join(Libis::Workflow::Config.workdir, name)
-    FileUtils.mkpath dir unless Dir.exist?(dir)
-    dir
-  end
-
-  def workflow
-    job.workflow
-  end
-
-  def logger
-    properties['logger'] || job.logger
-  rescue StandardError
-    ::Libis::Workflow::Config.logger
-  end
-
-  # Execute the workflow.
-  #
-  # The action parameter defines how the execution of the tasks will behave:
-  #  - With the default :run action each task will be executed regardsless how the task performed on the item
-  #    previously.
-  #  - When using the :retry action a task will not perform on an item if it was successful the last time. This
-  #    allows you to retry a run when an temporary error (e.g. asynchronous wait or halt) occured.
-  #
-  # @param [Symbol] action the type of action to take during this run. :run or :retry
-  def execute(action = :run)
-    self.action = action
-
-    unless action == :retry
-      self.start_date = Time.now
-      self.options = workflow.prepare_input(options)
+    def runner
+      @runner ||= Libis::Workflow::TaskRunner.new self
     end
 
-    self.tasks = workflow.tasks
-    configure_tasks options
-
-    save!
-
-    runner = Libis::Workflow::TaskRunner.new nil
-
-    tasks.each do |task|
-      runner << task
+    def configure_tasks(tasks)
+      runner.configure_tasks(tasks)
     end
 
-    runner.run self
-  end
+    # Execute the workflow.
+    #
+    # @param [Hash] options extra run-time options
+    def execute(options = {})
 
-  protected
+      runner.configure()
+      # configure_tasks(options)
 
-  def configure_tasks(opts)
-    tasks.each { |task| task.apply_options opts }
+      send(:save!)
+
+      runner.execute(send(:job))
+    end
+
+    def logger
+      send(:properties)['logger'] || send(:job).logger
+    rescue StandardError
+      ::Libis::Workflow::Config.logger
+    end
+
   end
 end

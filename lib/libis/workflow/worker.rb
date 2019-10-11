@@ -8,7 +8,6 @@ module Libis
   module Workflow
 
     class Worker
-      include Sidekiq::Worker
 
       def perform(job_config, options = {})
         job = configure(job_config, options)

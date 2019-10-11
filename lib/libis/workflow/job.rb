@@ -29,32 +29,37 @@ require 'libis/tools/extend/hash'
 # end
 #
 module Libis::Workflow::Job
-
-  ### Methods that need implementation
-
-  def name
-    super
-  end
-
-  def name=(name)
-    super
-  end
-
-  def make_run(options)
-    super
-  end
+  ### Methods that need implementation in the including class
+  #
+  # name
+  # name=(name)
+  # workflow
+  # runs
+  # items
+  # make_run
+  # last_run
 
   ### Derived methods
 
   # @param [Hash] opts extra conguration values for this particular run
-  def execute(opts = {})
-    run = make_run(opts)
+  def execute(tasks = [], opts = {})
+    run = send(:make_run)
     raise 'Could not create run' unless run
 
+    configure_run(run, tasks)
     run.execute(opts)
   end
 
+
+
+  def configure_run(run, tasks)
+    run.name = run_name
+    run.save!
+
+    run.runner
+  end
+
   def run_name(timestamp = Time.now)
-    "#{name}-#{timestamp.strftime('%Y%m%d%H%M%S')}"
+    "#{send(:name)}-#{timestamp.strftime('%Y%m%d%H%M%S')}"
   end
 end

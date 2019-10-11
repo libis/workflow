@@ -6,3 +6,5 @@ Bundler.setup
 
 require 'rspec'
 require 'libis-workflow'
+
+require_relative 'data'
