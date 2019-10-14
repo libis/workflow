@@ -28,38 +28,55 @@ require 'libis/tools/extend/hash'
 #
 # end
 #
-module Libis::Workflow::Job
-  ### Methods that need implementation in the including class
-  #
-  # name
-  # name=(name)
-  # workflow
-  # runs
-  # items
-  # make_run
-  # last_run
+module Libis
+  module Workflow
+    module Job
 
-  ### Derived methods
+      ### Methods that need implementation in the including class
+      # getter and setter accessors for:
+      # - name
+      # getter accessors for:
+      # - workflow
+      # - runs
+      # - items
+      # instance methods:
+      # - <<
+      # - item_list
+      # - make_run
+      # - last_run
 
-  # @param [Hash] opts extra conguration values for this particular run
-  def execute(tasks = [], opts = {})
-    run = send(:make_run)
-    raise 'Could not create run' unless run
+      ### Derived methods
 
-    configure_run(run, tasks)
-    run.execute(opts)
-  end
+      # @param [Hash] _opts extra conguration values for this particular run
+      def execute(_opts = {})
+        run = send(:make_run)
+        raise 'Could not create run' unless run
 
+        run.configure_tasks(tasks)
+        run.execute
+        run
+      end
 
+      def tasks
+        send(:workflow).tasks
+      end
 
-  def configure_run(run, tasks)
-    run.name = run_name
-    run.save!
+      def run_name(timestamp = Time.now)
+        "#{send(:name)}-#{timestamp.strftime('%Y%m%d%H%M%S')}"
+      end
 
-    run.runner
-  end
+      def namepath
+        name
+      end
 
-  def run_name(timestamp = Time.now)
-    "#{send(:name)}-#{timestamp.strftime('%Y%m%d%H%M%S')}"
+      def status_log
+        Config[:status_log].find_all(run: runs.last, item: self)
+      end
+
+      def logger
+        Config.logger
+      end
+
+    end
   end
 end

@@ -2,18 +2,24 @@
 
 require 'libis/tools/config'
 
-module Libis::Workflow
-  # noinspection RubyConstantNamingConvention
-  Config = ::Libis::Tools::Config
+module Libis
+  module Workflow
 
-  Config.define_singleton_method(:require_all) do |dir|
-    Dir.glob(File.join(dir, '*.rb')).each do |filename|
-      # noinspection RubyResolve
-      require filename
+    # noinspection RubyConstantNamingConvention
+    Config = ::Libis::Tools::Config
+
+    Config.define_singleton_method(:require_all) do |dir|
+      Dir.glob(File.join(dir, '*.rb')).each do |filename|
+        # noinspection RubyResolve
+        require filename
+      end
     end
-  end
 
-  # Config[:workdir] = './work'
-  # Config[:taskdir] = './tasks'
-  # Config[:itemdir] = './items'
+    Config[:workdir] = './work'
+    Config[:taskdir] = './tasks'
+    Config[:itemdir] = './items'
+
+    Config[:status_log] = Libis::Workflow::StatusLog
+
+  end
 end

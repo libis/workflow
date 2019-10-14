@@ -2,28 +2,32 @@
 
 require 'singleton'
 
-module Libis::Workflow
-  class MessageRegistry
-    include Singleton
+module Libis
+  module Workflow
+    class MessageRegistry
 
-    def initialize
-      @message_db = {}
-    end
+      include Singleton
 
-    def register_message(id, message)
-      @message_db[id] = message
-    end
+      def initialize
+        @message_db = {}
+      end
 
-    def get_message(id)
-      @message_db[id]
-    end
+      def register_message(id, message)
+        @message_db[id] = message
+      end
 
-    def self.register_message(id, message)
-      instance.register_message id, message
-    end
+      def get_message(id)
+        @message_db[id]
+      end
 
-    def self.get_message(id)
-      instance.get_message id
+      def self.register_message(id, message)
+        instance.register_message id, message
+      end
+
+      def self.get_message(id)
+        instance.get_message id
+      end
+
     end
   end
 end

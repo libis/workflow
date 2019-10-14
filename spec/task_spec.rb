@@ -6,7 +6,7 @@ describe 'Task' do
 
   it 'should create a default task' do
 
-    task = ::Libis::Workflow::Task.new nil
+    task = ::Libis::Workflow::Task.new
 
     expect(task.parent).to eq nil
     expect(task.name).to eq 'Task'

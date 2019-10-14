@@ -1,33 +1,46 @@
 # frozen_string_literal: true
 
-module Libis::Workflow::StatusLog
-  ### Methods that need implementation in the including class
-  # getter and setter accessors for:
-  # - run
-  # - item
-  # - status
-  # - progress
-  # - max
-  # class methods:
-  # - create_status(...)
-  # - find_last(...)
-  # instance methods:
-  # - update(...)
+module Libis
+  module Workflow
+    module StatusLog
 
-  def self.set_status(status:, task:, item: nil, progress: nil, max: nil)
-    entry = send(:find_last, task: task, item: item)
-    values = { status: status, task: task, item: item, progress: progress, max: max }.compact
-    return send(:create_status, values) if entry.nil?
-    return send(:create_status, values) if StatusEnum.to_int(status) < StatusEnum.to_int(entry.send(:status))
+      ### Methods that need implementation in the including class
+      # getter accessors for:
+      # - status
+      # class methods:
+      # - create_status(...)
+      # - find_last(...)
+      # - find_all(...)
+      # instance methods:
+      # - update_status(...)
 
-    entry.send(:update, values.tap { |k, _| %i[task item].include? k })
-  end
+      module Classmethods
 
-  def status_sym
-    StatusEnum.to_sym(send(:status))
-  end
+        def set_status(status: nil, task:, item: nil, progress: nil, max: nil)
+          item = nil unless item.is_a? Libis::Workflow::WorkItem
+          entry = send(:find_last, task: task, item: item)
+          values = { status: status, task: task, item: item, progress: progress, max: max }.compact
+          return send(:create_status, values) if entry.nil?
+          return send(:create_status, values) if Base::StatusEnum.to_int(status) <
+                                                 Base::StatusEnum.to_int(entry.send(:status))
 
-  def status_txt
-    StatusEnum.to_sym(send(:status))
+          entry.send(:update_status, values.reject { |k, _| %i[task item].include? k })
+        end
+
+      end
+
+      def self.included(base)
+        base.extend Classmethods
+      end
+
+      def status_sym
+        Base::StatusEnum.to_sym(send(:status))
+      end
+
+      def status_txt
+        Base::StatusEnum.to_sym(send(:status))
+      end
+
+    end
   end
 end

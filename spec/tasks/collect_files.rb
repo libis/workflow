@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'libis/exceptions'
 
 require_relative '../items'
@@ -12,8 +14,8 @@ class CollectFiles < ::Libis::Workflow::Task
             description: 'Only select files that match the given regular expression. Ignored if empty.'
 
   def process(item)
-    if item.is_a? TestRun
-      add_item(item, parameter(:location))
+    if item.is_a? TestJob
+      collect_files(item, parameter(:location))
     elsif item.is_a? TestDirItem
       collect_files(item, item.fullpath)
     end
@@ -24,10 +26,13 @@ class CollectFiles < ::Libis::Workflow::Task
     glob_string = File.join(glob_string, '**') if parameter(:subdirs)
     glob_string = File.join(glob_string, '*')
 
-    Dir.glob(glob_string).select do |x|
+    selection = Dir.glob(glob_string).select do |x|
       parameter(:selection) && !parameter(:selection).empty? ? x =~ Regexp.new(parameter(:selection)) : true
-    end.sort.each do |file|
-      next if %w'. ..'.include? file
+    end
+
+    selection.sort.each do |file|
+      next if %w[. ..].include? file
+
       add_item(item, file)
     end
   end
@@ -38,7 +43,7 @@ class CollectFiles < ::Libis::Workflow::Task
             elsif File.directory?(file)
               TestDirItem.new
             else
-              Item.new
+              WorkItem.new
             end
     child.filename = file
     item << child

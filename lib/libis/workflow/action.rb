@@ -2,13 +2,17 @@
 
 require 'ruby-enum'
 
-module Libis::Workflow
-  class Action
-    include Ruby::Enum
-    define :run, 'run'
-    define :continue, 'continue'
-    define :retry, 'retry'
-    define :undo, 'undo'
-    define :abort, 'abort'
+module Libis
+  module Workflow
+    class Action
+
+      include Ruby::Enum
+      define :run, 'run'
+      define :continue, 'continue'
+      define :retry, 'retry'
+      define :undo, 'undo'
+      define :abort, 'abort'
+
+    end
   end
 end

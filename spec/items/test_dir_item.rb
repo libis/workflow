@@ -1,14 +1,15 @@
-require 'libis/workflow/dir_item'
+# frozen_string_literal: true
 
-class TestDirItem < ::Libis::Workflow::DirItem
+require_relative 'test_work_item'
 
-  def name=(dir)
-    raise RuntimeError, "'#{dir}' is not a directory" unless File.directory? dir
-    super dir
-  end
+class TestDirItem < TestWorkItem
 
-  def name
-    self.properties[:name] || super
+  include Libis::Workflow::FileItem
+
+  def filename=(dir)
+    raise "'#{dir}' is not a directory" unless File.directory? dir
+
+    super
   end
 
 end

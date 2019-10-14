@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require_relative 'task_group'
 
 module Libis
   module Workflow
-
     # noinspection RubyTooManyMethodsInspection
     class TaskRunner < TaskGroup
 
@@ -14,6 +15,10 @@ module Libis
         super cfg
       end
 
+      def run
+        @run
+      end
+
       def names
         []
       end
@@ -23,16 +28,13 @@ module Libis
       end
 
       def execute(item)
-
         check_item_type [WorkItem, Job], item
 
         info 'Ingest run started.', item
 
         super
-
       end
 
     end
-
   end
 end

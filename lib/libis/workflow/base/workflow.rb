@@ -55,90 +55,96 @@ require 'libis/tools/extend/hash'
 #
 # end
 #
-module Libis::Workflow::Base::Workflow
+module Libis
+  module Workflow
+    module Base
+      module Workflow
 
-  module ClassMethods
-    def require_all
-      Libis::Workflow::Config.require_all(File.join(File.dirname(__FILE__), '..', 'tasks'))
-      # noinspection RubyResolve
-      Libis::Workflow::Config.require_all(Libis::Workflow::Config.taskdir)
-      # noinspection RubyResolve
-      Libis::Workflow::Config.require_all(Libis::Workflow::Config.itemdir)
-    end
-  end
+        module ClassMethods
+          def require_all
+            Libis::Workflow::Config.require_all(File.join(File.dirname(__FILE__), '..', 'tasks'))
+            # noinspection RubyResolve
+            Libis::Workflow::Config.require_all(Libis::Workflow::Config.taskdir)
+            # noinspection RubyResolve
+            Libis::Workflow::Config.require_all(Libis::Workflow::Config.itemdir)
+          end
+        end
 
-  def self.included(base)
-    base.extend ClassMethods
-  end
+        def self.included(base)
+          base.extend ClassMethods
+        end
 
-  def configure(cfg)
-    cfg.key_symbols_to_strings!(recursive: true)
-    self.name = cfg.delete('name') || self.class.name
-    self.description = cfg.delete('description') || ''
-    self.config['input'] = {}
-    self.config['tasks'] = []
-    self.config.merge! cfg
+        def configure(cfg)
+          cfg.key_symbols_to_strings!(recursive: true)
+          self.name = cfg.delete('name') || self.class.name
+          self.description = cfg.delete('description') || ''
+          self.config['input'] = {}
+          self.config['tasks'] = []
+          self.config.merge! cfg
 
-    self.class.require_all
+          self.class.require_all
 
-    self.config
-  end
+          self.config
+        end
 
-  def input
-    self.config.key_strings_to_symbols(recursive: true)[:input].inject({}) do |hash, input_def|
-      name = input_def.first
-      default = input_def.last[:default]
-      parameter = ::Libis::Tools::Parameter.new name, default
-      input_def.last.each { |k, v| parameter[k] = v }
-      hash[name] = parameter
-      hash
-    end
-  rescue => _e
-    {}
-  end
+        def input
+          self.config.key_strings_to_symbols(recursive: true)[:input].inject({}) do |hash, input_def|
+            name = input_def.first
+            default = input_def.last[:default]
+            parameter = ::Libis::Tools::Parameter.new name, default
+            input_def.last.each { |k, v| parameter[k] = v }
+            hash[name] = parameter
+            hash
+          end
+        rescue => _e
+          {}
+        end
 
-  # @param [Hash] options
-  def prepare_input(options)
-    options = options.key_strings_to_symbols
-    result = {}
-    self.input.each do |key, parameter|
-      value = nil
-      if options.has_key?(key)
-        value = parameter.parse(options[key])
-      elsif !parameter[:default].nil?
-        value = parameter[:default]
-      else
-        next
+        # @param [Hash] options
+        def prepare_input(options)
+          options = options.key_strings_to_symbols
+          result = {}
+          self.input.each do |key, parameter|
+            value = nil
+            if options.has_key?(key)
+              value = parameter.parse(options[key])
+            elsif !parameter[:default].nil?
+              value = parameter[:default]
+            else
+              next
+            end
+            propagate_to = []
+            propagate_to = parameter[:propagate_to] if parameter[:propagate_to].is_a? Array
+            propagate_to = parameter[:propagate_to].split(/[\s,;]+/) if parameter[:propagate_to].is_a? String
+            result[key] = value if propagate_to.empty?
+            propagate_to.each do |target|
+              task_name, param_name = target.split('#')
+              param_name ||= key.to_s
+              result[task_name] ||= {}
+              result[task_name][param_name] = value
+            end
+          end
+          result
+        end
+
+        def tasks(parent = nil)
+          self.config['tasks'].map do |cfg|
+            instantize_task(parent || nil, cfg)
+          end
+        end
+
+        def instantize_task(parent, cfg)
+          task_class = Libis::Workflow::TaskGroup
+          task_class = cfg['class'].constantize if cfg['class']
+          # noinspection RubyArgCount
+          task_instance = task_class.new(parent, cfg)
+          cfg['tasks'] && cfg['tasks'].map do |task_cfg|
+            task_instance << instantize_task(task_instance, task_cfg)
+          end
+          task_instance
+        end
+
       end
-      propagate_to = []
-      propagate_to = parameter[:propagate_to] if parameter[:propagate_to].is_a? Array
-      propagate_to = parameter[:propagate_to].split(/[\s,;]+/) if parameter[:propagate_to].is_a? String
-      result[key] = value if propagate_to.empty?
-      propagate_to.each do |target|
-        task_name, param_name = target.split('#')
-        param_name ||= key.to_s
-        result[task_name] ||= {}
-        result[task_name][param_name] = value
-      end
-    end
-    result
-  end
-
-  def tasks(parent = nil)
-    self.config['tasks'].map do |cfg|
-      instantize_task(parent || nil, cfg)
     end
   end
-
-  def instantize_task(parent, cfg)
-    task_class = Libis::Workflow::TaskGroup
-    task_class = cfg['class'].constantize if cfg['class']
-    # noinspection RubyArgCount
-    task_instance = task_class.new(parent, cfg)
-    cfg['tasks'] && cfg['tasks'].map do |task_cfg|
-      task_instance << instantize_task(task_instance, task_cfg)
-    end
-    task_instance
-  end
-
 end

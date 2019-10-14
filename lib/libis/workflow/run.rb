@@ -11,49 +11,48 @@ require 'fileutils'
 # - start_date: [Time] the timestamp of the execution of the run
 # - job: [Object] a reference to the Job this Run belongs to
 #
-module Libis::Workflow
-  module Run
-    include Base::Status
+module Libis
+  module Workflow
+    module Run
 
-    attr_accessor :runner
+      include Base::Status
 
-    ### Methods that need implementation in the including class
-    #
-    # save!
-    # name
-    # name=(name)
-    # job
-    # last_run
-    # status(task)
+      ### Methods that need implementation in the including class
+      # getter and setter accessors for:
+      # - name
+      # getter accessors for:
+      # - job
+      # - options
+      # - properties
+      # instance methods:
+      # - save!
 
-    ### Derived methods
+      ### Derived methods
 
-    def runner
-      @runner ||= Libis::Workflow::TaskRunner.new self
+      def runner
+        @runner ||= Libis::Workflow::TaskRunner.new self
+      end
+
+      def configure_tasks(tasks)
+        send(:options=, tasks)
+        runner.configure_tasks(tasks)
+      end
+
+      # Execute the workflow.
+      def execute
+        save!
+
+        runner.execute(job)
+      end
+
+      def status_log
+        Config[:status_log].find_all(run: self)
+      end
+
+      def logger
+        send(:properties)[:logger] || job&.logger || Libis::Workflow::Config.logger
+      end
+
     end
-
-    def configure_tasks(tasks)
-      runner.configure_tasks(tasks)
-    end
-
-    # Execute the workflow.
-    #
-    # @param [Hash] options extra run-time options
-    def execute(options = {})
-
-      runner.configure()
-      # configure_tasks(options)
-
-      send(:save!)
-
-      runner.execute(send(:job))
-    end
-
-    def logger
-      send(:properties)['logger'] || send(:job).logger
-    rescue StandardError
-      ::Libis::Workflow::Config.logger
-    end
-
   end
 end

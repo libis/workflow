@@ -15,3 +15,16 @@ Metrics/MethodLength:
 
 Metrics/ClassLength:
   Max: 250
+
+Metrics/AbcSize:
+  Max: 30
+
+Style/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+  IndentationWidth: 4
+
+Layout/EmptyLinesAroundClassBody:
+  EnforcedStyle: empty_lines_except_namespace
+
+Layout/EmptyLinesAroundModuleBody:
+  EnforcedStyle: empty_lines_except_namespace

@@ -1,17 +1,21 @@
-require 'libis/tools/checksum'
+# frozen_string_literal: true
 
-require 'libis/workflow/file_item'
+require_relative 'test_work_item'
 
-class TestFileItem < ::Libis::Workflow::FileItem
+class TestFileItem < TestWorkItem
 
-  def filename=(file)
-    raise RuntimeError, "'#{file}' is not a file" unless File.file? file
-    set_checksum :SHA256, ::Libis::Tools::Checksum.hexdigest(file, :SHA256)
-    super file
+  include Libis::Workflow::FileItem
+
+  def filename
+    File.basename(properties[:filename])
   end
 
-  def name
-    self.properties[:name] || super
+  def filename=(file)
+    raise "'#{file}' is not a file" unless File.file? file
+
+    super
+
+    set_checksum :SHA256, ::Libis::Tools::Checksum.hexdigest(file, :SHA256)
   end
 
 end
