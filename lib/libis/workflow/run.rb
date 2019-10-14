@@ -33,15 +33,23 @@ module Libis
         @runner ||= Libis::Workflow::TaskRunner.new self
       end
 
+      def action
+        properties[:action]
+      end
+
+      def action=(value)
+        properties[:action] = value
+      end
+
       def configure_tasks(tasks)
         send(:options=, tasks)
         runner.configure_tasks(tasks)
       end
 
       # Execute the workflow.
-      def execute
+      def execute(action = :start)
+        properties[:action] = action
         save!
-
         runner.execute(job)
       end
 

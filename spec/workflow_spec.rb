@@ -13,8 +13,8 @@ def check_output(logoutput, sample_out)
   sample_out = sample_out.lines.to_a.map(&:strip)
   output = logoutput.string.lines.to_a.map { |x| x[/(?<=\] ).*/].strip }
 
-  puts 'output:'
-  ap output
+  # puts 'output:'
+  # ap output
 
   expect(output.size).to eq sample_out.size
   output.each_with_index do |o, i|
@@ -23,13 +23,13 @@ def check_output(logoutput, sample_out)
 end
 
 def check_status_log(status_log, sample_status_log)
-  # puts 'status_log:'
   status_log = status_log.map(&:pretty)
+  # puts 'status_log:'
   # ap status_log
   expect(status_log.size).to eq sample_status_log.size
   sample_status_log.each_with_index do |h, i|
     h.keys.each do |key|
-      puts "key: #{key} : #{status_log[i][key]} <=> #{h[key]}"
+      # puts "key: #{key} : #{status_log[i][key]} <=> #{h[key]}"
       expect(status_log[i][key]).to eq h[key]
     end
   end
@@ -215,7 +215,7 @@ context 'Test run_always' do
 
   let(:job) do
     job = TestJob.new('TestJob', workflow)
-    job.configure(location: dirname, processing: processing, run_always: force_run)
+    job.configure(location: dirname, config: processing, run_always: force_run)
     job
   end
 
@@ -231,35 +231,30 @@ context 'Test run_always' do
         run
 
         check_output logoutput, <<STR
- INFO -- TestJob : Ingest run started.
- INFO -- TestJob : Running subtask (1/3): CollectFiles
- INFO -- TestJob : Running subtask (2/3): ProcessingTask
- INFO -- ProcessingTask - TestJob : Task success
- INFO -- ProcessingTask - TestJob : Task success
- INFO -- ProcessingTask - TestJob : Task success
- INFO -- TestJob : Running subtask (3/3): FinalTask
- INFO -- FinalTask - TestJob : Final processing of test_dir_item.rb
- INFO -- FinalTask - TestJob : Final processing of test_file_item.rb
- INFO -- TestJob : Done
+ INFO - TestJob : Ingest run started.
+ INFO - TestJob : Running subtask (1/3): CollectFiles
+ INFO - TestJob : Running subtask (2/3): ProcessingTask
+ INFO -- ProcessingTask - test_dir_item.rb : Task success
+ INFO -- ProcessingTask - test_file_item.rb : Task success
+ INFO -- ProcessingTask - test_work_item.rb : Task success
+ INFO - TestJob : Running subtask (3/3): FinalTask
+ INFO -- FinalTask : Final processing of test_dir_item.rb
+ INFO -- FinalTask : Final processing of test_file_item.rb
+ INFO -- FinalTask : Final processing of test_work_item.rb
+ INFO - TestJob : Done
 STR
 
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :DONE, progress: 3, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :DONE, progress: 1, max: 1 },
-          { task: 'FinalTask', status: :DONE, progress: 1, max: 1 }
+          { task: '', status: :done, progress: 3, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :done, progress: 3, max: 3 },
+          { task: 'FinalTask', status: :done, progress: 3, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :DONE, progress: 3, max: 3 },
-          { task: 'FinalTask', status: :DONE, progress: 3, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :DONE },
-          { task: 'FinalTask', status: :DONE }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :done },
+          { task: 'FinalTask', status: :done }
         ]
       end
     end
@@ -271,32 +266,26 @@ STR
         run
 
         check_output logoutput, <<~STR
-           INFO -- TestJob : Ingest run started.
-           INFO -- TestJob : Running subtask (1/3): CollectFiles
-           INFO -- TestJob : Running subtask (2/3): ProcessingTask
-          ERROR -- ProcessingTask - TestJob : Task failed with async_halt status
-          ERROR -- ProcessingTask - TestJob : Task failed with async_halt status
-          ERROR -- ProcessingTask - TestJob : Task failed with async_halt status
-           WARN -- ProcessingTask - items : 3 subitem(s) halted in async process
-           WARN -- ProcessingTask - TestJob : 1 subitem(s) halted in async process
-           WARN -- TestJob : 1 subtask(s) halted in async process
-           INFO -- TestJob : Waiting for halted async process
+           INFO - TestJob : Ingest run started.
+           INFO - TestJob : Running subtask (1/3): CollectFiles
+           INFO - TestJob : Running subtask (2/3): ProcessingTask
+          ERROR -- ProcessingTask - test_dir_item.rb : Task failed with async_halt status
+          ERROR -- ProcessingTask - test_file_item.rb : Task failed with async_halt status
+          ERROR -- ProcessingTask - test_work_item.rb : Task failed with async_halt status
+           WARN -- ProcessingTask - TestJob : 3 subitem(s) halted in async process
+           WARN - TestJob : 1 subtask(s) halted in async process
+           INFO - TestJob : Remote process failed
         STR
 
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :ASYNC_HALT, progress: 2, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :ASYNC_HALT, progress: 1, max: 1 }
+          { task: '', status: :async_halt, progress: 2, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :async_halt, progress: 3, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :ASYNC_HALT, progress: 3, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :ASYNC_HALT }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :async_halt }
         ]
       end
     end
@@ -308,32 +297,26 @@ STR
         run
 
         check_output logoutput, <<~STR
-           INFO -- TestJob : Ingest run started.
-           INFO -- TestJob : Running subtask (1/3): CollectFiles
-           INFO -- TestJob : Running subtask (2/3): ProcessingTask
-          ERROR -- ProcessingTask - TestJob : Task failed with failed status
-          ERROR -- ProcessingTask - TestJob : Task failed with failed status
-          ERROR -- ProcessingTask - TestJob : Task failed with failed status
-          ERROR -- ProcessingTask - items : 3 subitem(s) failed
-          ERROR -- ProcessingTask - TestJob : 1 subitem(s) failed
-          ERROR -- TestJob : 1 subtask(s) failed
-           INFO -- TestJob : Failed
+           INFO - TestJob : Ingest run started.
+           INFO - TestJob : Running subtask (1/3): CollectFiles
+           INFO - TestJob : Running subtask (2/3): ProcessingTask
+          ERROR -- ProcessingTask - test_dir_item.rb : Task failed with failed status
+          ERROR -- ProcessingTask - test_file_item.rb : Task failed with failed status
+          ERROR -- ProcessingTask - test_work_item.rb : Task failed with failed status
+          ERROR -- ProcessingTask - TestJob : 3 subitem(s) failed
+          ERROR - TestJob : 1 subtask(s) failed
+           INFO - TestJob : Failed
         STR
 
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :FAILED, progress: 2, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 1, max: 1 }
+          { task: '', status: :failed, progress: 2, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :failed, progress: 3, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 3, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :FAILED }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :failed }
         ]
       end
     end
@@ -345,31 +328,26 @@ STR
         run
 
         check_output logoutput, <<~STR
-           INFO -- TestJob : Ingest run started.
-           INFO -- TestJob : Running subtask (1/3): CollectFiles
-           INFO -- TestJob : Running subtask (2/3): ProcessingTask
-          ERROR -- ProcessingTask - items/test_dir_item.rb : Error processing subitem (1/2): Task failed with WorkflowError exception
-          ERROR -- ProcessingTask - items/test_file_item.rb : Error processing subitem (2/2): Task failed with WorkflowError exception
-          ERROR -- ProcessingTask - items : 2 subitem(s) failed
-          ERROR -- ProcessingTask - TestJob : 1 subitem(s) failed
-          ERROR -- TestJob : 1 subtask(s) failed
-           INFO -- TestJob : Failed
+           INFO - TestJob : Ingest run started.
+           INFO - TestJob : Running subtask (1/3): CollectFiles
+           INFO - TestJob : Running subtask (2/3): ProcessingTask
+          ERROR -- ProcessingTask - test_dir_item.rb : Error processing subitem (1/3): Task failed with WorkflowError exception
+          ERROR -- ProcessingTask - test_file_item.rb : Error processing subitem (2/3): Task failed with WorkflowError exception
+          ERROR -- ProcessingTask - test_work_item.rb : Error processing subitem (3/3): Task failed with WorkflowError exception
+          ERROR -- ProcessingTask - TestJob : 3 subitem(s) failed
+          ERROR - TestJob : 1 subtask(s) failed
+           INFO - TestJob : Failed
         STR
 
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :FAILED, progress: 2, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 1, max: 1 }
+          { task: '', status: :failed, progress: 2, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :failed, progress: 0, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 0, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :FAILED }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :failed }
         ]
       end
     end
@@ -381,30 +359,24 @@ STR
         run
 
         check_output logoutput, <<~STR
-           INFO -- TestJob : Ingest run started.
-           INFO -- TestJob : Running subtask (1/3): CollectFiles
-           INFO -- TestJob : Running subtask (2/3): ProcessingTask
-          FATAL -- ProcessingTask - items/test_dir_item.rb : Fatal error processing subitem (1/3): Task failed with WorkflowAbort exception
-          ERROR -- ProcessingTask - items : 1 subitem(s) failed
+           INFO - TestJob : Ingest run started.
+           INFO - TestJob : Running subtask (1/3): CollectFiles
+           INFO - TestJob : Running subtask (2/3): ProcessingTask
+          FATAL -- ProcessingTask - test_dir_item.rb : Fatal error processing subitem (1/3): Task failed with WorkflowAbort exception
           ERROR -- ProcessingTask - TestJob : 1 subitem(s) failed
-          ERROR -- TestJob : 1 subtask(s) failed
-           INFO -- TestJob : Failed
+          ERROR - TestJob : 1 subtask(s) failed
+           INFO - TestJob : Failed
         STR
 
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :FAILED, progress: 2, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 1, max: 1 }
+          { task: '', status: :failed, progress: 2, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :failed, progress: 0, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 0, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :FAILED }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :failed }
         ]
       end
     end
@@ -419,36 +391,31 @@ STR
       it 'should run final task' do
         run
 
-        check_output logoutput, <<STR
- INFO -- TestJob : Ingest run started.
- INFO -- TestJob : Running subtask (1/3): CollectFiles
- INFO -- TestJob : Running subtask (2/3): ProcessingTask
- INFO -- ProcessingTask - TestJob : Task success
- INFO -- ProcessingTask - TestJob : Task success
- INFO -- ProcessingTask - TestJob : Task success
- INFO -- TestJob : Running subtask (3/3): FinalTask
- INFO -- FinalTask - TestJob : Final processing of test_dir_item.rb
- INFO -- FinalTask - TestJob : Final processing of test_file_item.rb
- INFO -- TestJob : Done
-STR
+        check_output logoutput, <<~STR
+          INFO - TestJob : Ingest run started.
+          INFO - TestJob : Running subtask (1/3): CollectFiles
+          INFO - TestJob : Running subtask (2/3): ProcessingTask
+          INFO -- ProcessingTask - test_dir_item.rb : Task success
+          INFO -- ProcessingTask - test_file_item.rb : Task success
+          INFO -- ProcessingTask - test_work_item.rb : Task success
+          INFO - TestJob : Running subtask (3/3): FinalTask
+          INFO -- FinalTask : Final processing of test_dir_item.rb
+          INFO -- FinalTask : Final processing of test_file_item.rb
+          INFO -- FinalTask : Final processing of test_work_item.rb
+          INFO - TestJob : Done
+        STR
 
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :DONE, progress: 3, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :DONE, progress: 1, max: 1 },
-          { task: 'FinalTask', status: :DONE, progress: 1, max: 1 }
+          { task: '', status: :done, progress: 3, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :done, progress: 3, max: 3 },
+          { task: 'FinalTask', status: :done, progress: 3, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :DONE, progress: 3, max: 3 },
-          { task: 'FinalTask', status: :DONE, progress: 3, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :DONE },
-          { task: 'FinalTask', status: :DONE }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :done },
+          { task: 'FinalTask', status: :done }
         ]
       end
     end
@@ -460,37 +427,32 @@ STR
         run
 
         check_output logoutput, <<~STR
-           INFO -- TestJob : Ingest run started.
-           INFO -- TestJob : Running subtask (1/3): CollectFiles
-           INFO -- TestJob : Running subtask (2/3): ProcessingTask
-          ERROR -- ProcessingTask - TestJob : Task failed with async_halt status
-          ERROR -- ProcessingTask - TestJob : Task failed with async_halt status
-           WARN -- ProcessingTask - items : 2 subitem(s) halted in async process
-           WARN -- ProcessingTask - TestJob : 1 subitem(s) halted in async process
-           INFO -- TestJob : Running subtask (3/3): FinalTask
-           INFO -- FinalTask - TestJob : Final processing of test_dir_item.rb
-           INFO -- FinalTask - TestJob : Final processing of test_file_item.rb
-           WARN -- TestJob : 1 subtask(s) halted in async process
-           INFO -- TestJob : Waiting for halted async process
+           INFO - TestJob : Ingest run started.
+           INFO - TestJob : Running subtask (1/3): CollectFiles
+           INFO - TestJob : Running subtask (2/3): ProcessingTask
+          ERROR -- ProcessingTask - test_dir_item.rb : Task failed with async_halt status
+          ERROR -- ProcessingTask - test_file_item.rb : Task failed with async_halt status
+          ERROR -- ProcessingTask - test_work_item.rb : Task failed with async_halt status
+           WARN -- ProcessingTask - TestJob : 3 subitem(s) halted in async process
+           INFO - TestJob : Running subtask (3/3): FinalTask
+           INFO -- FinalTask : Final processing of test_dir_item.rb
+           INFO -- FinalTask : Final processing of test_file_item.rb
+           INFO -- FinalTask : Final processing of test_work_item.rb
+           WARN - TestJob : 1 subtask(s) halted in async process
+           INFO - TestJob : Remote process failed
         STR
 
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :ASYNC_HALT, progress: 3, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :ASYNC_HALT, progress: 1, max: 1 },
-          { task: 'FinalTask', status: :DONE, progress: 1, max: 1 }
+          { task: '', status: :async_halt, progress: 3, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :async_halt, progress: 3, max: 3 },
+          { task: 'FinalTask', status: :done, progress: 3, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :ASYNC_HALT, progress: 3, max: 3 },
-          { task: 'FinalTask', status: :DONE, progress: 3, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :ASYNC_HALT },
-          { task: 'FinalTask', status: :DONE }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :async_halt },
+          { task: 'FinalTask', status: :done }
         ]
       end
     end
@@ -502,36 +464,31 @@ STR
         run
 
         check_output logoutput, <<~STR
-           INFO -- TestJob : Ingest run started.
-           INFO -- TestJob : Running subtask (1/3): CollectFiles
-           INFO -- TestJob : Running subtask (2/3): ProcessingTask
-          ERROR -- ProcessingTask - TestJob : Task failed with failed status
-          ERROR -- ProcessingTask - TestJob : Task failed with failed status
-          ERROR -- ProcessingTask - items : 2 subitem(s) failed
-          ERROR -- ProcessingTask - TestRun : 1 subitem(s) failed
-           INFO -- TestJob : Running subtask (3/3): FinalTask
-           INFO -- FinalTask - TestJob : Final processing of test_dir_item.rb
-           INFO -- FinalTask - TestJob : Final processing of test_file_item.rb
-          ERROR -- TestJob : 1 subtask(s) failed
-           INFO -- TestJob : Failed
+           INFO - TestJob : Ingest run started.
+           INFO - TestJob : Running subtask (1/3): CollectFiles
+           INFO - TestJob : Running subtask (2/3): ProcessingTask
+          ERROR -- ProcessingTask - test_dir_item.rb : Task failed with failed status
+          ERROR -- ProcessingTask - test_file_item.rb : Task failed with failed status
+          ERROR -- ProcessingTask - test_work_item.rb : Task failed with failed status
+          ERROR -- ProcessingTask - TestJob : 3 subitem(s) failed
+           INFO - TestJob : Running subtask (3/3): FinalTask
+           INFO -- FinalTask : Final processing of test_dir_item.rb
+           INFO -- FinalTask : Final processing of test_file_item.rb
+           INFO -- FinalTask : Final processing of test_work_item.rb
+          ERROR - TestJob : 1 subtask(s) failed
+           INFO - TestJob : Failed
         STR
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :FAILED, progress: 3, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 1, max: 1 },
-          { task: 'FinalTask', status: :DONE, progress: 1, max: 1 }
+          { task: '', status: :failed, progress: 3, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :failed, progress: 3, max: 3 },
+          { task: 'FinalTask', status: :done, progress: 3, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 3, max: 3 },
-          { task: 'FinalTask', status: :DONE, progress: 3, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :FAILED },
-          { task: 'FinalTask', status: :DONE }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :failed },
+          { task: 'FinalTask', status: :done }
         ]
       end
 
@@ -542,42 +499,36 @@ STR
         run.execute :retry
 
         check_output logoutput, <<~STR
-           INFO -- TestJob : Ingest run started.
-           INFO -- TestJob : Running subtask (2/3): ProcessingTask
-          ERROR -- ProcessingTask - TestJob : Task failed with failed status
-          ERROR -- ProcessingTask - TestJob : Task failed with failed status
-          ERROR -- ProcessingTask - items : 2 subitem(s) failed
-          ERROR -- ProcessingTask - TestJob : 1 subitem(s) failed
-           INFO -- TestJob : Running subtask (3/3): FinalTask
-           INFO -- FinalTask - TestJob : Final processing of test_dir_item.rb
-           INFO -- FinalTask - TestJob : Final processing of test_file_item.rb
-          ERROR -- TestJob : 1 subtask(s) failed
-           INFO -- TestJob : Failed
+           INFO - TestJob : Ingest run started.
+           INFO - TestJob : Running subtask (2/3): ProcessingTask
+          ERROR -- ProcessingTask - test_dir_item.rb : Task failed with failed status
+          ERROR -- ProcessingTask - test_file_item.rb : Task failed with failed status
+          ERROR -- ProcessingTask - test_work_item.rb : Task failed with failed status
+          ERROR -- ProcessingTask - TestJob : 3 subitem(s) failed
+           INFO - TestJob : Running subtask (3/3): FinalTask
+           INFO -- FinalTask : Final processing of test_dir_item.rb
+           INFO -- FinalTask : Final processing of test_file_item.rb
+           INFO -- FinalTask : Final processing of test_work_item.rb
+          ERROR - TestJob : 1 subtask(s) failed
+           INFO - TestJob : Failed
         STR
+
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :FAILED, progress: 3, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 1, max: 1 },
-          { task: 'FinalTask', status: :DONE, progress: 1, max: 1 },
-          { task: 'TestRun', status: :FAILED, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 1, max: 1 },
-          { task: 'FinalTask', status: :DONE, progress: 1, max: 1 }
+          { task: '', status: :failed, progress: 3, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :failed, progress: 3, max: 3 },
+          { task: 'FinalTask', status: :done, progress: 3, max: 3 },
+          { task: '', status: :failed, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :failed, progress: 3, max: 3 },
+          { task: 'FinalTask', status: :done, progress: 3, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 3, max: 3 },
-          { task: 'FinalTask', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 3, max: 3 },
-          { task: 'FinalTask', status: :DONE, progress: 3, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :FAILED },
-          { task: 'FinalTask', status: :DONE },
-          { task: 'ProcessingTask', status: :FAILED },
-          { task: 'FinalTask', status: :DONE }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :failed },
+          { task: 'FinalTask', status: :done },
+          { task: 'ProcessingTask', status: :failed },
+          { task: 'FinalTask', status: :done }
         ]
       end
     end
@@ -589,36 +540,32 @@ STR
         run
 
         check_output logoutput, <<~STR
-           INFO -- TestJob : Ingest run started.
-           INFO -- TestJob : Running subtask (1/3): CollectFiles
-           INFO -- TestJob : Running subtask (2/3): ProcessingTask
-          ERROR -- ProcessingTask - items/test_dir_item.rb : Error processing subitem (1/2): Task failed with WorkflowError exception
-          ERROR -- ProcessingTask - items/test_file_item.rb : Error processing subitem (2/2): Task failed with WorkflowError exception
-          ERROR -- ProcessingTask - items : 2 subitem(s) failed
-          ERROR -- ProcessingTask - TestJob : 1 subitem(s) failed
-           INFO -- TestJob : Running subtask (3/3): FinalTask
-           INFO -- FinalTask - TestJob : Final processing of test_dir_item.rb
-           INFO -- FinalTask - TestJob : Final processing of test_file_item.rb
-          ERROR -- TestJob : 1 subtask(s) failed
-           INFO -- TestJob : Failed
+           INFO - TestJob : Ingest run started.
+           INFO - TestJob : Running subtask (1/3): CollectFiles
+           INFO - TestJob : Running subtask (2/3): ProcessingTask
+          ERROR -- ProcessingTask - test_dir_item.rb : Error processing subitem (1/3): Task failed with WorkflowError exception
+          ERROR -- ProcessingTask - test_file_item.rb : Error processing subitem (2/3): Task failed with WorkflowError exception
+          ERROR -- ProcessingTask - test_work_item.rb : Error processing subitem (3/3): Task failed with WorkflowError exception
+          ERROR -- ProcessingTask - TestJob : 3 subitem(s) failed
+           INFO - TestJob : Running subtask (3/3): FinalTask
+           INFO -- FinalTask : Final processing of test_dir_item.rb
+           INFO -- FinalTask : Final processing of test_file_item.rb
+           INFO -- FinalTask : Final processing of test_work_item.rb
+          ERROR - TestJob : 1 subtask(s) failed
+           INFO - TestJob : Failed
         STR
+
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :FAILED, progress: 3, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 1, max: 1 },
-          { task: 'FinalTask', status: :DONE, progress: 1, max: 1 }
+          { task: '', status: :failed, progress: 3, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :failed, progress: 0, max: 3 },
+          { task: 'FinalTask', status: :done, progress: 3, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 0, max: 3 },
-          { task: 'FinalTask', status: :DONE, progress: 3, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :FAILED },
-          { task: 'FinalTask', status: :DONE }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :failed },
+          { task: 'FinalTask', status: :done }
         ]
       end
     end
@@ -630,36 +577,30 @@ STR
         run
 
         check_output logoutput, <<~STR
-           INFO -- TestJob : Ingest run started.
-           INFO -- TestJob : Running subtask (1/3): CollectFiles
-           INFO -- TestJob : Running subtask (2/3): ProcessingTask
-          FATAL -- ProcessingTask - items/test_dir_item.rb : Fatal error processing subitem (1/3): Task failed with WorkflowAbort exception
-          ERROR -- ProcessingTask - items : 1 subitem(s) failed
+           INFO - TestJob : Ingest run started.
+           INFO - TestJob : Running subtask (1/3): CollectFiles
+           INFO - TestJob : Running subtask (2/3): ProcessingTask
+          FATAL -- ProcessingTask - test_dir_item.rb : Fatal error processing subitem (1/3): Task failed with WorkflowAbort exception
           ERROR -- ProcessingTask - TestJob : 1 subitem(s) failed
-           INFO -- TestJob : Running subtask (3/3): FinalTask
-           INFO -- FinalTask - TestJob : Final processing of test_dir_item.rb
-           INFO -- FinalTask - TestJob : Final processing of test_file_item.rb
-          ERROR -- TestJob : 1 subtask(s) failed
-           INFO -- TestJob : Failed
+           INFO - TestJob : Running subtask (3/3): FinalTask
+           INFO -- FinalTask : Final processing of test_dir_item.rb
+           INFO -- FinalTask : Final processing of test_file_item.rb
+           INFO -- FinalTask : Final processing of test_work_item.rb
+          ERROR - TestJob : 1 subtask(s) failed
+           INFO - TestJob : Failed
         STR
 
         check_status_log run.status_log, [
-          { task: 'TestRun', status: :FAILED, progress: 3, max: 3 },
-          { task: 'CollectFiles', status: :DONE, progress: 1, max: 1 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 1, max: 1 },
-          { task: 'FinalTask', status: :DONE, progress: 1, max: 1 }
+          { task: '', status: :failed, progress: 3, max: 3 },
+          { task: 'CollectFiles', status: :done, progress: 3, max: 3 },
+          { task: 'ProcessingTask', status: :failed, progress: 0, max: 3 },
+          { task: 'FinalTask', status: :done, progress: 3, max: 3 }
         ]
 
-        check_status_log run.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE, progress: 3, max: 3 },
-          { task: 'ProcessingTask', status: :FAILED, progress: 0, max: 3 },
-          { task: 'FinalTask', status: :DONE, progress: 3, max: 3 }
-        ]
-
-        check_status_log run.items.first.items.first.status_log, [
-          { task: 'CollectFiles', status: :DONE },
-          { task: 'ProcessingTask', status: :FAILED },
-          { task: 'FinalTask', status: :DONE }
+        check_status_log job.items.first.status_log, [
+          { task: 'CollectFiles', status: :done },
+          { task: 'ProcessingTask', status: :failed },
+          { task: 'FinalTask', status: :done }
         ]
       end
     end

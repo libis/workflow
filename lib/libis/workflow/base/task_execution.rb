@@ -5,11 +5,19 @@ module Libis
     module Base
       module TaskExecution
 
-        attr_accessor :action, :workitem
+        def action
+          run.action
+        end
+
+        def action=(value)
+          run.action = value
+        end
 
         def execute(item)
           return nil unless check_item_type [Job, WorkItem], item
           return item if action == :failed && !parameter(:run_always)
+
+
 
           item = execution_loop(item)
           self.action = :failed unless item

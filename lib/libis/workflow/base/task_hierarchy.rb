@@ -46,8 +46,8 @@ module Libis
           tasks
         end
 
-        def subitems(item = nil)
-          (item || workitem).send(:item_list)
+        def subitems(item)
+          item.send(:item_list)
         end
 
       end

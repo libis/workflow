@@ -38,7 +38,7 @@ module Libis
       end
 
       def status_txt
-        Base::StatusEnum.to_sym(send(:status))
+        Base::StatusEnum.to_str(send(:status))
       end
 
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'libis/tools/checksum'
 
 require 'libis/exceptions'
@@ -7,7 +9,7 @@ class ChecksumTester < ::Libis::Workflow::Task
 
   parameter checksum_type: nil,
             description: 'Checksum type to use.',
-            constraint: ::Libis::Tools::Checksum::CHECKSUM_TYPES.map {|x| x.to_s}
+            constraint: ::Libis::Tools::Checksum::CHECKSUM_TYPES.map(&:to_s)
 
   def process(item)
     return unless item.is_a? TestFileItem
@@ -26,6 +28,7 @@ class ChecksumTester < ::Libis::Workflow::Task
   def test_checksum(item, checksum_type)
     checksum = ::Libis::Tools::Checksum.hexdigest(item.fullpath, checksum_type.to_sym)
     return if item.checksum(checksum_type) == checksum
+
     raise ::Libis::WorkflowError, "Checksum test #{checksum_type} failed for #{item.filepath}"
   end
 

@@ -13,10 +13,10 @@ module Libis
         define :started, 'started'
         define :running, 'running'
         define :reverting, 'reverting'
-        define :async_wait, 'async process running'
+        define :async_wait, 'remote process running'
         define :reverted, 'reverted'
         define :done, 'done'
-        define :async_halt, 'async process failed'
+        define :async_halt, 'remote process failed'
         define :failed, 'failed'
 
         def self.to_sym(status)

@@ -42,8 +42,7 @@ module Libis
         @action = cfg[:action] || :start
       end
 
-      def check_item_type(klasses, item = nil)
-        item ||= workitem
+      def check_item_type(klasses, item)
         klasses = [klasses] unless klasses.is_a? Array
         unless klasses.any? { |klass| item.is_a? klass.to_s.constantize }
           raise WorkflowError, "Workitem is of wrong type : #{item.class} - expected #{klasses}"
@@ -89,8 +88,7 @@ module Libis
         @item_skipper = true
       end
 
-      def item_type?(klass, item = nil)
-        item ||= workitem
+      def item_type?(klass, item)
         item.is_a? klass.to_s.constantize
       end
 
