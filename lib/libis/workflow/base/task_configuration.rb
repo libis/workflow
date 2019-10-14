@@ -8,7 +8,7 @@ module Libis
         def configure(parameter_values)
           parameter_values.each do |name, value|
             parameter(name, value)
-          end
+          end if parameter_values
         end
 
         def configure_tasks(tasks, opts = {})
