@@ -13,14 +13,13 @@ module Libis
           run.action = value
         end
 
-        def execute(item)
+        def execute(item, opts = {})
           return nil unless check_item_type [Job, WorkItem], item
-          return item if action == :failed && !parameter(:run_always)
-
-
+          return item if action == :abort && !parameter(:run_always)
 
           item = execution_loop(item)
-          self.action = :failed unless item
+
+          self.action = :abort unless item
           item
         rescue WorkflowError => e
           error e.message, item
@@ -54,11 +53,12 @@ module Libis
             when :done, :reverted
               return item
             when :failed, :async_halt
-              return false
+              self.action = :abort
+              return item
             when :async_wait
               sleep(parameter(:retry_interval))
             else
-              return item
+              warn 'Something went terribly wrong, retrying ...'
             end
           end
         end

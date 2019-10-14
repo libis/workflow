@@ -20,6 +20,7 @@ module Libis
       ### Methods that need implementation in the including class
       # getter and setter accessors for:
       # - name
+      # - config
       # getter accessors for:
       # - job
       # - options
@@ -41,16 +42,16 @@ module Libis
         properties[:action] = value
       end
 
-      def configure_tasks(tasks)
-        send(:options=, tasks)
-        runner.configure_tasks(tasks)
+      def configure_tasks(tasks, opts = {})
+        send(:config=, tasks)
+        runner.configure_tasks(tasks, opts)
       end
 
       # Execute the workflow.
-      def execute(action = :start)
+      def execute(action = :start, opts = {})
         properties[:action] = action
         save!
-        runner.execute(job)
+        runner.execute(job, opts)
       end
 
       def status_log

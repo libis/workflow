@@ -47,13 +47,14 @@ module Libis
 
       ### Derived methods
 
-      # @param [Hash] _opts extra conguration values for this particular run
-      def execute(_opts = {})
-        run = send(:make_run)
+      # @param [Hash] opts extra conguration values for this particular run
+      def execute(opts = {})
+        run = send(:make_run, opts)
         raise 'Could not create run' unless run
 
-        run.configure_tasks(tasks)
-        run.execute
+        run.configure_tasks(tasks, opts)
+        action = opts[:action] || :start
+        run.execute action, opts
         run
       end
 

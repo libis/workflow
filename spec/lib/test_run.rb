@@ -5,15 +5,16 @@ class TestRun
   include Libis::Workflow::Run
 
   attr_accessor :name
-  attr_accessor :options
+  attr_accessor :config
 
   attr_reader :job
+  attr_reader :options
   attr_reader :properties
 
-  def initialize(name, job)
+  def initialize(name, job, opts = {})
     @name = name
     @job = job
-    @options = {}
+    @options = opts
     @properties = {}
   end
 

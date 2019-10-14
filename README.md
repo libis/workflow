@@ -6,15 +6,18 @@
 # LIBIS Workflow
 
 LIBIS Workflow framework
+<p><div style="border-width:1px;border-style:solid;padding:5px;"><b>
+Note: Version 3.x is a completely revised version and the documentation below
+ still needs to be updated. Use at your own risk.
+</b></div> 
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-    gem 'libis-workflow'
+gem 'libis-workflow', '~> 3.0.beta'
 ```
-
 
 And then execute:
 
@@ -58,7 +61,7 @@ logging and paths where tasks and workitems can be found.
 You should start by including the following line in your source code:
 
 ```ruby
-    require 'libis-workflow'
+require 'libis-workflow'
 ```
 
 This will load all of the Libis Workflow framework into your environment, but including only the required parts is OK as
@@ -147,104 +150,100 @@ work item in sequence until all tasks have completed successfully or a task has 
 Creating your own work items is highly recommended and is fairly easy:
 
 ```ruby
+require 'libis/workflow'
 
-    require 'libis/workflow'
+class MyWorkItem < ::Libis::Workflow::WorkItem
+  attr_accesor :name
 
-    class MyWorkItem < ::Libis::Workflow::WorkItem
-      attr_accesor :name
-
-      def initialize
-        @name = 'My work item'
-        super # Note: this is important as the base class requires some initialization
-      end
-    end
+  def initialize
+    @name = 'My work item'
+    super # Note: this is important as the base class requires some initialization
+  end
+end
 ```
 
 or if a custom storage implementation is desired, a number of data items and methods require implementation:
 
 ```ruby
+require 'libis/workflow'
 
-    require 'libis/workflow'
+class MyWorkItem < MyStorageItem 
+  include ::Libis::Workflow::Base::WorkItem
 
-    class MyWorkItem < MyStorageItem 
-      include ::Libis::Workflow::Base::WorkItem
+  stored_attribute :parent
+  stored_attribute :items
+  stored_attribute :options
+  stored_attribute :properties
+  stored_attribute :status_log
+  stored_attribute :summary
 
-      stored_attribute :parent
-      stored_attribute :items
-      stored_attribute :options
-      stored_attribute :properties
-      stored_attribute :status_log
-      stored_attribute :summary
+  def initialize
+    self.parent = nil
+    self.items = []
+    self.options = {}
+    self.properties = {}
+    self.status_log = []
+    self.summary = {}
+  end
 
-      def initialize
-        self.parent = nil
-        self.items = []
-        self.options = {}
-        self.properties = {}
-        self.status_log = []
-        self.summary = {}
-      end
+  protected
 
-      protected
+  def add_status_log(info)
+    self.status_log << info
+  end
 
-      def add_status_log(info)
-        self.status_log << info
-      end
+  def save_log_entry(entry)
+    entry.save
+  end
 
-      def save_log_entry(entry)
-        entry.save
-      end
-
-    end
+end
 ```
 
 Work items that are file-based can derive from the ::Libis::Workflow::FileItem class:
 
 ```ruby
+require 'libis/workflow'
 
-    require 'libis/workflow'
+class MyFileItem < ::Libis::Workflow::FileItem
 
-    class MyFileItem < ::Libis::Workflow::FileItem
+  def initialize(file)
+    filename = file
+    super
+  end
 
-      def initialize(file)
-        filename = file
-        super
-      end
+  def filesize
+    properties[:size]
+  end
 
-      def filesize
-        properties[:size]
-      end
+  def fixity_check(checksum)
+    properties[:checksum] == checksum
+  end
 
-      def fixity_check(checksum)
-        properties[:checksum] == checksum
-      end
-
-    end
+end
 ```
 
 or include the ::Libis::Workflow::Base::FileItem module:
 
 ```ruby
+require 'libis/workflow'
 
-    require 'libis/workflow'
+class MyFileItem < MyWorkItem 
+  include ::Libis::Workflow::FileItem
 
-    class MyFileItem < MyWorkItem 
-      include ::Libis::Workflow::FileItem
+  def initialize(file)
+    filename = file
+    super
+  end
 
-      def initialize(file)
-        filename = file
-        super
-      end
+  def filesize
+    properties[:size]
+  end
 
-      def filesize
-        properties[:size]
-      end
+  def fixity_check(checksum)
+    properties[:checksum] == checksum
+  end
 
-      def fixity_check(checksum)
-        properties[:checksum] == checksum
-      end
-
-    end
+end
 ```
 
 
@@ -255,23 +254,22 @@ Tasks should inherit from ::Libis::Workflow::Task and specify the actions it wan
 perform on each work item:
 
 ```ruby
+class MyTask < ::Libis::Workflow::Task
 
-    class MyTask < ::Libis::Workflow::Task
-
-      def process_item(item)
-        if do_something(item)
-          info "Did something"
-        else
-          raise ::Libis::WorkflowError, "Something went wrong" 
-        end
-      rescue Exception => e
-        error "Fatal problem, aborting" 
-        raise ::Libis::WorkflowAbort, "Fatal problem"  
-      ensure
-        item
-      end
-
+  def process_item(item)
+    if do_something(item)
+      info "Did something"
+    else
+      raise ::Libis::WorkflowError, "Something went wrong" 
     end
+  rescue Exception => e
+    error "Fatal problem, aborting" 
+    raise ::Libis::WorkflowAbort, "Fatal problem"  
+  ensure
+    item
+  end
+
+end
 ```
 
 As seen above, the task should define a method called process_item that takes one argument. The argument will be a 

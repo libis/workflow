@@ -21,8 +21,8 @@ class TestJob
     apply_input(workflow.config[:tasks], @input)
   end
 
-  def make_run
-    run = TestRun.new(run_name, self)
+  def make_run(opts = {})
+    run = TestRun.new(run_name, self, opts)
     runs << run
     run
   end

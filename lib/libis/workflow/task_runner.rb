@@ -24,10 +24,10 @@ module Libis
       end
 
       def namepath
-        ''
+        'Run'
       end
 
-      def execute(item)
+      def execute(item, opts = {})
         check_item_type [WorkItem, Job], item
 
         info 'Ingest run started.', item
