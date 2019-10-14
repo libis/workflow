@@ -23,7 +23,7 @@ module Libis
       include Base::TaskHierarchy
       include Base::TaskLogging
 
-      attr_accessor :processing_item
+      attr_accessor :processing_item, :properties
 
       parameter recursive: false, description: 'Run the task on all subitems recursively.'
       parameter abort_recursion_on_failure: false, description: 'Stop processing items recursively if one item fails.'
@@ -39,7 +39,7 @@ module Libis
         @subitems_stopper = false
         @subtasks_stopper = false
         configure cfg[:parameters] || {}
-        @action = cfg[:action] || :start
+        @properties = cfg.dup
       end
 
       def check_item_type(klasses, item)
