@@ -24,7 +24,14 @@ module Libis
           return send(:create_status, values) if Base::StatusEnum.to_int(status) <
                                                  Base::StatusEnum.to_int(entry.send(:status))
 
-          entry.send(:update_status, values.reject { |k, _| %i[task item].include? k })
+          entry.send(:update_status, values.slice(:status, :progress, :max))
+        end
+
+        def sanitize(run: nil, task: nil, item: nil)
+          run ||= task.run if task
+          task = task.namepath if task
+          item = nil unless item.is_a? Libis::Workflow::WorkItem
+          [run, task, item]
         end
 
       end

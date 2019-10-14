@@ -65,11 +65,4 @@ class TestStatusLog
       created: @created_at.strftime('%Y-%m-%d %H:%M:%S.%N'), updated: @updated_at.strftime('%Y-%m-%d %H:%M:%S.%N') }
   end
 
-  def self.sanitize(run: nil, task: nil, item: nil)
-    run ||= task.run if task
-    task = task.namepath if task
-    item = nil unless item.is_a? Libis::Workflow::WorkItem
-    [run, task, item]
-  end
-
 end
