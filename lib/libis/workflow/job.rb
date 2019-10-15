@@ -58,14 +58,12 @@ module Libis
       def prepare(opts = {})
         run = send(:make_run, opts)
         raise 'Could not create run' unless run
-
         run.configure_tasks(tasks, opts)
-        send(:action=, opts[:action] || :start)
         run
       end
 
       def perform(run, opts = {})
-        run.execute action, opts
+        run.execute (opts[:action] || :start), opts
       end
 
       def finish(_run, _opts = {}); end

@@ -13,8 +13,8 @@ def check_output(logoutput, sample_out)
   sample_out = sample_out.lines.to_a.map(&:strip)
   output = logoutput.string.lines.to_a.map { |x| x[/(?<=\] ).*/].strip }
 
-  puts 'output:'
-  ap output
+  # puts 'output:'
+  # ap output
 
   expect(output.size).to eq sample_out.size
   output.each_with_index do |o, i|
