@@ -49,14 +49,26 @@ module Libis
 
       # @param [Hash] opts extra conguration values for this particular run
       def execute(opts = {})
+        run = prepare(opts)
+        perform(run, opts)
+        finish(run, opts)
+        run
+      end
+
+      def prepare(opts = {})
         run = send(:make_run, opts)
         raise 'Could not create run' unless run
 
         run.configure_tasks(tasks, opts)
-        action = opts[:action] || :start
-        run.execute action, opts
+        send(:action=, opts[:action] || :start)
         run
       end
+
+      def perform(run, opts = {})
+        run.execute action, opts
+      end
+
+      def finish(_run, _opts = {}); end
 
       def tasks
         send(:workflow).tasks
