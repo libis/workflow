@@ -9,7 +9,7 @@ module Libis
       include WorkItem
 
       def name
-        properties[:name] || filename
+        super || filename
       end
 
       def fullpath
