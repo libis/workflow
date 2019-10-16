@@ -43,7 +43,7 @@ module Libis
       end
 
       def configure_tasks(tasks, opts = {})
-        send(:config=, tasks)
+        config[:tasks] = tasks
         runner.configure_tasks(tasks, opts)
       end
 
@@ -59,7 +59,7 @@ module Libis
       end
 
       def logger
-        send(:properties)[:logger] || job&.logger || Libis::Workflow::Config.logger
+        properties[:logger] || job&.logger || Libis::Workflow::Config.logger
       end
 
     end

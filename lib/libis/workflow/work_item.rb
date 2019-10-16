@@ -73,11 +73,11 @@ module Libis
       ### Derived methods. Should work as is when required methods are implemented properly
 
       def to_s
-        send(:name)
+        name
       end
 
       def names
-        (send(:parent)&.names || []).push(send(:name)).compact
+        (parent&.names || []).push(name).compact
       end
 
       def namepath
@@ -85,7 +85,7 @@ module Libis
       end
 
       def labels
-        (send(:parent)&.labels || []).push(send(:label)).compact
+        (parent&.labels || []).push(label).compact
       end
 
       def labelpath
@@ -101,18 +101,18 @@ module Libis
 
       # Iterates over the work item clients and invokes code on each of them.
       def each(&block)
-        send(:items).each(&block)
+        items.each(&block)
       end
 
       def size
-        send(:items).size
+        items.size
       end
 
       alias count size
 
       # @return [WorkItem] the root WorkItem object
       def root_item
-        send(:parent)&.root_item || self
+        parent&.root_item || self
       end
 
       def status_log

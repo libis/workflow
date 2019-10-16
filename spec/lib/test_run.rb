@@ -16,6 +16,7 @@ class TestRun
     @job = job
     @options = opts
     @properties = {}
+    @config = {}
   end
 
   def save!

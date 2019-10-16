@@ -56,7 +56,7 @@ module Libis
       end
 
       def prepare(opts = {})
-        run = send(:make_run, opts)
+        run = make_run(opts)
         raise 'Could not create run' unless run
         run.configure_tasks(tasks, opts)
         run
@@ -69,11 +69,11 @@ module Libis
       def finish(_run, _opts = {}); end
 
       def tasks
-        send(:workflow).tasks
+        workflow.tasks
       end
 
       def run_name(timestamp = Time.now)
-        "#{send(:name)}-#{timestamp.strftime('%Y%m%d%H%M%S')}"
+        "#{name}-#{timestamp.strftime('%Y%m%d%H%M%S')}"
       end
 
       def namepath

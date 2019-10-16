@@ -18,13 +18,13 @@ module Libis
 
         def set_status(status: nil, task:, item: nil, progress: nil, max: nil)
           item = nil unless item.is_a? Libis::Workflow::WorkItem
-          entry = send(:find_last, task: task, item: item)
+          entry = find_last(task: task, item: item)
           values = { status: status, task: task, item: item, progress: progress, max: max }.compact
-          return send(:create_status, values) if entry.nil?
-          return send(:create_status, values) if Base::StatusEnum.to_int(status) <
-                                                 Base::StatusEnum.to_int(entry.send(:status))
+          return create_status(values) if entry.nil?
+          return create_status(values) if Base::StatusEnum.to_int(status) <
+                                                 Base::StatusEnum.to_int(entry.status)
 
-          entry.send(:update_status, values.slice(:status, :progress, :max))
+          entry.update_status(values.slice(:status, :progress, :max))
         end
 
         def sanitize(run: nil, task: nil, item: nil)
@@ -41,11 +41,11 @@ module Libis
       end
 
       def status_sym
-        Base::StatusEnum.to_sym(send(:status))
+        Base::StatusEnum.to_sym(status)
       end
 
       def status_txt
-        Base::StatusEnum.to_str(send(:status))
+        Base::StatusEnum.to_str(status)
       end
 
     end

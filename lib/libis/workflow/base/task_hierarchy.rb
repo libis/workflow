@@ -47,7 +47,7 @@ module Libis
         end
 
         def subitems(item)
-          item.send(:item_list)
+          item.item_list
         end
 
       end
