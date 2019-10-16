@@ -100,7 +100,7 @@ context 'TestWorkflow' do
   it 'should camelize the workitem name' do
     run = job.execute
     # ap logoutput.string.lines
-    expect(run.config[0][:parameters][:location]).to eq datadir
+    expect(run.config[:tasks][0][:parameters][:location]).to eq datadir
     expect(job.items.size).to eq 1
     expect(job.items.first.class).to eq TestDirItem
     expect(job.items.first.size).to eq 3
