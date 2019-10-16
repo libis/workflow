@@ -33,7 +33,7 @@ class TestJob
 
   def <<(item)
     @items << item
-    item.job = self
+    item.parent = self
   end
 
   def item_list

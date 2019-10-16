@@ -58,6 +58,7 @@ module Libis
       def prepare(opts = {})
         run = make_run(opts)
         raise 'Could not create run' unless run
+
         run.configure_tasks(tasks, opts)
         run
       end
@@ -76,8 +77,16 @@ module Libis
         "#{name}-#{timestamp.strftime('%Y%m%d%H%M%S')}"
       end
 
+      def names
+        []
+      end
+
       def namepath
         name
+      end
+
+      def labels
+        []
       end
 
       def status_log

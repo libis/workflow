@@ -60,7 +60,6 @@ module Libis
       # - name
       # - label
       # - parent
-      # - job
       # getter accessors for:
       # - items
       # - options
@@ -112,7 +111,7 @@ module Libis
 
       # @return [WorkItem] the root WorkItem object
       def root_item
-        parent&.root_item || self
+        parent&.is_a?(WorkItem) ? parent.root_item : self
       end
 
       def status_log
