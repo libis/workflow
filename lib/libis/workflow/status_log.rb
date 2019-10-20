@@ -7,6 +7,9 @@ module Libis
       ### Methods that need implementation in the including class
       # getter accessors for:
       # - status
+      # - run
+      # - task
+      # - item
       # class methods:
       # - create_status(...)
       # - find_last(...)
@@ -21,17 +24,23 @@ module Libis
           entry = find_last(task: task, item: item)
           values = { status: status, task: task, item: item, progress: progress, max: max }.compact
           return create_status(values) if entry.nil?
-          return create_status(values) if Base::StatusEnum.to_int(status) <
-                                                 Base::StatusEnum.to_int(entry.status)
+          return create_status(values) if Base::StatusEnum.to_int(status) < Base::StatusEnum.to_int(entry.status)
 
           entry.update_status(values.slice(:status, :progress, :max))
         end
 
         def sanitize(run: nil, task: nil, item: nil)
-          run ||= task.run if task
-          task = task.namepath if task
+          if task.is_a?(Libis::Workflow::Task)
+            run ||= task.run
+            task = task.namepath
+          end
           item = nil unless item.is_a? Libis::Workflow::WorkItem
           [run, task, item]
+        end
+
+        def find_all_last(item)
+          list = find_all(item: item)
+          list.reverse.uniq(&:task).reverse
         end
 
       end

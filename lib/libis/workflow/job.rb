@@ -89,8 +89,13 @@ module Libis
         []
       end
 
-      def status_log
-        Config[:status_log].find_all(run: runs.last, item: self)
+      def last_status_log
+        Config[:status_log].find_all_last(self)
+      end
+
+      def last_status(task)
+        task = task.namepath if task.is_a?(Libis::Workflow::Task)
+        Config[:status_log].find_last(item: self, task: task)&.status_sym || Base::StatusEnum.keys.first
       end
 
       def logger

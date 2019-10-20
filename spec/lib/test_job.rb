@@ -27,6 +27,10 @@ class TestJob
     run
   end
 
+  def run_name(timestamp = Time.now)
+    "Run-#{runs.count + 1}"
+  end
+
   def last_run
     runs.last
   end

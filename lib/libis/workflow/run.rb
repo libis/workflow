@@ -15,8 +15,6 @@ module Libis
   module Workflow
     module Run
 
-      include Base::Status
-
       ### Methods that need implementation in the including class
       # getter and setter accessors for:
       # - name
@@ -39,7 +37,7 @@ module Libis
       end
 
       def action=(value)
-        properties[:action] = value
+        properties[:action] = value.to_s
       end
 
       def configure_tasks(tasks, opts = {})
@@ -48,7 +46,7 @@ module Libis
       end
 
       # Execute the workflow.
-      def execute(action = :start, opts = {})
+      def execute(action = 'start', opts = {})
         properties[:action] = action
         save!
         runner.execute(job, opts)
@@ -56,6 +54,10 @@ module Libis
 
       def status_log
         Config[:status_log].find_all(run: self)
+      end
+
+      def last_status(item)
+        item_status(item)
       end
 
       def logger

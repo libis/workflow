@@ -15,15 +15,19 @@ class ProcessingTask < ::Libis::Workflow::Task
     when :success
       info 'Task success', item
     when :async_halt
-      set_status(status: :async_halt, item: item)
+      set_item_status(status: :async_halt, item: item)
       error 'Task failed with async_halt status', item
     when :fail
-      set_status(status: :failed, item: item)
+      set_item_status(status: :failed, item: item)
       error 'Task failed with failed status', item
     when :error
-      raise Libis::WorkflowError, 'Task failed with WorkflowError exception'
+      msg = 'Task failed with WorkflowError exception'
+      error msg, item
+      raise Libis::WorkflowError, msg
     when :abort
-      raise Libis::WorkflowAbort, 'Task failed with WorkflowAbort exception'
+      msg = 'Task failed with WorkflowAbort exception'
+      error msg, item
+      raise Libis::WorkflowAbort, msg
     else
       info 'Task success', item
     end

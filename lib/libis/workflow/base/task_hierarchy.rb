@@ -20,24 +20,24 @@ module Libis
         end
 
         def substatus_check(status_count, item, task_or_item)
-          item_status = :done
+          final_item_status = :done
 
           if (waiting = status_count[:async_wait]).positive?
             info "waiting for %d sub#{task_or_item}(s) in async process", item, waiting
-            item_status = :async_wait
+            final_item_status = :async_wait
           end
 
           if (halted = status_count[:async_halt]).positive?
             warn "%d sub#{task_or_item}(s) halted in async process", item, halted
-            item_status = :async_halt
+            final_item_status = :async_halt
           end
 
           if (failed = status_count[:failed]).positive?
             error "%d sub#{task_or_item}(s) failed", item, failed
-            item_status = :failed
+            final_item_status = :failed
           end
 
-          set_status(item: item, status: item_status)
+          set_item_status(item: item, status: final_item_status)
         end
 
         private

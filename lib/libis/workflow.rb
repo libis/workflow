@@ -23,12 +23,12 @@ module Libis
     module Base
 
       autoload :Logging, 'libis/workflow/base/logging'
-      autoload :Status, 'libis/workflow/base/status'
       autoload :StatusEnum, 'libis/workflow/base/status_enum'
       autoload :TaskConfiguration, 'libis/workflow/base/task_configuration'
       autoload :TaskExecution, 'libis/workflow/base/task_execution'
       autoload :TaskHierarchy, 'libis/workflow/base/task_hierarchy'
       autoload :TaskLogging, 'libis/workflow/base/task_logging'
+      autoload :TaskStatus, 'libis/workflow/base/task_status'
 
     end
 

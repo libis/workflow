@@ -40,23 +40,23 @@ module Libis
           unless task.parameter(:run_always)
             next unless continue
 
-            if status(task: task, item: item) == :done && run.action == :retry
+            if item.last_status(task) == :done && run.action == 'retry'
               debug 'Retry: skipping task %s because it has finished successfully.', item, task.namepath
               next
             end
           end
           info 'Running subtask (%d/%d): %s', item, i + 1, tasks.size, task.name
-          new_item = task.process_item item
+          new_item = task.execute item
           item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
           status_progress(item: item, progress: i + 1)
-          item_status = status(task: task, item: item)
+          item_status = task.item_status(item)
           status_count[item_status] += 1
-          continue = false if parameter(:abort_on_failure) && item_status != :done
+          continue = false if parameter(:abort_on_failure) && Base::StatusEnum.failed?(item_status)
         end
 
         substatus_check(status_count, item, 'task')
 
-        info status_txt(item: item).capitalize, item
+        info item_status_txt(item).capitalize, item
       end
 
       def stop_processing_subtasks

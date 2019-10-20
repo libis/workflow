@@ -24,7 +24,7 @@ module Libis
       end
 
       def namepath
-        'Run'
+        run.name
       end
 
       def execute(item, opts = {})

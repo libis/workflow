@@ -4,6 +4,8 @@ require 'libis/workflow/task'
 
 describe 'Task' do
 
+  let(:debug_level) { :INFO }
+
   it 'should create a default task' do
 
     task = ::Libis::Workflow::Task.new

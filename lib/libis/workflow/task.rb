@@ -8,7 +8,7 @@ require 'libis/tools/extend/hash'
 require 'libis/tools/logger'
 
 require 'libis/workflow'
-require_relative 'base/status'
+require_relative 'base/task_status'
 
 module Libis
   module Workflow
@@ -17,13 +17,13 @@ module Libis
       include ::Libis::Tools::Logger
       include ::Libis::Tools::ParameterContainer
 
-      include Base::Status
+      include Base::TaskStatus
       include Base::TaskConfiguration
       include Base::TaskExecution
       include Base::TaskHierarchy
       include Base::TaskLogging
 
-      attr_accessor :processing_item, :properties
+      attr_accessor :properties
 
       parameter recursive: false, description: 'Run the task on all subitems recursively.'
       parameter abort_recursion_on_failure: false, description: 'Stop processing items recursively if one item fails.'
@@ -63,6 +63,10 @@ module Libis
         names.join('/')
       end
 
+      def to_s
+        namepath
+      end
+
       # @return [Libis::Workflow::Run]
       def run
         parent&.run || nil
@@ -91,6 +95,23 @@ module Libis
       def item_type?(klass, item)
         item.is_a? klass.to_s.constantize
       end
+
+      def status_log
+        Config[:status_log].find_all(task: self)
+      end
+
+      def last_status
+        Config[:status_log].find_all(run: self) &.status_sym || StatusEnum.keys.first
+      end
+
+      # @return [Libis::Workflow::Status] updated or created status entry
+      def status_progress(item:, progress:, max: nil)
+        entry = last_item_status(item)
+        entry&.update_status({ progress: progress, max: max }.compact) ||
+            set_item_status(status: :started, item: item, progress: progress, max: max)
+      end
+
+
 
     end
   end

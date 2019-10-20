@@ -6,29 +6,29 @@ module Libis
       module TaskExecution
 
         def action
-          run.action
+          run.action.to_s
         end
 
         def action=(value)
-          run.action = value
+          run.action = value.to_s
         end
 
         def execute(item, opts = {})
           return nil unless check_item_type [Job, WorkItem], item
-          return item if action == :abort && !parameter(:run_always)
+          return item if action == 'abort' && !parameter(:run_always)
 
           item = execution_loop(item)
 
-          self.action = :abort unless item
+          self.action = 'abort' unless item
           item
         rescue WorkflowError => e
           error e.message, item
-          set_status status: :failed, item: item
+          set_item_status status: :failed, item: item
         rescue WorkflowAbort => e
-          set_status status: :failed, item: item
+          set_item_status status: :failed, item: item
           raise e if parent
         rescue StandardError => e
-          set_status status: :failed, item: item
+          set_item_status status: :failed, item: item
           fatal_error "Exception occured: #{e.message}", item
           debug e.backtrace.join("\n")
         end
@@ -49,11 +49,13 @@ module Libis
             new_item = process_item(item)
             item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
 
-            case status(item: item)
+            case item_status(item)
+            when :not_started
+              return item
             when :done, :reverted
               return item
             when :failed, :async_halt
-              self.action = :abort
+              self.action = 'abort'
               return item
             when :async_wait
               sleep(parameter(:retry_interval))
@@ -66,19 +68,19 @@ module Libis
         def process_item(item)
           @item_skipper = false
 
-          return item if status(item: item) == :done && !parameter(:run_always)
+          return item if item.last_status(self) == :done && !parameter(:run_always)
 
           pre_process(item)
 
           if @item_skipper
             run_subitems(item) if parameter(:recursive)
           else
-            set_status status: :started, item: item
-            self.processing_item = item
+            set_item_status status: :started, item: item
+            processing_item = item
             process item
             item = processing_item
             run_subitems(item) if parameter(:recursive)
-            set_status status: :done, item: item if check_status(:started, item: item)
+            set_item_status status: :done, item: item if item_status_equals(item: item, status: :started)
           end
 
           post_process item
@@ -96,34 +98,29 @@ module Libis
           status_progress(item: parent_item, progress: 0, max: items.count)
           items.each_with_index do |item, i|
             debug 'Processing subitem (%d/%d): %s', parent_item, i + 1, items.size, item.to_s
-            # new_item = item
 
             begin
               new_item = process_item(item)
+              item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
             rescue Libis::WorkflowError => e
-              set_status(status: :failed, item: item)
-              error 'Error processing subitem (%d/%d): %s', item, i + 1, items.size, e.message
+              set_item_status(status: :failed, item: item)
+              error 'Error processing subitem (%d/%d): %s', parent_item, i + 1, items.size, e.message
               break if parameter(:abort_recursion_on_failure)
             rescue Libis::WorkflowAbort => e
-              fatal_error 'Fatal error processing subitem (%d/%d): %s', item, i + 1, items.size, e.message
-              set_status(status: :failed, item: item)
+              fatal_error 'Fatal error processing subitem (%d/%d): %s', parent_item, i + 1, items.size, e.message
+              set_item_status(status: :failed, item: item)
               break
             rescue StandardError => e
-              set_status(status: :failed, item: item)
+              set_item_status(status: :failed, item: item)
               raise Libis::WorkflowAbort, "#{e.message} @ #{e.backtrace.first}"
-            else
-              item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
-              status_progress(item: parent_item, progress: i + 1)
             ensure
-              # noinspection RubyScope
-              item_status = status(item: item)
-              # noinspection RubyScope
+              status_progress(item: parent_item, progress: i + 1)
+              item_status = item_status(item)
               status_count[item_status] += 1
               break if parameter(:abort_recursion_on_failure) && item_status != :done
             end
           end
 
-          # noinspection RubyScope
           debug '%d of %d subitems passed', parent_item, status_count[:done], items.size
           substatus_check(status_count, parent_item, 'item')
         end

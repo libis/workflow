@@ -24,11 +24,18 @@ class TestStatusLog
     new_status
   end
 
-  def self.find_last(task:, item: nil)
-    run, task, item = sanitize(task: task, item: item)
-    registry
-        .find_all { |entry| entry.run == run && entry.task == task && entry.item == item }
-        .max_by(&:updated_at)
+  def self.find_last(run: nil, task: nil, item: nil)
+    if task.is_a?(String)
+      run, task, item = sanitize(run: run, task: task, item: item)
+      registry
+          .find_all { |entry| entry.task == task && entry.item == item }
+          .max_by(&:updated_at)
+    else
+      run, task, item = sanitize(run: run, task: task, item: item)
+      registry
+          .find_all { |entry| entry.run == run && entry.task == task && entry.item == item }
+          .max_by(&:updated_at)
+    end
   end
 
   def self.find_all(run: nil, task: nil, item: nil)

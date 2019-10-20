@@ -19,6 +19,18 @@ module Libis
         define :async_halt, 'remote process failed'
         define :failed, 'failed'
 
+        def self.failed?(status)
+          [:async_halt, :failed].include?(status)
+        end
+
+        def self.success?(status)
+          [:revered, :done].include? status
+        end
+
+        def self.busy?(status)
+          [:stated, :running, :reverting, :async_wait].include?(status)
+        end
+
         def self.to_sym(status)
           case status
           when Symbol
