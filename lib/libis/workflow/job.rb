@@ -89,6 +89,14 @@ module Libis
         []
       end
 
+      def job
+        self
+      end
+
+      def status_log
+        Config[:status_log].find_all(item: self)
+      end
+
       def last_status_log
         Config[:status_log].find_all_last(self)
       end

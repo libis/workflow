@@ -113,6 +113,10 @@ module Libis
         parent&.is_a?(WorkItem) ? parent.root_item : self
       end
 
+      def job
+        parent&.job
+      end
+
       def status_log
         Config[:status_log].find_all(item: self)
       end
