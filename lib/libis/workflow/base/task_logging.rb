@@ -10,8 +10,11 @@ module Libis
           item = args.shift if args&.first&.is_a?(WorkItem) || args&.first&.is_a?(Job)
           subject = item&.namepath || item&.name || item&.to_s || nil
           set_subject(subject)
+          log_entry(severity, item, msg, *args)
           super(severity, msg, *args)
         end
+
+        def log_entry(_severity, _item, _msg, *_args); end
 
         def logger
           (parent || run).logger
