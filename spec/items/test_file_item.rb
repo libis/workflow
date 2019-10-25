@@ -6,10 +6,6 @@ class TestFileItem < TestWorkItem
 
   include Libis::Workflow::FileItem
 
-  def filename
-    File.basename(properties[:filename])
-  end
-
   def filename=(file)
     raise "'#{file}' is not a file" unless File.file? file
 

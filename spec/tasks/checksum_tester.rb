@@ -11,7 +11,7 @@ class ChecksumTester < ::Libis::Workflow::Task
             description: 'Checksum type to use.',
             constraint: ::Libis::Tools::Checksum::CHECKSUM_TYPES.map(&:to_s)
 
-  def process(item)
+  def process(item, *_args)
     return unless item.is_a? TestFileItem
 
     checksum_type = parameter(:checksum_type)

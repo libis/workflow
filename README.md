@@ -321,7 +321,7 @@ followed by calling 'post_process'. The methods 'pre_process' and 'post_process'
 but can be overwritten if needed.
 
 The 'pre_process' is intended to re-initialize the task before processing a new item. It can also be used to force the
-task to skip processing the items altogether by calling the 'skip_processing_item' method or to prevent a recursive
+task to skip processing the items altogether by returning false or to prevent a recursive
 task from traveling further down the item tree by calling the 'stop_processing_subitems' method. The temporary locks
 behave as reset-on-read switches and are only active for the processing of the current item.
 

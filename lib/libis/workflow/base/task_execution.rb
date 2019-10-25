@@ -6,18 +6,18 @@ module Libis
       module TaskExecution
 
         def action
-          run.action.to_s
+          parent&.action.to_s
         end
 
         def action=(value)
-          run.action = value.to_s
+          parent&.action = value.to_s
         end
 
-        def execute(item, opts = {})
-          return nil unless check_item_type [Job, WorkItem], item
+        def execute(item, *args)
+          return nil unless check_item_type item, raise_on_error: false
           return item if action == 'abort' && !parameter(:run_always)
 
-          item = execution_loop(item)
+          item = execution_loop(item, *args)
 
           self.action = 'abort' unless item
           item
@@ -33,96 +33,58 @@ module Libis
           debug e.backtrace.join("\n")
         end
 
-        def pre_process(_item)
+        def pre_process(_item, *_args)
           true
           # optional implementation
         end
 
-        def post_process(_item)
+        def post_process(_item, *_args)
           # optional implementation
         end
 
         protected
 
-        def execution_loop(item)
+        def execution_loop(item, *args)
           (parameter(:retry_count).abs + 1).times do
-            new_item = process_item(item)
-            item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
-
-            case item_status(item)
-            when :not_started
-              return item
-            when :done, :reverted
-              return item
-            when :failed, :async_halt
-              self.action = 'abort'
-              return item
-            when :async_wait
-              sleep(parameter(:retry_interval))
-            else
-              warn 'Something went terribly wrong, retrying ...'
-            end
+            execution_once(item, *args)
           end
         end
 
-        def process_item(item)
-          @item_skipper = false
+        def execution_once(item, *args)
+          new_item = process_item(item, *args)
+          item = new_item if check_item_type item, raise_on_error: false
+
+          case item_status(item)
+          when :not_started
+            return item
+          when :done, :reverted
+            return item
+          when :failed, :async_halt
+            self.action = 'abort'
+            return item
+          when :async_wait
+            sleep(parameter(:retry_interval))
+          else
+            warn 'Something went terribly wrong, retrying ...'
+          end
+        end
+
+        def process_item(item, *args)
 
           return item if item.last_status(self) == :done && !parameter(:run_always)
 
-          pre_process(item)
-
-          if @item_skipper
-            run_subitems(item) if parameter(:recursive)
-          else
+          if pre_process(item, *args)
             set_item_status status: :started, item: item
-            processing_item = item
-            process item
-            item = processing_item
-            run_subitems(item) if parameter(:recursive)
+            process item, *args
+            run_subitems(item, *args) if parameter(:recursive)
             set_item_status status: :done, item: item if item_status_equals(item: item, status: :started)
+          else
+            run_subitems(item, *args) if parameter(:recursive)
           end
 
-          post_process item
+          post_process item, *args
 
           item
-        end
-
-        def run_subitems(parent_item)
-          return unless check_processing_subitems
-
-          items = subitems(parent_item)
-          return if items.empty?
-
-          status_count = Hash.new(0)
-          status_progress(item: parent_item, progress: 0, max: items.count)
-          items.each_with_index do |item, i|
-            debug 'Processing subitem (%d/%d): %s', parent_item, i + 1, items.size, item.to_s
-
-            begin
-              new_item = process_item(item)
-              item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
-            rescue Libis::WorkflowError => e
-              set_item_status(status: :failed, item: item)
-              error 'Error processing subitem (%d/%d): %s', parent_item, i + 1, items.size, e.message
-              break if parameter(:abort_recursion_on_failure)
-            rescue Libis::WorkflowAbort => e
-              fatal_error 'Fatal error processing subitem (%d/%d): %s', parent_item, i + 1, items.size, e.message
-              set_item_status(status: :failed, item: item)
-              break
-            rescue StandardError => e
-              set_item_status(status: :failed, item: item)
-              raise Libis::WorkflowAbort, "#{e.message} @ #{e.backtrace.first}"
-            ensure
-              status_progress(item: parent_item, progress: i + 1)
-              item_status = item_status(item)
-              status_count[item_status] += 1
-              break if parameter(:abort_recursion_on_failure) && item_status != :done
-            end
-          end
-
-          debug '%d of %d subitems passed', parent_item, status_count[:done], items.size
-          substatus_check(status_count, parent_item, 'item')
         end
 
         def capture_cmd(cmd, *opts)

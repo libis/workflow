@@ -10,11 +10,12 @@ module Libis
       parameter abort_on_failure: true,
                 description: 'Stop processing tasks if one task fails.'
 
-      attr_accessor :tasks, :name
+      attr_accessor :tasks, :name, :subtasks_stopper
 
       def initialize(cfg = {})
         @tasks = []
         @name = cfg[:name]
+        @subtasks_stopper = false
         super cfg
       end
 
@@ -25,9 +26,21 @@ module Libis
 
       alias << add_task
 
+      def configure_tasks(tasks, opts = {})
+        tasks.each do |task|
+          task[:class] ||= 'Libis::Workflow::TaskGroup'
+          task_obj = task[:class].constantize.new(task)
+          task_obj.configure(task[:parameters])
+          self << task_obj
+          next unless task[:tasks]
+
+          task_obj.configure_tasks(task[:tasks], opts)
+        end
+      end
+
       protected
 
-      def process(item)
+      def process(item, *args)
         return unless check_processing_subtasks
 
         tasks = subtasks
@@ -46,7 +59,7 @@ module Libis
             end
           end
           info 'Running subtask (%d/%d): %s', item, i + 1, tasks.size, task.name
-          new_item = task.execute item
+          new_item = task.execute item, *args
           item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
           status_progress(item: item, progress: i + 1)
           item_status = task.item_status(item)
@@ -69,6 +82,10 @@ module Libis
           return false
         end
         true
+      end
+
+      def subtasks
+        tasks
       end
 
     end

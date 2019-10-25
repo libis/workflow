@@ -46,10 +46,10 @@ module Libis
       end
 
       # Execute the workflow.
-      def execute(action = 'start', opts = {})
+      def execute(action = 'start', *args)
         properties[:action] = action
         save!
-        runner.execute(job, opts)
+        runner.execute(job, *args)
       end
 
       def status_log

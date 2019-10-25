@@ -8,10 +8,6 @@ module Libis
 
       include WorkItem
 
-      def name
-        super || filename
-      end
-
       def fullpath
         properties[:filename]
       end
@@ -22,6 +18,7 @@ module Libis
 
       def filename=(file)
         properties[:filename] = file
+        self.name ||= File.basename(file)
 
         return unless File.exist?(file)
 

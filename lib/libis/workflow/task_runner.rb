@@ -27,8 +27,16 @@ module Libis
         run.name
       end
 
-      def execute(item, opts = {})
-        check_item_type [WorkItem, Job], item
+      def action
+        run.action
+      end
+
+      def action=(value)
+        run.action = value
+      end
+
+      def execute(item, *_args)
+        check_item_type item
 
         info 'Ingest run started.', item
 

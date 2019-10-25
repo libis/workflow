@@ -36,16 +36,19 @@ module Libis
       end
 
       def initialize(cfg = {})
-        @subitems_stopper = false
-        @subtasks_stopper = false
         configure cfg[:parameters] || {}
         @properties = cfg.dup
       end
 
-      def check_item_type(klasses, item)
-        klasses = [klasses] unless klasses.is_a? Array
+      def allowed_item_types
+        [Job, WorkItem]
+      end
+
+      def check_item_type(item, *args, raise_on_error: true)
+        klasses = args.empty? ? allowed_item_types : args
         unless klasses.any? { |klass| item.is_a? klass.to_s.constantize }
-          raise WorkflowError, "Workitem is of wrong type : #{item.class} - expected #{klasses}"
+          return false unless raise_on_error
+          raise WorkflowError, "Workitem is of wrong type : #{item.class} - expected one of #{klasses}"
         end
 
         true
@@ -67,6 +70,10 @@ module Libis
         namepath
       end
 
+      def <<(_task)
+        raise Libis::WorkflowError, "Processing task '#{namepath}' is not allowed to have subtasks."
+      end
+
       # @return [Libis::Workflow::Run]
       def run
         parent&.run || nil
@@ -74,22 +81,6 @@ module Libis
 
       def work_dir
         run&.job&.work_dir
-      end
-
-      def stop_processing_subitems
-        @subitems_stopper = true if parameter(:recursive)
-      end
-
-      def check_processing_subitems
-        if @subitems_stopper
-          @subitems_stopper = false
-          return false
-        end
-        true
-      end
-
-      def skip_processing_item
-        @item_skipper = true
       end
 
       def item_type?(klass, item)
@@ -103,15 +94,6 @@ module Libis
       def last_status
         Config[:status_log].find_all(run: self) &.status_sym || StatusEnum.keys.first
       end
-
-      # @return [Libis::Workflow::Status] updated or created status entry
-      def status_progress(item:, progress:, max: nil)
-        entry = last_item_status(item)
-        entry&.update_status({ progress: progress, max: max }.compact) ||
-            set_item_status(status: :started, item: item, progress: progress, max: max)
-      end
-
-
 
     end
   end

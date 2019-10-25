@@ -13,7 +13,7 @@ class CollectFiles < ::Libis::Workflow::Task
   parameter selection: nil,
             description: 'Only select files that match the given regular expression. Ignored if empty.'
 
-  def process(item)
+  def process(item, *_args)
     if item.is_a? TestJob
       collect_files(item, parameter(:location))
     elsif item.is_a? TestDirItem

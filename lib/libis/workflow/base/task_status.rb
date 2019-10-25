@@ -20,6 +20,13 @@ module Libis
           Config[:status_log].set_status(status: status, task: self, item: item, progress: progress, max: max)
         end
 
+        # @return [Libis::Workflow::Status] updated or created status entry
+        def status_progress(item:, progress: nil, max: nil)
+          entry = last_item_status(item)
+          entry&.update_status({ progress: progress || entry.progress + 1, max: max }.compact) ||
+              set_item_status(status: :started, item: item, progress: progress, max: max)
+        end
+
         # Get last known status symbol for a given task and item
         # @return [Symbol] the status code
         def item_status(item)

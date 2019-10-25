@@ -8,7 +8,7 @@ class ProcessingTask < ::Libis::Workflow::Task
   parameter config: 'success', constraint: %w[success async_halt fail error abort],
             description: 'determines the outcome of the processing'
 
-  def process(item)
+  def process(item, *_args)
     return unless item.is_a? TestFileItem
 
     case parameter(:config).downcase.to_sym

@@ -5,18 +5,55 @@ module Libis
     module Base
       module TaskHierarchy
 
-        attr_accessor :parent, :name
+        attr_accessor :parent, :name, :recursion_blocker
 
-        def <<(_task)
-          raise Libis::WorkflowError, "Processing task '#{namepath}' is not allowed to have subtasks."
+        def stop_recursion
+          @recursion_blocker = true if parameter(:recursive)
         end
 
-        def names
-          (parent&.names || []).push(name).compact
+        def check_recursion
+          if @recursion_blocker
+            @recursion_blocker = false
+            return false
+          end
+          true
         end
 
-        def namepath
-          names.join('/')
+        def run_subitems(parent_item, *args)
+          return unless check_recursion
+
+          items = subitems(parent_item)
+          return if items.empty?
+
+          status_count = Hash.new(0)
+          status_progress(item: parent_item, progress: 0, max: items.count)
+          items.each_with_index do |item, i|
+            debug 'Processing subitem (%d/%d): %s', parent_item, i + 1, items.size, item.to_s
+
+            begin
+              new_item = process_item(item, *args)
+              item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
+            rescue Libis::WorkflowError => e
+              set_item_status(status: :failed, item: item)
+              error 'Error processing subitem (%d/%d): %s', parent_item, i + 1, items.size, e.message
+              break if parameter(:abort_recursion_on_failure)
+            rescue Libis::WorkflowAbort => e
+              fatal_error 'Fatal error processing subitem (%d/%d): %s', parent_item, i + 1, items.size, e.message
+              set_item_status(status: :failed, item: item)
+              break
+            rescue StandardError => e
+              set_item_status(status: :failed, item: item)
+              raise Libis::WorkflowAbort, "#{e.message} @ #{e.backtrace.first}"
+            ensure
+              status_progress(item: parent_item, progress: i + 1)
+              item_status = item_status(item)
+              status_count[item_status] += 1
+              break if parameter(:abort_recursion_on_failure) && item_status != :done
+            end
+          end
+
+          debug '%d of %d subitems passed', parent_item, status_count[:done], items.size
+          substatus_check(status_count, parent_item, 'item')
         end
 
         def substatus_check(status_count, item, task_or_item)
@@ -41,10 +78,6 @@ module Libis
         end
 
         private
-
-        def subtasks
-          tasks
-        end
 
         def subitems(item)
           item.item_list

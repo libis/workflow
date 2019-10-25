@@ -74,6 +74,10 @@ module Libis
         name
       end
 
+      def parents
+        (parent&.parents || []).push(parent).compact
+      end
+
       def names
         (parent&.names || []).push(name).compact
       end
