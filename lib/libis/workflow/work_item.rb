@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'backports/rails/hash'
+require 'libis/tools/extend/array'
 require 'libis/tools/extend/hash'
 
 module Libis
@@ -74,6 +75,14 @@ module Libis
         name
       end
 
+      def work_dir
+        file_safe_name
+      end
+
+      def work_path
+        File.join((parents << self).map(&:work_dir).cleanup)
+      end
+
       def parents
         (parent&.parents || []).push(parent).compact
       end
@@ -94,11 +103,18 @@ module Libis
         labels.join('/')
       end
 
-      # File name safe version of the to_s output.
+      # Safe version of the to_s output.
       #
-      # @return [String] file name safe string
+      # @return [String] safe string
       def safe_name
         to_s.gsub(/[^\w.-]/) { |s| format('%<prefix>s%<ord>02x', prefix: '%', ord: s.ord) }
+      end
+
+      # Filename safe version of the to_s output.
+      #
+      # @return [String] filename safe string
+      def file_safe_name
+        to_s.gsub(/[$:!&]/, '')
       end
 
       # Iterates over the work item clients and invokes code on each of them.

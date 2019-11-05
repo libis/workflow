@@ -25,11 +25,16 @@ module Libis
 
       attr_accessor :properties
 
-      parameter recursive: false, description: 'Run the task on all subitems recursively.'
       parameter abort_recursion_on_failure: false, description: 'Stop processing items recursively if one item fails.'
       parameter retry_count: 0, description: 'Number of times to retry the task if waiting for another process.'
       parameter retry_interval: 10, description: 'Number of seconds to wait between retries.'
       parameter run_always: false, description: 'Always run this task, even if previous tasks have failed.'
+
+      def self.recursive(v = nil)
+        @recursive = v unless v.nil?
+        return @recursive unless @recursive.nil?
+        superclass.recursive rescue true
+      end
 
       def self.task_classes
         ObjectSpace.each_object(::Class).select { |klass| klass < self && !klass.is_a?(TaskGroup) }
@@ -46,9 +51,9 @@ module Libis
 
       def check_item_type(item, *args, raise_on_error: true)
         klasses = args.empty? ? allowed_item_types : args
-        unless klasses.any? { |klass| item.is_a? klass.to_s.constantize }
+        unless klasses.any? { |klass| item.is_a? klass }
           return false unless raise_on_error
-          raise WorkflowError, "Workitem is of wrong type : #{item.class} - expected one of #{klasses}"
+          raise WorkflowError, "Item is of wrong type : #{item.class.name} - expected one of #{klasses.map(&:name)}"
         end
 
         true

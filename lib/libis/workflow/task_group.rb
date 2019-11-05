@@ -12,6 +12,8 @@ module Libis
 
       attr_accessor :tasks, :name, :subtasks_stopper
 
+      recursive false
+
       def initialize(cfg = {})
         @tasks = []
         @name = cfg[:name]
@@ -26,7 +28,7 @@ module Libis
 
       alias << add_task
 
-      def configure_tasks(tasks, opts = {})
+      def configure_tasks(tasks, *args)
         tasks.each do |task|
           task[:class] ||= 'Libis::Workflow::TaskGroup'
           task_obj = task[:class].constantize.new(task)
@@ -34,7 +36,7 @@ module Libis
           self << task_obj
           next unless task[:tasks]
 
-          task_obj.configure_tasks(task[:tasks], opts)
+          task_obj.configure_tasks(task[:tasks], *args)
         end
       end
 

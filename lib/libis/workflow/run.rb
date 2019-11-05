@@ -40,9 +40,9 @@ module Libis
         properties[:action] = value.to_s
       end
 
-      def configure_tasks(tasks, opts = {})
+      def configure_tasks(tasks, *args)
         config[:tasks] = tasks
-        runner.configure_tasks(tasks, opts)
+        runner.configure_tasks(tasks, *args)
       end
 
       # Execute the workflow.

@@ -17,6 +17,7 @@ module Libis
       end
 
       def filename=(file)
+        delete_file
         properties[:filename] = file
         self.name ||= File.basename(file)
 
@@ -32,6 +33,10 @@ module Libis
         properties[:gid] = stats.gid
 
         add_checksum :MD5
+      end
+
+      def own_file(v = true)
+        properties[:owns_file] = v
       end
 
       def filelist
@@ -68,6 +73,17 @@ module Libis
         info.each do |k, v|
           properties[k] = v
         end
+      end
+
+      KEY_NAMES = %w'filename size access_time modification_time creation_time mode uid gid owns_file'
+
+      def delete_file
+        if properties[:owns_file] && fullpath
+          File.delete(fullpath)
+        end
+        properties.keys
+            .select { |key| KEY_NAMES.include?(key) || key.to_s =~ /^checksum_/ }
+            .each { |key| properties.delete(key) }
       end
 
     end

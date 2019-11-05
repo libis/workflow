@@ -11,12 +11,12 @@ class TestRun
   attr_reader :options
   attr_reader :properties
 
-  def initialize(name, job, opts = {})
+  def initialize(name, job, *args)
     @name = name
     @job = job
-    @options = opts
-    @properties = {}
-    @config = {}
+    @options = args.extract_options!
+    @properties = args.extract_options!
+    @config = args.extract_options!
   end
 
   def save!

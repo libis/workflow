@@ -44,24 +44,20 @@ context 'TestWorkflow' do
         {
           class: 'CollectFiles',
           parameters: {
-            recursive: true,
             location: 'data'
           }
         },
         {
           name: 'ProcessFiles',
-          parameters: { recursive: false },
           tasks: [
             {
               class: 'ChecksumTester',
               parameters: {
-                recursive: true,
                 checksum_type: 'SHA1'
               }
             },
             {
-              class: 'CamelizeName',
-              parameters: { recursive: true }
+              class: 'CamelizeName'
             }
           ]
         }
@@ -163,21 +159,18 @@ context 'Test run_always' do
         {
           class: 'CollectFiles',
           parameters: {
-            recursive: true,
             location: '.'
           }
         },
         {
           class: 'ProcessingTask',
           parameters: {
-            recursive: true,
             config: 'success'
           }
         },
         {
           class: 'FinalTask',
           parameters: {
-            recursive: true,
             run_always: false
           }
         }

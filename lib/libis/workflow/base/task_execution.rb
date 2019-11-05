@@ -14,7 +14,6 @@ module Libis
         end
 
         def execute(item, *args)
-          return nil unless check_item_type item, raise_on_error: false
           return item if action == 'abort' && !parameter(:run_always)
 
           item = execution_loop(item, *args)
@@ -46,27 +45,24 @@ module Libis
 
         def execution_loop(item, *args)
           (parameter(:retry_count).abs + 1).times do
-            execution_once(item, *args)
-          end
-        end
+            new_item = process_item(item, *args)
+            item = new_item if check_item_type item, raise_on_error: false
 
-        def execution_once(item, *args)
-          new_item = process_item(item, *args)
-          item = new_item if check_item_type item, raise_on_error: false
-
-          case item_status(item)
-          when :not_started
-            return item
-          when :done, :reverted
-            return item
-          when :failed, :async_halt
-            self.action = 'abort'
-            return item
-          when :async_wait
-            sleep(parameter(:retry_interval))
-          else
-            warn 'Something went terribly wrong, retrying ...'
+            case item_status(item)
+            when :not_started
+              return item
+            when :done, :reverted
+              return item
+            when :failed, :async_halt
+              self.action = 'abort'
+              return item
+            when :async_wait
+              sleep(parameter(:retry_interval))
+            else
+              warn 'Something went terribly wrong, retrying ...'
+            end
           end
+          item
         end
 
         def process_item(item, *args)
@@ -76,11 +72,10 @@ module Libis
           if pre_process(item, *args)
             set_item_status status: :started, item: item
             process item, *args
-            run_subitems(item, *args) if parameter(:recursive)
-            set_item_status status: :done, item: item if item_status_equals(item: item, status: :started)
-          else
-            run_subitems(item, *args) if parameter(:recursive)
           end
+
+          run_subitems(item, *args) if self.class.recursive
+          set_item_status status: :done, item: item if item_status_equals(item: item, status: :started)
 
           post_process item, *args
 

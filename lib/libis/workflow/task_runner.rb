@@ -8,7 +8,8 @@ module Libis
     class TaskRunner < TaskGroup
 
       parameter abort_on_failure: true, frozen: true
-      parameter recursive: false, frozen: true
+
+      recursive false
 
       def initialize(run, cfg = {})
         @run = run

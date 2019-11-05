@@ -8,7 +8,7 @@ module Libis
         attr_accessor :parent, :name, :recursion_blocker
 
         def stop_recursion
-          @recursion_blocker = true if parameter(:recursive)
+          @recursion_blocker = true if self.class.recursive
         end
 
         def check_recursion

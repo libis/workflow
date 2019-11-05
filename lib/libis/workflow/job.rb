@@ -39,6 +39,7 @@ module Libis
       # - workflow
       # - runs
       # - items
+      # - work_dir
       # instance methods:
       # - <<
       # - item_list
@@ -47,27 +48,28 @@ module Libis
 
       ### Derived methods
 
-      # @param [Hash] opts extra conguration values for this particular run
-      def execute(opts = {})
-        run = prepare(opts)
-        perform(run, opts)
-        finish(run, opts)
+      # @param [Array] args extra conguration values for this particular run
+      def execute(*args)
+        run = prepare(*args)
+        perform(run, *args)
+        finish(run, *args)
         run
       end
 
-      def prepare(opts = {})
-        run = make_run(opts)
+      def prepare(*args)
+        run = make_run(*args)
         raise 'Could not create run' unless run
 
-        run.configure_tasks(tasks, opts)
+        run.configure_tasks(tasks, *args)
         run
       end
 
-      def perform(run, opts = {})
-        run.execute (opts[:action] || :start), opts
+      def perform(run, *args)
+        opts = args.last.is_a?(Hash) ? args.last : {}
+        run.execute (opts[:action] || :start), *args
       end
 
-      def finish(_run, _opts = {}); end
+      def finish(_run, *_args); end
 
       def tasks
         workflow.tasks
@@ -87,6 +89,10 @@ module Libis
 
       def labels
         []
+      end
+
+      def to_dir
+        work_dir
       end
 
       def job
