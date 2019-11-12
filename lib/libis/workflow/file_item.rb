@@ -75,7 +75,7 @@ module Libis
         end
       end
 
-      KEY_NAMES = %w'filename size access_time modification_time creation_time mode uid gid owns_file'
+      KEY_NAMES = %i'filename size access_time modification_time creation_time mode uid gid owns_file'
 
       def delete_file
         if properties[:owns_file] && fullpath
