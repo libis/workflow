@@ -103,6 +103,10 @@ module Libis
         labels.join('/')
       end
 
+      def short_name
+        to_s.gsub(/[^\w\s._-]/,'').split(/[\s._-]+/).map(&:capitalize).join
+      end
+
       # Safe version of the to_s output.
       #
       # @return [String] safe string

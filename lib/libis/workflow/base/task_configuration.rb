@@ -7,7 +7,7 @@ module Libis
 
         def configure(parameter_values)
           parameter_values.each do |name, value|
-            parameter(name, value)
+            parameter(name.to_sym, value)
           end if parameter_values
         end
 
