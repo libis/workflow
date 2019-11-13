@@ -52,6 +52,7 @@ module Libis
         status_progress(item: item, progress: 0, max: tasks.count)
         continue = true
         tasks.each_with_index do |task, i|
+          break if task.properties[:autorun] == false
           unless task.parameter(:run_always)
             next unless continue
 
