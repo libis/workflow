@@ -14,7 +14,7 @@ module Libis
         end
 
         def execute(item, *args)
-          return item if action == 'abort' && !parameter(:run_always)
+          return item if action == 'abort' && !run_always
 
           item = execution_loop(item, *args)
 
@@ -44,7 +44,7 @@ module Libis
         protected
 
         def execution_loop(item, *args)
-          (parameter(:retry_count).abs + 1).times do
+          (retry_count.abs + 1).times do
             new_item = process_item(item, *args)
             item = new_item if check_item_type item, raise_on_error: false
 
@@ -57,7 +57,7 @@ module Libis
               self.action = 'abort'
               return item
             when :async_wait
-              sleep(parameter(:retry_interval))
+              sleep(retry_interval)
             else
               warn 'Something went terribly wrong, retrying ...'
             end
@@ -67,14 +67,14 @@ module Libis
 
         def process_item(item, *args)
 
-          return item if item.last_status(self) == :done && !parameter(:run_always)
+          return item if item.last_status(self) == :done && !run_always
 
           if pre_process(item, *args)
             set_item_status status: :started, item: item
             process item, *args
           end
 
-          run_subitems(item, *args) if self.class.recursive
+          run_subitems(item, *args) if recursive
           set_item_status status: :done, item: item if item_status_equals(item: item, status: :started)
 
           post_process item, *args

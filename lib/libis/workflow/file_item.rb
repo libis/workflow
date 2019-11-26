@@ -9,11 +9,11 @@ module Libis
       include WorkItem
 
       def fullpath
-        properties[:filename]
+        properties[:filename] || name
       end
 
       def filename
-        File.basename(properties[:filename])
+        File.basename(fullpath)
       end
 
       def filename=(file)
@@ -79,7 +79,7 @@ module Libis
 
       def delete_file
         if properties[:owns_file] && fullpath
-          File.delete(fullpath)
+          File.delete(fullpath) if File.exists?(fullpath)
         end
         properties.keys
             .select { |key| KEY_NAMES.include?(key) || key.to_s =~ /^checksum_/ }

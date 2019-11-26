@@ -8,7 +8,7 @@ module Libis
         attr_accessor :parent, :name, :recursion_blocker
 
         def stop_recursion
-          @recursion_blocker = true if self.class.recursive
+          @recursion_blocker = true if recursive
         end
 
         def check_recursion
@@ -36,19 +36,19 @@ module Libis
             rescue Libis::WorkflowError => e
               set_item_status(status: :failed, item: item)
               error 'Error processing subitem (%d/%d): %s', parent_item, i + 1, items.size, e.message
-              break if parameter(:abort_recursion_on_failure)
             rescue Libis::WorkflowAbort => e
               fatal_error 'Fatal error processing subitem (%d/%d): %s', parent_item, i + 1, items.size, e.message
               set_item_status(status: :failed, item: item)
               break
             rescue StandardError => e
+              fatal_error 'Unexpected error processing subitem (%d/%d): %s', parent_item, i + 1, items.size, e.message
               set_item_status(status: :failed, item: item)
               raise Libis::WorkflowAbort, "#{e.message} @ #{e.backtrace.first}"
             ensure
-              status_progress(item: parent_item, progress: i + 1)
               item_status = item_status(item)
               status_count[item_status] += 1
-              break if parameter(:abort_recursion_on_failure) && item_status != :done
+              break if abort_on_failure && item_status != :done
+              status_progress(item: parent_item, progress: i + 1)
             end
           end
 

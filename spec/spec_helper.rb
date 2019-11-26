@@ -35,8 +35,8 @@ RSpec.configure do |config|
       cfg.logger.appenders =
           ::Logging::Appenders.string_io('StringIO', layout: ::Libis::Tools::Config.get_log_formatter,
                                          level: debug_level || :INFO)
-      # cfg.logger.add_appenders ::Logging::Appenders.stdout('StdOut', layout: ::Libis::Tools::Config.get_log_formatter,
-      #                                                      level: :DEBUG)
+       #cfg.logger.add_appenders ::Logging::Appenders.stdout('StdOut', layout: ::Libis::Tools::Config.get_log_formatter,
+       #                                                     level: :DEBUG)
       Libis::Workflow::Config.require_all cfg.itemdir
       Libis::Workflow::Config.require_all cfg.taskdir
       Libis::Workflow::Config.require_all cfg.workdir

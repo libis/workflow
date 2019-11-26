@@ -7,8 +7,7 @@ module Libis
     # noinspection RubyTooManyMethodsInspection
     class TaskRunner < TaskGroup
 
-      parameter abort_on_failure: true, frozen: true
-
+      abort_on_failure true
       recursive false
 
       def initialize(run, cfg = {})
@@ -21,11 +20,11 @@ module Libis
       end
 
       def names
-        []
+        ['']
       end
 
       def namepath
-        run.name
+        '/'
       end
 
       def action

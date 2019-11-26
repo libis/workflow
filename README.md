@@ -101,9 +101,9 @@ is a Hash with:
 * any task parameter values. Each task can define parameters that configure the task. It is using the 
   ::Libis::Tools::Parameter class for this.
   
-The ::Libis::Workflow::Task base class allready defines the following parameters:
+The ::Libis::Workflow::Task base class has these class settings:
 * recursive: Run the task on all subitems recursively. Default: false
-* abort_recursion_on_failure: Stop processing items recursively if one item fails. Default: false
+* abort_on_failure: Stop processing subitems recursively if one item fails. Default: false
 * retry_count: Number of times to retry the task. Default: 0
 * retry_interval: Number of seconds to wait between retries. Default: 10
 * run_always: If set and true will cause the task to be always executed, even if previous tasks have failed or during

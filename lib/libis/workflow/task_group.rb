@@ -53,10 +53,10 @@ module Libis
         continue = true
         tasks.each_with_index do |task, i|
           break if task.properties[:autorun] == false
-          unless task.parameter(:run_always)
+          unless task.run_always
             next unless continue
 
-            if item.last_status(task) == :done && run.action == 'retry'
+            if item.last_status(task) == :done
               debug 'Retry: skipping task %s because it has finished successfully.', item, task.namepath
               next
             end
@@ -67,7 +67,7 @@ module Libis
           status_progress(item: item, progress: i + 1)
           item_status = task.item_status(item)
           status_count[item_status] += 1
-          continue = false if parameter(:abort_on_failure) && Base::StatusEnum.failed?(item_status)
+          continue = false if abort_on_failure && Base::StatusEnum.failed?(item_status)
         end
 
         substatus_check(status_count, item, 'task')
