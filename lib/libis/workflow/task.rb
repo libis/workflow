@@ -25,10 +25,45 @@ module Libis
 
       attr_accessor :properties
 
-      parameter abort_recursion_on_failure: false, description: 'Stop processing items recursively if one item fails.'
-      parameter retry_count: 0, description: 'Number of times to retry the task if waiting for another process.'
-      parameter retry_interval: 10, description: 'Number of seconds to wait between retries.'
-      parameter run_always: false, description: 'Always run this task, even if previous tasks have failed.'
+      def self.abort_on_failure(v = nil)
+        @abort_on_failure = v unless v.nil?
+        return @abort_on_failure unless @abort_on_failure.nil?
+        superclass.abort_on_failure rescue false
+      end
+
+      def abort_on_failure
+        self.class.abort_on_failure
+      end
+
+      def self.retry_count(v = nil)
+        @retry_count = v unless v.nil?
+        return @retry_count unless @retry_count.nil?
+        superclass.retry_count rescue 0
+      end
+
+      def retry_count
+        self.class.retry_count
+      end
+
+      def self.retry_interval(v = nil)
+        @retry_interval = v unless v.nil?
+        return @retry_interval unless @retry_interval.nil?
+        superclass.retry_interval rescue 10
+      end
+
+      def retry_interval
+        self.class.retry_interval
+      end
+
+      def self.run_always(v = nil)
+        @run_always = v unless v.nil?
+        return @run_always unless @run_always.nil?
+        superclass.run_always rescue false
+      end
+
+      def run_always
+        self.class.run_always
+      end
 
       def self.recursive(v = nil)
         @recursive = v unless v.nil?
@@ -36,7 +71,12 @@ module Libis
         superclass.recursive rescue true
       end
 
+      def recursive
+        self.class.recursive
+      end
+
       def self.task_classes
+        #noinspection RubyArgCount
         ObjectSpace.each_object(::Class).select { |klass| klass < self && !klass.is_a?(TaskGroup) }
       end
 
