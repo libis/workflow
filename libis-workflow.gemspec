@@ -35,5 +35,4 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'libis-tools', '~> 1.0'
   spec.add_runtime_dependency 'ruby-enum', '~> 0.7'
-  spec.add_runtime_dependency 'zeitwerk', '~> 2.1'
 end
