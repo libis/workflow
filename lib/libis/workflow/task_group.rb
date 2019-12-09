@@ -7,9 +7,6 @@ module Libis
     # noinspection RubyTooManyMethodsInspection
     class TaskGroup < Task
 
-      parameter abort_on_failure: true,
-                description: 'Stop processing tasks if one task fails.'
-
       attr_accessor :tasks, :name, :subtasks_stopper
 
       recursive false
@@ -67,7 +64,10 @@ module Libis
           status_progress(item: item, progress: i + 1)
           item_status = task.item_status(item)
           status_count[item_status] += 1
-          continue = false if abort_on_failure && Base::StatusEnum.failed?(item_status)
+          if Base::StatusEnum.failed?(item_status)
+            continue = false
+            break if abort_on_failure
+          end
         end
 
         substatus_check(status_count, item, 'task')

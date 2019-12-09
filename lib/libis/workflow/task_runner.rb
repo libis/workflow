@@ -7,7 +7,7 @@ module Libis
     # noinspection RubyTooManyMethodsInspection
     class TaskRunner < TaskGroup
 
-      abort_on_failure true
+      abort_on_failure false
       recursive false
 
       def initialize(run, cfg = {})
