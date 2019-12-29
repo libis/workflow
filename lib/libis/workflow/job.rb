@@ -50,18 +50,18 @@ module Libis
 
       # @param [Array] args extra conguration values for this particular run
       def execute(*args)
-        run = prepare(*args)
+        run = args.shift if args.first&.is_a?(Libis::Workflow::Run)
+        run ||= make_run(*args)
+        raise 'Could not create run' unless run
+
+        prepare(run, *args)
         perform(run, *args)
         finish(run, *args)
         run
       end
 
-      def prepare(*args)
-        run = make_run(*args)
-        raise 'Could not create run' unless run
-
+      def prepare(run, *args)
         run.configure_tasks(tasks, *args)
-        run
       end
 
       def perform(run, *args)

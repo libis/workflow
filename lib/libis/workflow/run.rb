@@ -56,8 +56,8 @@ module Libis
         Config[:status_log].find_all(run: self)
       end
 
-      def last_status(item)
-        item_status(item)
+      def last_status(item = nil, task: '/')
+        Config[:status_log].find_last(run: self, task: task, item: item)&.status_sym || Base::StatusEnum.keys.first
       end
 
       def logger
