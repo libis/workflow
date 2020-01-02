@@ -35,3 +35,5 @@ Gemfile.lock
 
 .idea/
 /spec/coverage
+
+/t*.rb
