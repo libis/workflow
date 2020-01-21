@@ -25,12 +25,7 @@ module Libis
 
         stats = ::File.stat file
         properties[:size] = stats.size
-        properties[:access_time] = stats.atime
         properties[:modification_time] = stats.mtime
-        properties[:creation_time] = stats.ctime
-        properties[:mode] = stats.mode
-        properties[:uid] = stats.uid
-        properties[:gid] = stats.gid
 
         add_checksum :MD5
       end
@@ -75,14 +70,16 @@ module Libis
         end
       end
 
-      KEY_NAMES = %i'filename size access_time modification_time creation_time mode uid gid owns_file'
+      def key_names
+        %i'filename size modification_time owns_file'
+      end
 
       def delete_file
         if properties[:owns_file] && fullpath
           File.delete(fullpath) if File.exists?(fullpath)
         end
         properties.keys
-            .select { |key| KEY_NAMES.include?(key) || key.to_s =~ /^checksum_/ }
+            .select { |key| key_names.include?(key) || key.to_s =~ /^checksum_/ }
             .each { |key| properties.delete(key) }
       end
 
