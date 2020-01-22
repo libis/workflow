@@ -28,7 +28,11 @@ module Libis
         end
 
         def self.busy?(status)
-          [:stated, :running, :reverting, :async_wait].include?(status)
+          [:started, :running, :reverting, :async_wait].include?(status)
+        end
+
+        def self.done?(status)
+          [:reverted, :done, :async_halt, :failed].include?(status)
         end
 
         def self.to_sym(status)
