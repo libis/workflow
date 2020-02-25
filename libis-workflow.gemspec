@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'date'
-require_relative 'lib/libis/workflow/version'
+require File.join(__dir__,'lib/libis/workflow/version')
 
 Gem::Specification.new do |spec|
   spec.name = 'libis-workflow'
