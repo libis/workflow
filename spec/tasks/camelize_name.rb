@@ -1,4 +1,4 @@
-require 'backports/rails/string'
+require 'libis/tools/extend/string'
 
 require 'libis/workflow'
 

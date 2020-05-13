@@ -1,8 +1,6 @@
-require 'backports/rails/hash'
-require 'backports/rails/string'
-
 require 'libis/tools/parameter'
 require 'libis/tools/extend/hash'
+require 'libis/tools/extend/string'
 require 'libis/tools/logger'
 
 require 'libis/workflow'

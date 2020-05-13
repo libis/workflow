@@ -1,4 +1,3 @@
-require 'backports/rails/hash'
 require 'libis/tools/extend/hash'
 
 require 'libis/workflow/config'
