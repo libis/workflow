@@ -34,6 +34,4 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'awesome_print'
 
   spec.add_runtime_dependency 'libis-tools', '~> 1.0'
-  spec.add_runtime_dependency 'sidekiq', '~> 5.0'
-  spec.add_runtime_dependency 'eldritch', '~> 1.1'
 end

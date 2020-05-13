@@ -31,8 +31,6 @@ module Libis
     autoload :TaskGroup, 'libis/workflow/task_group'
     autoload :TaskRunner, 'libis/workflow/task_runner'
 
-    autoload :Worker, 'libis/workflow/worker'
-
     def self.configure
       yield Config.instance
     end
