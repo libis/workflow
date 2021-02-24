@@ -1,6 +1,7 @@
 require 'digest'
 
 require 'libis/workflow/base/work_item'
+require 'libis/tools/checksum'
 
 module Libis
   module Workflow
@@ -40,7 +41,7 @@ module Libis
             self.properties['mode'] = stats.mode
             self.properties['uid'] = stats.uid
             self.properties['gid'] = stats.gid
-            set_checksum(:MD5, ::Digest::MD5.hexdigest(File.read(name))) if File.file?(name)
+            set_checksum(:MD5, ::Libis::Tools::Checksum.hexdigest(name, :MD5)) if File.file?(name)
           rescue => _e
             # ignored
           end
