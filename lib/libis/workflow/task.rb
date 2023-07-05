@@ -240,6 +240,16 @@ module Libis
       def substatus_check(status_count, item, task_or_item)
         item_status = :DONE
 
+        if (not_started = status_count[:NOT_STARTED]) > 0
+          error "%d sub#{task_or_item}(s) not started", item, not_started
+          item_status = :FAILED
+        end
+
+        if (started = status_count[:STARTED]) > 0
+          error "%d sub#{task_or_item}(s) started but not done", item, started
+          item_status = :FAILED
+        end
+
         if (waiting = status_count[:ASYNC_WAIT]) > 0
           info "waiting for %d sub#{task_or_item}(s) in async process", item, waiting
           item_status = :ASYNC_WAIT
