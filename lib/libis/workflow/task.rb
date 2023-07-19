@@ -97,8 +97,8 @@ module Libis
 
       rescue Exception => e
         set_status item, :FAILED
-        fatal_error "Exception occured: #{e.message}", item
-        debug e.backtrace.join("\n")
+        fatal_error "Aborting ingest because of error: %s @ %s\n%s", item, e.message, e.backtrace.first, e.backtrace.map{|t| ' -- ' + t}.join("\n")
+        raise Libis::WorkflowAbort, "#{e.message} @ #{e.backtrace.first}"
 
       ensure
         item.save!
@@ -209,7 +209,7 @@ module Libis
             break if parameter(:abort_recursion_on_failure)
 
           rescue Libis::WorkflowAbort => e
-            fatal_error 'Fatal error processing subitem (%d/%d): %s', item, i + 1, items.size, e.message
+            fatal_error 'Fatal error processing subitem (%d/%d): %s @ %s\n%s', item, i + 1, items.size, e.message, e.backtrace.first, e.backtrace.map{|t| ' -- ' + t}.join("\n")
             item.set_status(namepath, :FAILED)
             break
 

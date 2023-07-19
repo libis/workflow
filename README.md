@@ -258,7 +258,7 @@ perform on each work item:
 
     class MyTask < ::Libis::Workflow::Task
 
-      def process_item(item)
+      def process(item)
         if do_something(item)
           info "Did something"
         else
@@ -274,7 +274,7 @@ perform on each work item:
     end
 ```
 
-As seen above, the task should define a method called process_item that takes one argument. The argument will be a 
+As seen above, the task should define a method called process that takes one argument. The argument will be a 
 reference to the work item that it needs to perform an action on. The task has several option to progress after 
 performing its actions:
 * return. This is considered a normal and successful operation result. After a successful return the item's status will 
@@ -297,7 +297,7 @@ help of workflow input parameters and run options.
 
 #### Performing an action on the work item and all child items recursively
 
-With the 'recursive' parameter set to true, your task's process_item method will be called for the work item and then 
+With the 'recursive' parameter set to true, your task's process method will be called for the work item and then 
 once for each child and each child's children recursively.
 
 Note: you should not make both parent and child tasks recursive as this will cause the subitems to be processed 
@@ -318,7 +318,7 @@ parameter 'retry_interval', which is 30 by default.
 
 ### Pre- and postprocessing
 
-The default implementation of 'process' is to call 'pre_process' and then call 'process_item' on each child item, 
+The default implementation of running a task is to call 'pre_process' and then call 'process' for each child item, 
 followed by calling 'post_process'. The methods 'pre_process' and 'post_process' are no-operation methods by default, 
 but can be overwritten if needed.
 
