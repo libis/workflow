@@ -50,7 +50,7 @@ module Libis
           end
           info 'Running subtask (%d/%d): %s', item, i+1, tasks.size, task.name
           new_item = task.run item
-          item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
+          item = new_item if new_item.is_a?(Libis::Workflow::Base::WorkItem)
           item.status_progress(self.namepath, i+1)
           item_status = item.status(task.namepath)
           status_count[item_status] += 1

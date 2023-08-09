@@ -60,7 +60,7 @@ module Libis
         (parameter(:retry_count) + 1).times do
 
           i = run_item(item)
-          item = i if i.is_a?(Libis::Workflow::WorkItem)
+          item = i if i.is_a?(Libis::Workflow::Base::WorkItem)
 
           # noinspection RubyScope
           case item.status(namepath)
@@ -218,7 +218,7 @@ module Libis
             raise Libis::WorkflowAbort, "#{e.message} @ #{e.backtrace.first}"
 
           else
-            item = new_item if new_item.is_a?(Libis::Workflow::WorkItem)
+            item = new_item if new_item.is_a?(Libis::Workflow::Base::WorkItem)
             parent_item.status_progress(namepath, i + 1)
 
           ensure
