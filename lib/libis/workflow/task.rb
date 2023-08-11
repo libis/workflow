@@ -38,6 +38,10 @@ module Libis
         raise Libis::WorkflowError, "Processing task '#{namepath}' is not allowed to have subtasks."
       end
 
+      def root_task
+        parent&.root_task || self
+      end
+
       # @param [Libis::Workflow::Base::WorkItem] item
       def run(item)
         check_item_type ::Libis::Workflow::Base::WorkItem, item
@@ -232,9 +236,15 @@ module Libis
 
         end
 
-        # noinspection RubyScope
-        debug '%d of %d subitems passed', parent_item, status_count[:DONE], items.size
         substatus_check(status_count, parent_item, 'item')
+      end
+
+      def global_status(item)
+        results = Hash.new(0)
+        self.tasks.each { |subtask| results[item.status(subtask.namepath)] += 1 }
+        [:FAILED, :ASYNC_WAIT, :ASYNC_HALT].each { |status| return status if results[status] > 0 }
+        return :FAILED if results[:STARTED] > 1
+        :DONE
       end
 
       def substatus_check(status_count, item, task_or_item)
@@ -262,6 +272,10 @@ module Libis
         if (failed = status_count[:FAILED]) > 0
           error "%d sub#{task_or_item}(s) failed", item, failed
           item_status = :FAILED
+        end
+
+        if (done = status_count[:DONE]) > 0
+          debug "%d sub#{task_or_item}(s) passed", item, done
         end
 
         set_status(item, item_status)
