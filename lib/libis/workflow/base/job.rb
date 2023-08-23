@@ -64,8 +64,10 @@ module Libis
 
           run.job = self
           (opts.delete('run_config') || {}).each { |key,value| run.send("#{key}=", value) }
+          (opts.delete('run_properties') || {}).each { |key,value| run.properties[key] = value }
           run.options = self.input.merge(opts)
           run.save!
+          run.reload
 
           run.run
 
