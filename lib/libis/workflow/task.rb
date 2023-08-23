@@ -251,7 +251,7 @@ module Libis
         item_status = :DONE
 
         if (not_started = status_count[:NOT_STARTED]) > 0
-          error "%d sub#{task_or_item}(s) skipped", item, not_started
+          debug "%d sub#{task_or_item}(s) skipped", item, not_started
         end
 
         if (started = status_count[:STARTED]) > 0
