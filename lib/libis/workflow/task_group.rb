@@ -54,7 +54,7 @@ module Libis
           item.status_progress(self.namepath, i+1)
           item_status = item.status(task.namepath)
           status_count[item_status] += 1
-          continue = false if parameter(:abort_on_failure) && item_status != :DONE
+          continue = false if !task.parameter(:run_always) && parameter(:abort_on_failure) && item_status != :DONE
         end
 
         substatus_check(status_count, item, 'task')
