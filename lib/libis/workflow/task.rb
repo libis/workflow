@@ -208,17 +208,17 @@ module Libis
             new_item = run_item(item)
 
           rescue Libis::WorkflowError => e
-            item.set_status(namepath, :FAILED)
+            set_status(item, :FAILED)
             error 'Error processing subitem (%d/%d): %s', item, i + 1, items.size, e.message
             break if parameter(:abort_recursion_on_failure)
 
           rescue Libis::WorkflowAbort => e
             fatal_error 'Fatal error processing subitem (%d/%d): %s @ %s\n%s', item, i + 1, items.size, e.message, e.backtrace.first, e.backtrace.map{|t| ' -- ' + t}.join("\n")
-            item.set_status(namepath, :FAILED)
+            set_status(item, :FAILED)
             break
 
           rescue Exception => e
-            item.set_status(namepath, :FAILED)
+            set_status(item, :FAILED)
             raise Libis::WorkflowAbort, "#{e.message} @ #{e.backtrace.first}"
 
           else
@@ -330,7 +330,7 @@ module Libis
       end
 
       def set_status(item, state)
-        item.set_status namepath, state
+        item.set_status(namepath, state) unless parameter(:run_always)
         state
       end
 
