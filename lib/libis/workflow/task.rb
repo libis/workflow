@@ -99,6 +99,10 @@ module Libis
         set_status item, :FAILED
         raise e if parent
 
+      rescue WorkflowAbortForget => e
+        set_status item, :FAILED
+        raise e
+
       rescue Exception => e
         set_status item, :FAILED
         fatal_error "Aborting ingest because of error: %s @ %s\n%s", item, e.message, e.backtrace.first, e.backtrace.map{|t| ' -- ' + t}.join("\n")
@@ -216,6 +220,11 @@ module Libis
             fatal_error 'Fatal error processing subitem (%d/%d): %s @ %s\n%s', item, i + 1, items.size, e.message, e.backtrace.first, e.backtrace.map{|t| ' -- ' + t}.join("\n")
             set_status(item, :FAILED)
             break
+
+          rescue Libis::WorkflowAbortForget => e
+            fatal_error 'Fatal error processing subitem (%d/%d): %s @ %s\n%s', item, i + 1, items.size, e.message, e.backtrace.first, e.backtrace.map{|t| ' -- ' + t}.join("\n")
+            set_status(item, :FAILED)
+            raise e
 
           rescue Exception => e
             set_status(item, :FAILED)

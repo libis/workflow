@@ -3,4 +3,6 @@ module Libis
   end
   class WorkflowAbort < ::RuntimeError
   end
+  class WorkflowAbortForget < ::RuntimeError
+  end
 end
