@@ -227,6 +227,7 @@ module Libis
             raise e
 
           rescue Exception => e
+            fatal_error 'Fatal error processing subitem (%d/%d): %s @ %s\n%s', item, i + 1, items.size, e.message, e.backtrace.first, e.backtrace.map{|t| ' -- ' + t}.join("\n")
             set_status(item, :FAILED)
             raise Libis::WorkflowAbort, "#{e.message} @ #{e.backtrace.first}"
 
