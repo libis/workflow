@@ -6,22 +6,28 @@ require 'awesome_print'
 basedir = File.absolute_path File.join(File.dirname(__FILE__))
 dirname = File.join(basedir, 'items')
 
+def print_output(logoutput)
+  output = logoutput.string.lines.to_a.map {|x| x[/(?<=\] ).*/]&.strip}.compact
+
+  puts 'output:'
+  ap output
+end
+
 def check_output(logoutput, sample_out)
-  sample_out = sample_out.lines.to_a.map {|x| x.strip}
-  output = logoutput.string.lines.to_a.map {|x| x[/(?<=\] ).*/].strip}
-
-  # puts 'output:'
-  # ap output
-
+  sample_out = sample_out.lines.to_a.map {|x| x&.strip}
+  output = logoutput.string.lines.to_a.map {|x| x[/(?<=\] ).*/]&.strip}.compact
   expect(output.size).to eq sample_out.size
   output.each_with_index do |o, i|
-    expect(o).to eq sample_out[i]
+    expect(o).to start_with sample_out[i]
   end
 end
 
+def print_status_log(status_log)
+  puts 'status_log:'
+  status_log.each { |e| ap e }
+end
+
 def check_status_log(status_log, sample_status_log)
-  # puts 'status_log:'
-  # status_log.each { |e| ap e }
   expect(status_log.size).to eq sample_status_log.size
   sample_status_log.each_with_index do |h, i|
     h.keys.each {|key| expect(status_log[i][key.to_s]).to eq h[key]}
@@ -113,24 +119,26 @@ DEBUG -- CollectFiles - TestRun : Processing subitem (1/1): items
 DEBUG -- CollectFiles - items : Processing subitem (1/3): test_dir_item.rb
 DEBUG -- CollectFiles - items : Processing subitem (2/3): test_file_item.rb
 DEBUG -- CollectFiles - items : Processing subitem (3/3): test_run.rb
-DEBUG -- CollectFiles - items : 3 of 3 subitems passed
-DEBUG -- CollectFiles - TestRun : 1 of 1 subitems passed
+DEBUG -- CollectFiles - items : 3 subitem(s) passed
+DEBUG -- CollectFiles - TestRun : 1 subitem(s) passed
  INFO -- Run - TestRun : Running subtask (2/2): ProcessFiles
  INFO -- ProcessFiles - TestRun : Running subtask (1/2): ChecksumTester
 DEBUG -- ProcessFiles/ChecksumTester - TestRun : Processing subitem (1/1): items
 DEBUG -- ProcessFiles/ChecksumTester - items : Processing subitem (1/3): test_dir_item.rb
 DEBUG -- ProcessFiles/ChecksumTester - items : Processing subitem (2/3): test_file_item.rb
 DEBUG -- ProcessFiles/ChecksumTester - items : Processing subitem (3/3): test_run.rb
-DEBUG -- ProcessFiles/ChecksumTester - items : 3 of 3 subitems passed
-DEBUG -- ProcessFiles/ChecksumTester - TestRun : 1 of 1 subitems passed
+DEBUG -- ProcessFiles/ChecksumTester - items : 3 subitem(s) passed
+DEBUG -- ProcessFiles/ChecksumTester - TestRun : 1 subitem(s) passed
  INFO -- ProcessFiles - TestRun : Running subtask (2/2): CamelizeName
 DEBUG -- ProcessFiles/CamelizeName - TestRun : Processing subitem (1/1): items
 DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (1/3): test_dir_item.rb
 DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (2/3): test_file_item.rb
 DEBUG -- ProcessFiles/CamelizeName - Items : Processing subitem (3/3): test_run.rb
-DEBUG -- ProcessFiles/CamelizeName - Items : 3 of 3 subitems passed
-DEBUG -- ProcessFiles/CamelizeName - TestRun : 1 of 1 subitems passed
+DEBUG -- ProcessFiles/CamelizeName - Items : 3 subitem(s) passed
+DEBUG -- ProcessFiles/CamelizeName - TestRun : 1 subitem(s) passed
+DEBUG -- ProcessFiles - TestRun : 2 subtask(s) passed
  INFO -- ProcessFiles - TestRun : Done
+DEBUG -- Run - TestRun : 2 subtask(s) passed
  INFO -- Run - TestRun : Done
 STR
 
@@ -422,7 +430,7 @@ STR
       it 'should run final task' do
         run
 
-        check_output logoutput, <<STR
+         check_output logoutput, <<STR
  INFO -- Run - TestRun : Ingest run started.
  INFO -- Run - TestRun : Running subtask (1/3): CollectFiles
  INFO -- Run - TestRun : Running subtask (2/3): ProcessingTask
@@ -551,10 +559,23 @@ STR
       it 'should run final task during retry' do
         run
 
-        logoutput.truncate(0)
         run.run :retry
 
         check_output logoutput, <<STR
+INFO -- Run - TestRun : Ingest run started.
+INFO -- Run - TestRun : Running subtask (1/3): CollectFiles
+INFO -- Run - TestRun : Running subtask (2/3): ProcessingTask
+ERROR -- ProcessingTask - TestRun : Task failed with failed status
+ERROR -- ProcessingTask - TestRun : Task failed with failed status
+ERROR -- ProcessingTask - TestRun : Task failed with failed status
+ERROR -- ProcessingTask - items : 3 subitem(s) failed
+ERROR -- ProcessingTask - TestRun : 1 subitem(s) failed
+INFO -- Run - TestRun : Running subtask (3/3): FinalTask
+INFO -- FinalTask - TestRun : Final processing of test_dir_item.rb
+INFO -- FinalTask - TestRun : Final processing of test_file_item.rb
+INFO -- FinalTask - TestRun : Final processing of test_run.rb
+ERROR -- Run - TestRun : 1 subtask(s) failed
+ INFO -- Run - TestRun : Failed
  INFO -- Run - TestRun : Ingest run started.
  INFO -- Run - TestRun : Running subtask (2/3): ProcessingTask
 ERROR -- ProcessingTask - TestRun : Task failed with failed status

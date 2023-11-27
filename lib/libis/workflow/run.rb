@@ -25,6 +25,9 @@ module Libis
         nil
       end
 
+      def reload
+      end
+
       def logger
         self.properties[:logger] || (job.logger rescue nil)
       end

@@ -43,7 +43,7 @@ module Libis
         tasks.each_with_index do |task, i|
           unless task.parameter(:run_always)
             next unless continue
-            if  item.status(task.namepath) == :DONE && item.get_run.action == :retry
+            if item.status(task.namepath) == :DONE && item.get_run.action == :retry
               debug 'Retry: skipping task %s because it has finished successfully.', item, task.namepath
               next
             end

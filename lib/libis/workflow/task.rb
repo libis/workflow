@@ -213,21 +213,21 @@ module Libis
 
           rescue Libis::WorkflowError => e
             set_status(item, :FAILED)
-            error 'Error processing subitem (%d/%d): %s', item, i + 1, items.size, e.message
+            error 'Error processing subitem (%d/%d): %s @ %s', item, i + 1, items.size, e.message, e.backtrace.first
             break if parameter(:abort_recursion_on_failure)
 
           rescue Libis::WorkflowAbort => e
-            fatal_error 'Fatal error processing subitem (%d/%d): %s @ %s\n%s', item, i + 1, items.size, e.message, e.backtrace.first, e.backtrace.map{|t| ' -- ' + t}.join("\n")
+            fatal_error "Fatal error processing subitem (%d/%d): %s\n%s", item, i + 1, items.size, e.message, e.backtrace[..9].map{|t| ' -- ' + t}.join("\n")
             set_status(item, :FAILED)
             break
 
           rescue Libis::WorkflowAbortForget => e
-            fatal_error 'Fatal error processing subitem (%d/%d): %s @ %s\n%s', item, i + 1, items.size, e.message, e.backtrace.first, e.backtrace.map{|t| ' -- ' + t}.join("\n")
+            fatal_error "Fatal error processing subitem (%d/%d): %s\n%s", item, i + 1, items.size, e.message, e.backtrace[..9].map{|t| ' -- ' + t}.join("\n")
             set_status(item, :FAILED)
             raise e
 
           rescue Exception => e
-            fatal_error 'Fatal error processing subitem (%d/%d): %s @ %s\n%s', item, i + 1, items.size, e.message, e.backtrace.first, e.backtrace.map{|t| ' -- ' + t}.join("\n")
+            fatal_error "Fatal error processing subitem (%d/%d): %s @ %s\n%s", item, i + 1, items.size, e.message, e.backtrace[..9].map{|t| ' -- ' + t}.join("\n")
             set_status(item, :FAILED)
             raise Libis::WorkflowAbort, "#{e.message} @ #{e.backtrace.first}"
 
@@ -340,7 +340,7 @@ module Libis
       end
 
       def set_status(item, state)
-        item.set_status(namepath, state) unless parameter(:run_always)
+        item.set_status(namepath, state)# unless parameter(:run_always)
         state
       end
 
