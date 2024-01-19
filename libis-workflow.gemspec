@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
 
   spec.author = 'Kris Dekeyser'
   spec.email = 'kris.dekeyser@libis.be'
-  spec.homepage = 'https://github.com/Kris-LIBIS/workflow'
+  spec.homepage = 'https://github.com/libis/workflow'
   spec.license = 'MIT'
 
   if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'jruby'
