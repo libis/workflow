@@ -9,6 +9,8 @@
 /test/version_tmp/
 /tmp/
 
+.rake_tasks~
+
 ## Specific to RubyMotion:
 .dat*
 .repl_history
