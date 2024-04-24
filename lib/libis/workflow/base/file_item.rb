@@ -9,7 +9,6 @@ module Libis
 
       # noinspection RubyResolve
       module FileItem
-        include Libis::Workflow::Base::WorkItem
 
         def filename
           File.basename(self.properties['filename']) || self.properties['link']

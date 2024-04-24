@@ -21,7 +21,6 @@ module Libis
       #
       # A simple in-memory implementation can be found in ::Libis::Workflow::Run
       module Run
-        include ::Libis::Workflow::Base::WorkItem
 
         attr_accessor :tasks, :action
 
