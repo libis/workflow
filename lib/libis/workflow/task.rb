@@ -253,7 +253,7 @@ module Libis
         results = Hash.new(0)
         self.tasks.each { |subtask| results[item.status(subtask.namepath)] += 1 }
         [:FAILED, :ASYNC_WAIT, :ASYNC_HALT].each { |status| return status if results[status] > 0 }
-        return :FAILED if results[:STARTED] > 1
+        return :STARTED if results[:STARTED] > 0
         :DONE
       end
 
