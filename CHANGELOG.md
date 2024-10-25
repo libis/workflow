@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2.1.17](https://github.com/libis/workflow/tree/v2.1.17) (25/10/2024)
+
+[Full Changelog](https://github.com/libis/workflow/compare/v2.1.16...v2.1.17)
+
 ## [v2.1.16](https://github.com/libis/workflow/tree/v2.1.16) (24/04/2024)
 
 [Full Changelog](https://github.com/libis/workflow/compare/v2.1.15...v2.1.16)
